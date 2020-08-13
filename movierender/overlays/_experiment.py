@@ -1,4 +1,4 @@
-from overlays.overlay import Overlay
+from movierender.overlays import Overlay
 import matplotlib.pyplot as plt
 
 

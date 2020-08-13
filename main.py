@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
-from render import MovieRenderer
-import overlays as ovl
-from render.pipelines import CompositeRGBImage
+from movierender.render import MovieRenderer
+from movierender import overlays as ovl
+from movierender.render.pipelines import CompositeRGBImage
 
 red = [1, 0, 0]
 blue = [0, 0, 1]

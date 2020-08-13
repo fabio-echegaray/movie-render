@@ -12,10 +12,10 @@ from moviepy.video.io.bindings import mplfig_to_npimage
 
 from typing import List, TYPE_CHECKING
 
-from render.pipelines import SingleImage
+from movierender.render.pipelines import SingleImage
 
 if TYPE_CHECKING:
-    from overlays.overlay import Overlay
+    from movierender.overlays import Overlay
 
 
 class MovieRenderer:
