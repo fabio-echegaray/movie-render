@@ -2,9 +2,6 @@ from __future__ import annotations
 import os
 import logging
 
-import numpy as np
-import xml.etree.ElementTree
-
 import moviepy.editor as mpy
 from moviepy.video.io.bindings import mplfig_to_npimage
 
@@ -43,13 +40,14 @@ class MovieRenderer:
         self.image_pipeline = None
         self.images = None
         self._file = file
+        self._last_t = None
+        self._render = None
         self._load_image()
 
     def __iter__(self):
         return self
 
     def __next__(self):
-        channel = zstack = 1
         if self.image_pipeline is not None:
             imp = self.image_pipeline
         else:
@@ -93,18 +91,24 @@ class MovieRenderer:
         """
 
         def make_frame_mpl(t):
-            im = self.__next__()
+            self.frame = int(round(t))
+
+            if self.frame == self._last_t:
+                return self._render
 
             self.ax.cla()
             ext = [0, self.width / self.pix_per_um, 0, self.height / self.pix_per_um]
-            self.ax.imshow(im, extent=ext, cmap='gray', interpolation='none', aspect='equal', origin='lower')
+            self.ax.imshow(self.image_pipeline(), extent=ext, cmap='gray',
+                           interpolation='none', aspect='equal', origin='lower')
 
             for ovrl in self.layers:
                 kwargs = self._kwargs.copy()
                 kwargs.update(**ovrl._kwargs)
                 ovrl.plot(self.ax, **kwargs)
 
-            return mplfig_to_npimage(self.ax.get_figure())  # RGB image of the figure
+            self._last_t = self.frame
+            self._render = mplfig_to_npimage(self.ax.get_figure())  # RGB image of the figure
+            return self._render
 
         if filename is None:
             _, filename = os.path.split(self._file)
@@ -116,7 +120,7 @@ class MovieRenderer:
             path, img_name = os.path.split(self._file)
             self.ax.get_figure().savefig(os.path.join(path, img_name + ".test.png"))
 
-        animation = mpy.VideoClip(make_frame_mpl, duration=self.n_frames / self.fps)
+        animation = mpy.VideoClip(make_frame_mpl, duration=self.n_frames - 1)
         animation.write_videofile(filename, fps=self.fps, bitrate=self.bitrate)
         animation.close()
 

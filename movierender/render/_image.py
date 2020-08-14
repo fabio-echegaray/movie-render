@@ -53,12 +53,15 @@ def load_tiff(file_or_path):
                 for i, page in enumerate(tif.pages):
                     images.append(page.asarray())
 
+            ax_dct = {n: k for k, n in enumerate(tif.series[0].axes)}
+            shape = tif.series[0].shape
             frames = metadata['frames'] if 'frames' in metadata else 1
             return MetadataImage(image=np.asarray(images), pix_per_um=res, um_per_pix=1. / res,
                                  time_interval=dt, frames=frames,
                                  timestamps=np.linspace(start=0, stop=frames * dt, num=frames),
                                  channels=metadata['channels'] if 'channels' in metadata else 1,
-                                 width=width, height=height, zstacks=None, series=tif.series[0])
+                                 zstacks=shape[ax_dct['Z']] if 'Z' in ax_dct else 1,
+                                 width=width, height=height, series=tif.series[0])
 
 
 def load_zeiss(path):

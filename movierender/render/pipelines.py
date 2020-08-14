@@ -1,5 +1,4 @@
 import logging
-# from .movie import MovieRenderer
 import numpy as np
 from skimage import color, exposure
 
@@ -30,7 +29,7 @@ class ImagePipeline(object):
 
 class SingleImage(ImagePipeline):
     def __call__(self, *args, **kwargs):
-        channel = zstack = 1
+        channel = zstack = 0
         r = self._renderer
 
         ix = r.frame * (r.n_channels * r.n_zstacks) + zstack * r.n_channels + channel
@@ -43,9 +42,9 @@ class SingleImage(ImagePipeline):
 
 class CompositeRGBImage(ImagePipeline):
     def __call__(self, *args, **kwargs):
-        zstack = 1
+        zstack = 0
 
-        if not 'channeldict' in self._kwargs:
+        if 'channeldict' not in self._kwargs:
             raise Exception("Channel parameters needed to apply this pipeline.")
         channeldict = self._kwargs['channeldict']
 
