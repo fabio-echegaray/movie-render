@@ -117,7 +117,7 @@ class MovieRenderer:
         if test:
             im = make_frame_mpl(0)
             self.ax.axis('on')
-            path, img_name = os.path.split(self._file)
+            path, img_name = os.path.split(filename)
             self.ax.get_figure().savefig(os.path.join(path, img_name + ".test.png"))
 
         animation = mpy.VideoClip(make_frame_mpl, duration=self.n_frames - 1)
