@@ -31,14 +31,17 @@ def load_tiff(file_or_path):
         height = tif.series[0].shape[idx.find('Y')]
 
         if tif.is_imagej is not None:
-            metadata = tif.imagej_metadata
-            dt = metadata['finterval'] if 'finterval' in metadata else 1
+            metadata = {}
+            if tif.imagej_metadata is not None:
+                metadata = tif.imagej_metadata
+
+            dt = metadata['finterval'] if 'finterval' in metadata else None
 
             # asuming square pixels
             if 'XResolution' in tif.pages[0].tags:
                 xr = tif.pages[0].tags['XResolution'].value
                 res = float(xr[0]) / float(xr[1])  # pixels per um
-                if metadata['unit'] == 'centimeter':
+                if tif.pages[0].tags['ResolutionUnit'].value == 'CENTIMETER':
                     res = res / 1e4
 
             images = None
@@ -56,9 +59,9 @@ def load_tiff(file_or_path):
             ax_dct = {n: k for k, n in enumerate(tif.series[0].axes)}
             shape = tif.series[0].shape
             frames = metadata['frames'] if 'frames' in metadata else 1
+            ts = np.linspace(start=0, stop=frames * dt, num=frames) if dt is not None else None
             return MetadataImage(image=np.asarray(images), pix_per_um=res, um_per_pix=1. / res,
-                                 time_interval=dt, frames=frames,
-                                 timestamps=np.linspace(start=0, stop=frames * dt, num=frames),
+                                 time_interval=dt, frames=frames, timestamps=ts,
                                  channels=metadata['channels'] if 'channels' in metadata else 1,
                                  zstacks=shape[ax_dct['Z']] if 'Z' in ax_dct else 1,
                                  width=width, height=height, series=tif.series[0])
