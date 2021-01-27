@@ -33,16 +33,18 @@ class MovieRenderer:
         self.layers = []
         self.logger = logging.getLogger(__name__)
 
-        self.frame = 0
+        self.time = 0
         self.fps = fps
+        self.duration = None
         self.bitrate = bitrate
 
         self.image_pipeline = None
         self.images = None
         self._file = file
-        self._last_t = None
+        self._last_f = None
         self._render = None
         self._load_image()
+
 
     def __iter__(self):
         return self
@@ -52,7 +54,7 @@ class MovieRenderer:
             imp = self.image_pipeline
         else:
             imp = SingleImage(self)
-        self.frame = (self.frame + 1) % self.n_frames
+        self.time = (self.time + 1) % self.n_frames
 
         return imp()
 
@@ -71,6 +73,8 @@ class MovieRenderer:
         assert img.frames > 1, "More than one frame needed to make a movie."
         self.logger.info(f"Loaded {img_name}. WxH({img.width},{img.height}), channels: {img.channels}, "
                          f"frames: {img.frames}, stacks: {img.zstacks}")
+        self.duration = img.frames / self.fps
+        self.logger.info(f"Total duration {self.duration}[s]")
 
         self.images = img.image
 
@@ -91,9 +95,11 @@ class MovieRenderer:
         """
 
         def make_frame_mpl(t):
-            self.frame = int(round(t))
+            self.time = t
+            # calculate frame given time
+            self.frame = round(self.fps * t) + 1
 
-            if self.frame == self._last_t:
+            if self.frame == self._last_f:
                 return self._render
 
             self.ax.cla()
@@ -106,7 +112,7 @@ class MovieRenderer:
                 kwargs.update(**ovrl._kwargs)
                 ovrl.plot(self.ax, **kwargs)
 
-            self._last_t = self.frame
+            self._last_f = self.frame
             self._render = mplfig_to_npimage(self.ax.get_figure())  # RGB image of the figure
             return self._render
 
@@ -120,7 +126,7 @@ class MovieRenderer:
             path, img_name = os.path.split(filename)
             self.ax.get_figure().savefig(os.path.join(path, img_name + ".test.png"))
 
-        animation = mpy.VideoClip(make_frame_mpl, duration=self.n_frames - 1)
+        animation = mpy.VideoClip(make_frame_mpl, duration=self.duration)
         animation.write_videofile(filename, fps=self.fps, bitrate=self.bitrate)
         animation.close()
 
