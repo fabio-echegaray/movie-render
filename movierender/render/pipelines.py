@@ -61,9 +61,12 @@ class CompositeRGBImage(ImagePipeline):
             _img = r.images[ix if ix <= len(r.images) - 1 else len(r.images) - 1]
 
             # Contrast enhancing by stretching the histogram
-            # _img = exposure.equalize_hist(_img)
             if 'rescale' in settings:
-                _img = exposure.rescale_intensity(_img, in_range=tuple(np.percentile(_img, (2, 99))))
+                if hasattr(r, 'ranges'):
+                    mini, maxi = r.ranges[channel * 2], r.ranges[channel * 2 + 1]
+                    _img = exposure.rescale_intensity(_img, in_range=(mini, maxi))
+                else:
+                    _img = exposure.rescale_intensity(_img, in_range=tuple(np.percentile(_img, (2, 99))))
 
             _img = color.gray2rgb(_img)
             background += _img * settings['color'] * settings['intensity']

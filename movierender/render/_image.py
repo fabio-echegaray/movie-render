@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 MetadataImage = namedtuple('MetadataImage', ['image', 'pix_per_um', 'um_per_pix',
                                              'time_interval', 'frames', 'channels',
                                              'zstacks', 'width', 'height', 'series',
-                                             'timestamps'])
+                                             'timestamps', 'intensity_ranges'])
 
 
 def load_tiff(file_or_path):
@@ -64,7 +64,8 @@ def load_tiff(file_or_path):
                                  time_interval=dt, frames=frames, timestamps=ts,
                                  channels=metadata['channels'] if 'channels' in metadata else 1,
                                  zstacks=shape[ax_dct['Z']] if 'Z' in ax_dct else 1,
-                                 width=width, height=height, series=tif.series[0])
+                                 width=width, height=height, series=tif.series[0],
+                                 intensity_ranges=metadata['Ranges'] if 'Ranges' in metadata else None)
 
 
 def load_zeiss(path):

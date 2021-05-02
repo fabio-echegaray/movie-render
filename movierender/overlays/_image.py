@@ -12,8 +12,7 @@ class Timestamp(Overlay):
     def plot(self, ax, xy=(0, 0), string_format="hh:mm", timestamps=None, fontdict=None, va=None, **kwargs):
         assert timestamps is not None, "Need timestamps to render on axes."
         x0, y0 = xy
-        # secs = sum(timestamps[:self._renderer.frame])
-        secs = timestamps[self._renderer.frame]
+        secs = timestamps[self._renderer.frame - 1]
         if string_format == "hh:mm":
             mins = int(secs / 60)
             hours = int(mins / 60)

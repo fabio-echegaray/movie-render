@@ -45,7 +45,6 @@ class MovieRenderer:
         self._render = None
         self._load_image()
 
-
     def __iter__(self):
         return self
 
@@ -86,7 +85,8 @@ class MovieRenderer:
             'n_channels': img.channels,
             'n_zstacks':  img.zstacks,
             'width':      img.width,
-            'height':     img.height
+            'height':     img.height,
+            'ranges':     img.intensity_ranges
             })
 
     def render(self, filename=None, test=False):
@@ -97,7 +97,7 @@ class MovieRenderer:
         def make_frame_mpl(t):
             self.time = t
             # calculate frame given time
-            self.frame = round(self.fps * t) + 1
+            self.frame = int(round(self.fps * t) + 1)
 
             if self.frame == self._last_f:
                 return self._render
