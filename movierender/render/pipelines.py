@@ -20,7 +20,7 @@ class ImagePipeline(object):
             if ovrl.image_pipeline is not None:
                 raise Exception("More than one image processing pipeline.")
             else:
-                assert ovrl.images is not None, "No images to process."
+                assert len(ovrl.image.frames) > 0, "No images to process."
                 ovrl.image_pipeline = self
                 self._renderer = ovrl
                 return ovrl
@@ -32,12 +32,11 @@ class SingleImage(ImagePipeline):
         channel = zstack = 0
         r = self._renderer
 
-        ix = r.frame * (r.n_channels * r.n_zstacks) + zstack * r.n_channels + channel
-        self.logger.debug(f"Retrieving frame {r.frame} of {channel} at z-stack={zstack} "
-                          f"(index={ix} = {r.frame} * ({r.n_channels} * {r.n_zstacks})"
-                          f" + {zstack} * {r.n_channels} + {channel})")
+        ix = r.image.ix_at(c=channel, z=zstack, t=r.frame - 1)
+        self.logger.debug(f"Retrieving frame {r.frame} of channel {channel} at z-stack={zstack} "
+                          f"(index={ix})")
 
-        return r.images[ix if ix <= len(r.images) - 1 else len(r.images) - 1]
+        return r.image.image(ix).image
 
 
 class CompositeRGBImage(ImagePipeline):
@@ -53,12 +52,11 @@ class CompositeRGBImage(ImagePipeline):
         background = np.zeros((r.width, r.height) + (3,), dtype=np.float64)
         for name, settings in channeldict.items():
             channel = settings['id']
-            ix = r.frame * (r.n_channels * r.n_zstacks) + zstack * r.n_channels + channel
-            self.logger.debug(f"Retrieving frame {r.frame} of {channel} at z-stack={zstack} "
-                              f"(index={ix} = {r.frame} * ({r.n_channels} * {r.n_zstacks})"
-                              f" + {zstack} * {r.n_channels} + {channel})")
+            ix = r.image.ix_at(c=channel, z=zstack, t=r.frame - 1)
+            self.logger.debug(f"Retrieving frame {r.frame} of channel {channel} at z-stack={zstack} "
+                              f"(index={ix})")
 
-            _img = r.images[ix if ix <= len(r.images) - 1 else len(r.images) - 1]
+            _img = r.image.image(ix).image
 
             # Contrast enhancing by stretching the histogram
             if 'rescale' in settings:

@@ -8,7 +8,7 @@ from moviepy.video.io.bindings import mplfig_to_npimage
 from typing import List, TYPE_CHECKING
 
 from movierender.render.pipelines import SingleImage
-from ._image import find_image
+from cached import CachedImageFile
 
 if TYPE_CHECKING:
     from movierender.overlays import Overlay
@@ -17,10 +17,10 @@ if TYPE_CHECKING:
 class MovieRenderer:
     layers: List[Overlay]
 
-    def __init__(self, fig, file: str, fps=1, bitrate="4000k", show_axis=False, **kwargs):
+    def __init__(self, fig, image: CachedImageFile, fps=1, bitrate="4000k", show_axis=False, **kwargs):
         self._kwargs = {
             'fontdict': {'size': 10},
-            }
+        }
         self._kwargs.update(**kwargs)
 
         self.fig = fig
@@ -39,8 +39,7 @@ class MovieRenderer:
         self.bitrate = bitrate
 
         self.image_pipeline = None
-        self.images = None
-        self._file = file
+        self.image = image
         self._last_f = None
         self._render = None
         self._load_image()
@@ -64,30 +63,24 @@ class MovieRenderer:
             raise AttributeError("No such attribute: " + name)
 
     def _load_image(self):
-        folder = os.path.dirname(self._file)
-        img_name = os.path.basename(self._file)
-
-        img = find_image(img_name, folder=folder)
-
-        assert img.frames > 1, "More than one frame needed to make a movie."
-        self.logger.info(f"Loaded {img_name}. WxH({img.width},{img.height}), channels: {img.channels}, "
-                         f"frames: {img.frames}, stacks: {img.zstacks}")
-        self.duration = img.frames / self.fps
+        assert len(self.image.frames) > 1, "More than one frame needed to make a movie."
+        self.logger.info(f"Loaded {self.image.image_path}. WxH({self.image.width},{self.image.height}), "
+                         f"channels: {len(self.image.channels)}, "
+                         f"frames: {len(self.image.frames)}, stacks: {len(self.image.stacks)}")
+        self.duration = len(self.image.frames) / self.fps
         self.logger.info(f"Total duration {self.duration}[s]")
 
-        self.images = img.image
-
         self._kwargs.update({
-            'pix_per_um': img.pix_per_um,
-            'timestamps': img.timestamps,
-            'dt':         img.time_interval,
-            'n_frames':   img.frames,
-            'n_channels': img.channels,
-            'n_zstacks':  img.zstacks,
-            'width':      img.width,
-            'height':     img.height,
-            'ranges':     img.intensity_ranges
-            })
+            'pix_per_um': self.image.pix_per_um,
+            'timestamps': self.image.timestamps,
+            'dt':         self.image.time_interval,
+            'n_frames':   len(self.image.frames),
+            'n_channels': len(self.image.channels),
+            'n_zstacks':  len(self.image.stacks),
+            'width':      self.image.width,
+            'height':     self.image.height,
+            # 'ranges':     self.image.intensity_ranges
+        })
 
     def render(self, filename=None, test=False):
         """
