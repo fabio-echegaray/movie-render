@@ -3,7 +3,10 @@ import matplotlib.pyplot as plt
 
 
 class Treatment(Overlay):
-    def plot(self, ax, xy=(0, 0), lw=1, fontdict=None, expdict=None, **kwargs):
+    def plot(self, ax=None, xy=(0, 0), lw=1, fontdict=None, expdict=None, **kwargs):
+        if ax is None:
+            ax = self.ax
+        assert ax is not None, "No axes found to plot overlay."
         assert expdict is not None, "Experiment label parameters needed to apply this overlay."
 
         x0, y0 = xy

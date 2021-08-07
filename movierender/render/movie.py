@@ -40,7 +40,7 @@ class MovieRenderer:
 
         self.image_pipeline = None
         self.image = image
-        self._last_f = None
+        self._last_f = image.frames[-1]
         self._render = None
         self._load_image()
 
@@ -68,7 +68,7 @@ class MovieRenderer:
                          f"channels: {len(self.image.channels)}, "
                          f"frames: {len(self.image.frames)}, stacks: {len(self.image.stacks)}")
         self.duration = len(self.image.frames) / self.fps
-        self.logger.info(f"Total duration {self.duration}[s]")
+        self.logger.info(f"Total duration {self.duration:.3f}[s]")
 
         self._kwargs.update({
             'pix_per_um': self.image.pix_per_um,
@@ -95,20 +95,30 @@ class MovieRenderer:
             if self.frame == self._last_f:
                 return self._render
 
+            # clear axes of all objects
             self.ax.cla()
-            ext = [0, self.width / self.pix_per_um, 0, self.height / self.pix_per_um]
-            self.ax.imshow(self.image_pipeline(), extent=ext, cmap='gray',
-                           interpolation='none', aspect='equal', origin='lower')
+            for ovrl in self.layers:
+                if ovrl.ax is not None:
+                    ovrl.ax.cla()
+            if self.image_pipeline is not None and self.image_pipeline.ax is not None:
+                self.image_pipeline.ax.cla()
+
+            if self.image_pipeline is not None:
+                ext = [0, self.width / self.pix_per_um, 0, self.height / self.pix_per_um]
+                ax = self.image_pipeline.ax if self.image_pipeline.ax is not None else self.ax
+                ax.imshow(self.image_pipeline(), extent=ext, cmap='gray',
+                          interpolation='none', aspect='equal', origin='lower')
 
             for ovrl in self.layers:
                 kwargs = self._kwargs.copy()
                 kwargs.update(**ovrl._kwargs)
-                ovrl.plot(self.ax, **kwargs)
+                ovrl.plot(ax=self.ax if ovrl.ax is None else None, **kwargs)
 
             self._last_f = self.frame
             self._render = mplfig_to_npimage(self.ax.get_figure())  # RGB image of the figure
             return self._render
 
+        # Start of method
         if filename is None:
             _, filename = os.path.split(self._file)
             filename += ".mp4"

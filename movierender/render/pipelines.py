@@ -4,8 +4,9 @@ from skimage import color, exposure
 
 
 class ImagePipeline(object):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, ax=None, **kwargs):
         self._kwargs = kwargs
+        self.ax = ax
         self.logger = logging.getLogger(__name__)
 
         # if len(args) > 0 and isinstance(args[0], MovieRenderer):
@@ -35,8 +36,8 @@ class SingleImage(ImagePipeline):
         ix = r.image.ix_at(c=channel, z=zstack, t=r.frame - 1)
         self.logger.debug(f"Retrieving frame {r.frame} of channel {channel} at z-stack={zstack} "
                           f"(index={ix})")
-
-        return r.image.image(ix).image
+        mimg = r.image.image(ix)
+        return mimg.image if mimg is not None else np.zeros((r.width, r.height))
 
 
 class CompositeRGBImage(ImagePipeline):
