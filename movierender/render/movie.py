@@ -107,7 +107,7 @@ class MovieRenderer:
                 ext = [0, self.width / self.pix_per_um, 0, self.height / self.pix_per_um]
                 ax = self.image_pipeline.ax if self.image_pipeline.ax is not None else self.ax
                 ax.imshow(self.image_pipeline(), extent=ext, cmap='gray',
-                          interpolation='none', aspect='equal', origin='lower')
+                          interpolation='none', aspect='equal', origin='lower', zorder=0)
 
             for ovrl in self.layers:
                 kwargs = self._kwargs.copy()

@@ -29,7 +29,7 @@ class ImagePipeline(object):
 
 
 class SingleImage(ImagePipeline):
-    def __call__(self, *args, **kwargs):
+    def __call__(self, *args, adjust_exposure=True, **kwargs):
         channel = zstack = 0
         r = self._renderer
 
@@ -37,7 +37,11 @@ class SingleImage(ImagePipeline):
         self.logger.debug(f"Retrieving frame {r.frame} of channel {channel} at z-stack={zstack} "
                           f"(index={ix})")
         mimg = r.image.image(ix)
-        return mimg.image if mimg is not None else np.zeros((r.width, r.height))
+        img = mimg.image if mimg is not None else np.zeros((r.width, r.height))
+        if adjust_exposure:
+            p2, p98 = np.percentile(img, (2, 98))
+            img = exposure.rescale_intensity(img, in_range=(p2, p98))
+        return img
 
 
 class CompositeRGBImage(ImagePipeline):
