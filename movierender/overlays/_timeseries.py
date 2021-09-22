@@ -1,22 +1,52 @@
 import pandas as pd
-import seaborn as sns
 from movierender.overlays import Overlay
 
 
 class DataTimeseries(Overlay):
-    def __init__(self, df: pd.DataFrame, x="time", y=None, frame="frame", time="time", style=None, hue=None, size=None,
-                 **kwargs):
+    def __init__(self, df: pd.DataFrame, x="time", y=None, frame="frame", time="time", style_dict=None, **kwargs):
         assert all([it in df.columns for it in [x, y]]), "Data point columns not found in DataFrame."
         self._x = x
         self._y = y
         self._f = frame
         self._t = time
+        self._style = style_dict
         self.df = (df
                    .rename(columns={frame: 'frame', time: 'time'})
                    .assign(x=df[x], y=df[y]))
         super().__init__(**kwargs)
 
-    def plot(self, ax=None, **kwargs):
+    def plot(self, ax=None, legend=False, **kwargs):
+        self.use_matplotlib_plot(ax=ax, legend=legend, **kwargs)
+
+    def use_matplotlib_plot(self, ax=None, legend=False, no_dots=False, **kwargs):
+        if ax is None:
+            ax = self.ax
+        assert ax is not None, "No axes found to plot overlay."
+        # assert timestamps is not None, "Need timestamps to render on axes."
+
+        xmin, xmax = self.df['x'].min(), self.df['x'].max()
+        ymin, ymax = self.df['y'].min(), self.df['y'].max()
+        fr = self._renderer.frame if self._renderer is not None else self.df['frame'].max()
+
+        dat = self.df.query("frame <= @fr")
+        if not no_dots:
+            ax.scatter(data=dat, x='x', y='y', s=1, c='gray', zorder=10)
+        for (ix_u, ix_sig), uniseries in self.df.groupby(['unit', 'signal']):
+            ax.plot(uniseries['x'], uniseries['y'], c='gray', lw=0.5, zorder=10)
+        for (ix_u, ix_sig), uniseries in dat.groupby(['unit', 'signal']):
+            color = self._style[ix_sig]['color'] if self._style is not None and 'color' in self._style[ix_sig] else None
+            color = color if color is not None else 'r'
+            ax.plot(uniseries['x'], uniseries['y'], c=color, lw=1, zorder=20)
+
+        ax.set_xlabel(self._t)
+        ax.set_xlim([xmin, xmax])
+        ax.set_ylim([ymin, ymax])
+        if not legend:
+            ax.legend([])
+
+    def use_lineplot(self, ax=None, legend=False, **kwargs):
+        import seaborn as sns
+
         if ax is None:
             ax = self.ax
         assert ax is not None, "No axes found to plot overlay."
@@ -36,4 +66,5 @@ class DataTimeseries(Overlay):
         ax.set_xlabel(self._t)
         ax.set_xlim([xmin, xmax])
         ax.set_ylim([ymin, ymax])
-        # ax.get_legend().remove()
+        if not legend:
+            ax.get_legend().remove()
