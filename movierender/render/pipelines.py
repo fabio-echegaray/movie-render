@@ -18,19 +18,22 @@ class ImagePipeline(object):
     def __radd__(self, ovrl):
         # if isinstance(ovrl, MovieRenderer):
         if ovrl.__class__.__name__ == 'MovieRenderer':
-            if ovrl.image_pipeline is not None:
-                raise Exception("More than one image processing pipeline.")
+            if (ovrl.image_pipeline and all([ip.ax is None for ip in ovrl.image_pipeline])) \
+                    or (not ovrl.image_pipeline and self.ax is None):
+                raise Exception("More than one image processing pipeline. "
+                                "If you need to add more image pipelines, "
+                                "consider providing an ax parameter to the class constructor.")
             else:
                 assert len(ovrl.image.frames) > 0, "No images to process."
-                ovrl.image_pipeline = self
+                ovrl.image_pipeline.append(self)
                 self._renderer = ovrl
                 return ovrl
         return self
 
 
 class SingleImage(ImagePipeline):
-    def __call__(self, *args, adjust_exposure=True, **kwargs):
-        channel = zstack = 0
+    def __call__(self, *args, channel=0, adjust_exposure=True, **kwargs):
+        zstack = 0
         r = self._renderer
 
         ix = r.image.ix_at(c=channel, z=zstack, t=r.frame - 1)
@@ -54,7 +57,7 @@ class CompositeRGBImage(ImagePipeline):
 
         r = self._renderer
 
-        background = np.zeros((r.width, r.height) + (3,), dtype=np.float64)
+        background = np.zeros(r.image.image(0).image.shape + (3,), dtype=np.float64)
         for name, settings in channeldict.items():
             channel = settings['id']
             ix = r.image.ix_at(c=channel, z=zstack, t=r.frame - 1)

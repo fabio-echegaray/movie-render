@@ -24,11 +24,8 @@ class MovieRenderer:
         self._kwargs.update(**kwargs)
 
         self.fig = fig
-        if show_axis:
-            self.ax = fig.gca()
-        else:
-            self.ax = fig.add_axes([0, 0, 1, 1])
-            self.ax.axis('off')
+        self.show_axis = show_axis
+        self.ax = fig.gca()
 
         self.layers = []
         self.logger = logging.getLogger(__name__)
@@ -38,7 +35,7 @@ class MovieRenderer:
         self.duration = None
         self.bitrate = bitrate
 
-        self.image_pipeline = None
+        self.image_pipeline = []
         self.image = image
         self._last_f = image.frames[-1]
         self._render = None
@@ -100,19 +97,34 @@ class MovieRenderer:
             for ovrl in self.layers:
                 if ovrl.ax is not None:
                     ovrl.ax.cla()
-            if self.image_pipeline is not None and self.image_pipeline.ax is not None:
-                self.image_pipeline.ax.cla()
+            for imgp in self.image_pipeline:
+                if imgp.ax is not None:
+                    imgp.ax.cla()
+                if not self.show_axis and imgp.ax is not None:
+                    imgp.ax.set_xticklabels([])
+                    imgp.ax.set_yticklabels([])
+                    imgp.ax.set_xticks([])
+                    imgp.ax.set_yticks([])
 
-            if self.image_pipeline is not None:
+            for imgp in self.image_pipeline:
                 ext = [0, self.width / self.pix_per_um, 0, self.height / self.pix_per_um]
-                ax = self.image_pipeline.ax if self.image_pipeline.ax is not None else self.ax
-                ax.imshow(self.image_pipeline(), extent=ext, cmap='gray',
-                          interpolation='none', aspect='equal', origin='lower', zorder=0)
+                ax = imgp.ax if imgp.ax is not None else self.ax
+                ax.imshow(imgp(), cmap='gray', extent=ext, origin='lower',
+                          interpolation='none', aspect='equal',
+                          zorder=0)
 
             for ovrl in self.layers:
                 kwargs = self._kwargs.copy()
-                kwargs.update(**ovrl._kwargs)
+                kwargs.update(**ovrl._kwargs, show_axis=self.show_axis)
                 ovrl.plot(ax=self.ax if ovrl.ax is None else None, **kwargs)
+
+            for ovrl in self.layers:
+                if not ovrl.show_axis and ovrl.ax is not None:
+                    ovrl.ax.set_xticklabels([])
+                    ovrl.ax.set_yticklabels([])
+                    ovrl.ax.set_xticks([])
+                    ovrl.ax.set_yticks([])
+            self.fig.tight_layout()
 
             self._last_f = self.frame
             self._render = mplfig_to_npimage(self.ax.get_figure())  # RGB image of the figure
@@ -128,6 +140,7 @@ class MovieRenderer:
             self.ax.axis('on')
             path, img_name = os.path.split(filename)
             self.ax.get_figure().savefig(os.path.join(path, img_name + ".test.png"))
+            return
 
         animation = mpy.VideoClip(make_frame_mpl, duration=self.duration)
         animation.write_videofile(filename, fps=self.fps, bitrate=self.bitrate)
