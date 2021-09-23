@@ -18,7 +18,7 @@ class DataTimeseries(Overlay):
     def plot(self, ax=None, legend=False, **kwargs):
         self.use_matplotlib_plot(ax=ax, legend=legend, **kwargs)
 
-    def use_matplotlib_plot(self, ax=None, legend=False, no_dots=False, **kwargs):
+    def use_matplotlib_plot(self, ax=None, legend=False, no_dots=False, lw=2, **kwargs):
         if ax is None:
             ax = self.ax
         assert ax is not None, "No axes found to plot overlay."
@@ -36,7 +36,7 @@ class DataTimeseries(Overlay):
         for (ix_u, ix_sig), uniseries in dat.groupby(['unit', 'signal']):
             color = self._style[ix_sig]['color'] if self._style is not None and 'color' in self._style[ix_sig] else None
             color = color if color is not None else 'r'
-            ax.plot(uniseries['x'], uniseries['y'], c=color, lw=1, zorder=20)
+            ax.plot(uniseries['x'], uniseries['y'], c=color, lw=lw, zorder=20)
 
         ax.set_xlabel(self._t)
         ax.set_xlim([xmin, xmax])
