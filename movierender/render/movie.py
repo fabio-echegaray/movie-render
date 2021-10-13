@@ -3,6 +3,7 @@ import os
 import logging
 
 import moviepy.editor as mpy
+import numpy as np
 from moviepy.video.io.bindings import mplfig_to_npimage
 
 from typing import List, TYPE_CHECKING
@@ -38,7 +39,7 @@ class MovieRenderer:
         self.image_pipeline = []
         self.image = image
         self._last_f = image.frames[-1]
-        self._render = None
+        self._render = np.zeros((image.width, image.height), dtype=float)
         self._load_image()
 
     def __iter__(self):
@@ -63,7 +64,7 @@ class MovieRenderer:
         assert len(self.image.frames) > 1, "More than one frame needed to make a movie."
         self.logger.info(f"Loaded {self.image.image_path}. WxH({self.image.width},{self.image.height}), "
                          f"channels: {len(self.image.channels)}, "
-                         f"frames: {len(self.image.frames)}, stacks: {len(self.image.stacks)}")
+                         f"frames: {len(self.image.frames)}, stacks: {len(self.image.zstacks)}")
         self.duration = len(self.image.frames) / self.fps
         self.logger.info(f"Total duration {self.duration:.3f}[s]")
 
@@ -73,7 +74,7 @@ class MovieRenderer:
             'dt':         self.image.time_interval,
             'n_frames':   len(self.image.frames),
             'n_channels': len(self.image.channels),
-            'n_zstacks':  len(self.image.stacks),
+            'n_zstacks':  len(self.image.zstacks),
             'width':      self.image.width,
             'height':     self.image.height,
             # 'ranges':     self.image.intensity_ranges
@@ -81,7 +82,7 @@ class MovieRenderer:
 
     def render(self, filename=None, test=False):
         """
-        Builds and displays the movie.
+        Render the movie into an mp4 file.
         """
 
         def make_frame_mpl(t):
