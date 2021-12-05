@@ -9,7 +9,7 @@ class ScaleBar(Overlay):
 
         x0, y0 = xy
         ax.plot([x0, x0 + um], [y0, y0], c='w', lw=lw)
-        ax.text(x0 + um / 2, y0 + 1.5, f'{um} um', color='w', fontdict=fontdict, horizontalalignment='center')
+        ax.text(x0 + um / 2, y0 + 2.5, f'{um} um', color='w', fontdict=fontdict, horizontalalignment='center')
 
 
 class Timestamp(Overlay):

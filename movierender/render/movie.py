@@ -9,7 +9,7 @@ from moviepy.video.io.bindings import mplfig_to_npimage
 from typing import List, TYPE_CHECKING
 
 from movierender.render.pipelines import SingleImage
-from cached import CachedImageFile
+from fileops.cached import CachedImageFile
 
 if TYPE_CHECKING:
     from movierender.overlays import Overlay

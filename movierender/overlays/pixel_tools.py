@@ -1,4 +1,4 @@
-from cached import CachedImageFile
+from fileops.cached import CachedImageFile
 
 
 class PixelTools(CachedImageFile):

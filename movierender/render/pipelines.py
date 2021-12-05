@@ -4,9 +4,10 @@ from skimage import color, exposure
 
 
 class ImagePipeline(object):
-    def __init__(self, *args, ax=None, **kwargs):
+    def __init__(self, *args, ax=None, zstack=0, **kwargs):
         self._kwargs = kwargs
         self.ax = ax
+        self.zstack = zstack
         self.logger = logging.getLogger(__name__)
 
         # if len(args) > 0 and isinstance(args[0], MovieRenderer):
@@ -33,11 +34,10 @@ class ImagePipeline(object):
 
 class SingleImage(ImagePipeline):
     def __call__(self, *args, channel=0, adjust_exposure=True, **kwargs):
-        zstack = 0
         r = self._renderer
 
-        ix = r.image.ix_at(c=channel, z=zstack, t=r.frame - 1)
-        self.logger.debug(f"Retrieving frame {r.frame} of channel {channel} at z-stack={zstack} "
+        ix = r.image.ix_at(c=channel, z=self.zstack, t=r.frame - 1)
+        self.logger.debug(f"Retrieving frame {r.frame} of channel {channel} at z-stack={self.zstack} "
                           f"(index={ix})")
         mimg = r.image.image(ix)
         img = mimg.image if mimg is not None else np.zeros((r.width, r.height))
@@ -49,8 +49,6 @@ class SingleImage(ImagePipeline):
 
 class CompositeRGBImage(ImagePipeline):
     def __call__(self, *args, **kwargs):
-        zstack = 0
-
         if 'channeldict' not in self._kwargs:
             raise Exception("Channel parameters needed to apply this pipeline.")
         channeldict = self._kwargs['channeldict']
@@ -60,8 +58,8 @@ class CompositeRGBImage(ImagePipeline):
         background = np.zeros(r.image.image(0).image.shape + (3,), dtype=np.float64)
         for name, settings in channeldict.items():
             channel = settings['id']
-            ix = r.image.ix_at(c=channel, z=zstack, t=r.frame - 1)
-            self.logger.debug(f"Retrieving frame {r.frame} of channel {channel} at z-stack={zstack} "
+            ix = r.image.ix_at(c=channel, z=self.zstack, t=r.frame - 1)
+            self.logger.debug(f"Retrieving frame {r.frame} of channel {channel} at z-stack={self.zstack} "
                               f"(index={ix})")
 
             _img = r.image.image(ix).image

@@ -1,6 +1,7 @@
 import datetime
 import time as tim
 
+import numpy as np
 import pandas as pd
 from matplotlib import dates
 from movierender.overlays import Overlay
@@ -26,10 +27,7 @@ class DataTimeseries(Overlay):
 
         super().__init__(**kwargs)
 
-    def plot(self, ax=None, legend=False, **kwargs):
-        self.use_matplotlib_plot(ax=ax, legend=legend, **kwargs)
-
-    def use_matplotlib_plot(self, ax=None, legend=False, no_dots=False, lw=2, **kwargs):
+    def plot(self, ax=None, legend=False, plot_dots=True, lw=2, **kwargs):
         if ax is None:
             ax = self.ax
         assert ax is not None, "No axes found to plot overlay."
@@ -37,11 +35,14 @@ class DataTimeseries(Overlay):
 
         xmin, xmax = self.df['x'].min(), self.df['x'].max()
         ymin, ymax = self.df['y'].min(), self.df['y'].max()
+        if not np.isfinite([ymin, ymax]).all():
+            return
+
         fr = self._renderer.frame if self._renderer is not None else self.df['frame'].max()
         dat = self.df.query("frame <= @fr")
 
-        if not no_dots:
-            ax.scatter(data=dat, x='x', y='y', s=1, c='gray', zorder=10)
+        if plot_dots:
+            ax.scatter(dat['x'].tolist(), dat['y'], s=1, c='gray', zorder=10)
         for (ix_u, ix_sig), uniseries in self.df.groupby(['unit', 'signal']):
             ax.plot(uniseries['x'], uniseries['y'], c='gray', lw=0.5, zorder=10)
         for (ix_u, ix_sig), uniseries in dat.groupby(['unit', 'signal']):
@@ -54,7 +55,8 @@ class DataTimeseries(Overlay):
 
         formatter = dates.DateFormatter('%H:%M')
         ax.xaxis.set_major_formatter(formatter)
-        ax.xlabel("Time [hh:mm]")
+        ax.set_xlabel("Time [hh:mm]")
+        ax.xaxis_date()
 
         if not legend:
             ax.legend([])
