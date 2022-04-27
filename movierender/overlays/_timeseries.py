@@ -15,6 +15,7 @@ class DataTimeseries(Overlay):
         self._f = frame
         self._t = time
         self._style = style_dict
+        # Rename columns if parameters were given
         self.df = (df
                    .rename(columns={frame: 'frame', time: 'time'})
                    .assign(x=df[x], y=df[y]))
@@ -24,6 +25,7 @@ class DataTimeseries(Overlay):
         self.df.loc[:, 'x'] = list(
             map(datetime.datetime.strptime, map(lambda s: tim.strftime('%H:%M:%S', tim.gmtime(s)), self.df['x']),
                 len(self.df['x']) * ['%H:%M:%S']))
+        self.df.loc[:, 'x'] = pd.to_datetime(self.df.loc[:, 'x'])
 
         super().__init__(**kwargs)
 
@@ -31,7 +33,7 @@ class DataTimeseries(Overlay):
         if ax is None:
             ax = self.ax
         assert ax is not None, "No axes found to plot overlay."
-        # assert timestamps is not None, "Need timestamps to render on axes."
+        # assert timestamps is not None, "Need timestamps to render on axis."
 
         xmin, xmax = self.df['x'].min(), self.df['x'].max()
         ymin, ymax = self.df['y'].min(), self.df['y'].max()
@@ -53,6 +55,10 @@ class DataTimeseries(Overlay):
         ax.set_xlim([xmin, xmax])
         ax.set_ylim([ymin, ymax])
 
+        xmin_locator = dates.MinuteLocator(interval=30)
+        xmaj_locator = dates.MinuteLocator(interval=60)
+        ax.xaxis.set_minor_locator(xmin_locator)
+        ax.xaxis.set_major_locator(xmaj_locator)
         formatter = dates.DateFormatter('%H:%M')
         ax.xaxis.set_major_formatter(formatter)
         ax.set_xlabel("Time [hh:mm]")
@@ -60,28 +66,3 @@ class DataTimeseries(Overlay):
 
         if not legend:
             ax.legend([])
-
-    def use_lineplot(self, ax=None, legend=False, **kwargs):
-        import seaborn as sns
-
-        if ax is None:
-            ax = self.ax
-        assert ax is not None, "No axes found to plot overlay."
-        # assert timestamps is not None, "Need timestamps to render on axes."
-
-        xmin, xmax = self.df['x'].min(), self.df['x'].max()
-        ymin, ymax = self.df['y'].min(), self.df['y'].max()
-        fr = self._renderer.frame
-        dat = self.df.query("frame <= @fr")
-        ax.scatter(data=dat, x='x', y='y', s=5, c='gray', zorder=10)
-        sns.lineplot(data=dat, x='x', y='y',
-                     style='variable', hue='signal',
-                     units='unit', estimator=None,
-                     legend='brief',
-                     ax=ax, zorder=20)
-
-        ax.set_xlabel(self._t)
-        ax.set_xlim([xmin, xmax])
-        ax.set_ylim([ymin, ymax])
-        if not legend:
-            ax.get_legend().remove()
