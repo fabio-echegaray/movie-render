@@ -1,8 +1,11 @@
-from fileops.cached import CachedImageFile
+from fileops.image import ImageFile
 
 
-class PixelTools(CachedImageFile):
-    def __init__(self, cimg: CachedImageFile):
+class PixelTools:
+    def __init__(self, cimg: ImageFile):
+        self.width = 0
+        self.height = 0
+        self.um_per_pix = 0
         for d in cimg.__dict__:
             self.__dict__.update({d: cimg.__dict__[d]})
 
