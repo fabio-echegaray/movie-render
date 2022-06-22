@@ -8,6 +8,7 @@ from moviepy.video.io.bindings import mplfig_to_npimage
 
 from typing import List, TYPE_CHECKING
 
+from fileops.image.exceptions import FrameNotFoundError
 from movierender.render.pipelines import SingleImage
 from fileops.image import ImageFile
 
@@ -108,12 +109,15 @@ class MovieRenderer:
                     imgp.ax.set_yticks([])
 
             for imgp in self.image_pipeline:
-                ppu = self.pix_per_um if self.pix_per_um is not None else 1
-                ext = [0, self.width / ppu, 0, self.height / ppu]
-                ax = imgp.ax if imgp.ax is not None else self.ax
-                ax.imshow(imgp(), cmap='gray', extent=ext, origin='lower',
-                          interpolation='none', aspect='equal',
-                          zorder=0)
+                try:
+                    ppu = self.pix_per_um if self.pix_per_um is not None else 1
+                    ext = [0, self.width / ppu, 0, self.height / ppu]
+                    ax = imgp.ax if imgp.ax is not None else self.ax
+                    ax.imshow(imgp(), cmap='gray', extent=ext, origin='lower',
+                              interpolation='none', aspect='equal',
+                              zorder=0)
+                except FrameNotFoundError:
+                    continue
 
             for ovrl in self.layers:
                 kwargs = self._kwargs.copy()
