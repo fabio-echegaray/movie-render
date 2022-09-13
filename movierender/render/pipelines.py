@@ -1,12 +1,19 @@
 import logging
+from uuid import uuid4
+
 import numpy as np
 from skimage import color, exposure
 
 from fileops.image.imagemeta import MetadataImage
 
 
-class ImagePipeline(object):
+class PipelineException(Exception):
+    pass
+
+
+class ImagePipeline:
     def __init__(self, *args, ax=None, zstack=0, **kwargs):
+        self.uuid = uuid4()
         self._kwargs = kwargs
         self.ax = ax
         self.zstack = zstack
@@ -21,11 +28,15 @@ class ImagePipeline(object):
     def __radd__(self, ovrl):
         # if isinstance(ovrl, MovieRenderer):
         if ovrl.__class__.__name__ == 'MovieRenderer':
-            if (ovrl.image_pipeline and all([ip.ax is None for ip in ovrl.image_pipeline])) \
-                    or (not ovrl.image_pipeline and self.ax is None):
-                raise Exception("More than one image processing pipeline. "
-                                "If you need to add more image pipelines, "
-                                "consider providing an ax parameter to the class constructor.")
+            ovrl_pipeline_filled = len(ovrl.image_pipeline) > 0
+            ovrl_pipeline_empty = not ovrl_pipeline_filled
+            at_least_one_ax_in_pipeline = ovrl_pipeline_filled and all([ip.ax is None for ip in ovrl.image_pipeline])
+            if (ovrl_pipeline_empty and at_least_one_ax_in_pipeline) \
+                    or (ovrl_pipeline_filled and self.ax is None):
+                raise PipelineException(
+                    f"More than one image processing pipeline when adding {ovrl.__class__.__name__}. "
+                    "If you need to add more image pipelines, "
+                    "consider providing an ax parameter to the class constructor.")
             else:
                 assert len(ovrl.image.frames) > 0, "No images to process."
                 ovrl.image_pipeline.append(self)
@@ -33,12 +44,15 @@ class ImagePipeline(object):
                 return ovrl
         return self
 
+    def __call__(self, *args, **kwargs):
+        raise NotImplementedError
+
 
 class SingleImage(ImagePipeline):
     def __call__(self, *args, channel=0, adjust_exposure=True, **kwargs):
         r = self._renderer
 
-        ix = r.image.ix_at(c=channel, z=self.zstack, t=r.frame - 1)
+        ix = r.image.ix_at(c=channel, z=self.zstack, t=r.frame)
         self.logger.debug(f"Retrieving frame {r.frame} of channel {channel} at z-stack={self.zstack} "
                           f"(index={ix})")
         mimg = r.image.image(ix)
@@ -60,7 +74,7 @@ class CompositeRGBImage(ImagePipeline):
         background = np.zeros(r.image.image(0).image.shape + (3,), dtype=np.float64)
         for name, settings in channeldict.items():
             channel = settings['id']
-            ix = r.image.ix_at(c=channel, z=self.zstack, t=r.frame - 1)
+            ix = r.image.ix_at(c=channel, z=self.zstack, t=r.frame)
             self.logger.debug(f"Retrieving frame {r.frame} of channel {channel} at z-stack={self.zstack} "
                               f"(index={ix})")
 

@@ -1,15 +1,27 @@
 from __future__ import annotations
+
+import asyncio
+import io
+import multiprocessing
 import os
 import logging
+import pickle
+import copy
+from pathlib import Path
+from uuid import uuid4
 
+import asyncpool
+import imageio
 import moviepy.editor as mpy
 import numpy as np
+from matplotlib.figure import Figure
 from moviepy.video.io.bindings import mplfig_to_npimage
 
 from typing import List, TYPE_CHECKING
 
 from fileops.image.exceptions import FrameNotFoundError
-from movierender.render.pipelines import SingleImage
+from fileops.pathutils import ensure_dir
+from movierender.render.pipelines import SingleImage, ImagePipeline
 from fileops.image import ImageFile
 
 if TYPE_CHECKING:
@@ -19,7 +31,7 @@ if TYPE_CHECKING:
 class MovieRenderer:
     layers: List[Overlay]
 
-    def __init__(self, fig, image: ImageFile, fps=1, bitrate="4000k", show_axis=False, **kwargs):
+    def __init__(self, fig: Figure, image: ImageFile, fps=1, bitrate="4000k", show_axis=False, **kwargs):
         self._kwargs = {
             'fontdict': {'size': 10},
         }
@@ -33,15 +45,19 @@ class MovieRenderer:
         self.logger = logging.getLogger(__name__)
 
         self.time = 0
+        self.frame = 0
         self.fps = fps
         self.duration = None
         self.bitrate = bitrate
 
-        self.image_pipeline = []
+        self.image_pipeline: List[ImagePipeline] = []
         self.image = image
         self._last_f = image.frames[-1]
         self._render = np.zeros((image.width, image.height), dtype=float)
         self._load_image()
+
+        self._tmp = Path(image.render_path).joinpath('tmp')
+        ensure_dir(self._tmp)
 
     def __iter__(self):
         return self
@@ -60,6 +76,51 @@ class MovieRenderer:
             return self._kwargs[name]
         else:
             raise AttributeError("No such attribute: " + name)
+
+    def __deepcopy__(self):
+        # check there is only one figure to render
+        figures = {self.fig}
+        for imgp in self.image_pipeline:
+            if imgp.ax is not None:
+                figures.add(imgp.ax.get_figure())
+        assert len(
+            figures) == 1, "There are more than one figure in this MovieRenderer object and thus cannot be deep-copied."
+
+        # copy new figure and axes from initial instance setup
+        buf = io.BytesIO()
+        pickle.dump(self.fig, buf)
+        buf.seek(0)
+        new_fig = pickle.load(buf)
+
+        # extract equivalences between axes
+        newax = {old_ax: new_ax for old_ax, new_ax in zip(self.fig.axes, new_fig.axes)}
+        # create new MovieRenderer instance
+        new_mvr = MovieRenderer(new_fig, self.image, fps=self.fps, bitrate=self.bitrate, show_axis=self.show_axis)
+        # copy all image pipelines
+        for imgp in self.image_pipeline:
+            c_imgp = imgp.__class__
+            new_ax = newax[imgp.ax] if imgp.ax is not None else None
+            new_imgp = c_imgp(ax=new_ax)
+            for d in imgp.__dict__:
+                if d not in ['uuid', 'ax', '_renderer']:
+                    new_imgp.__dict__.update({d: imgp.__dict__[d]})
+            new_imgp.__dict__.update({'_renderer': new_mvr})
+
+            new_mvr.image_pipeline.append(new_imgp)
+
+        # copy all layer render
+        for layer in self.layers:
+            lcls = layer.__class__
+            new_ax = newax[imgp.ax] if imgp.ax is not None else None
+            nl = lcls(ax=new_ax)
+            for d in layer.__dict__:
+                if d not in ['uuid', 'ax', '_renderer']:
+                    nl.__dict__.update({d: layer.__dict__[d]})
+            nl.__dict__.update({'_renderer': new_mvr})
+
+            new_mvr.layers.append(nl)
+
+        return new_mvr
 
     def _load_image(self):
         assert len(self.image.frames) > 1, "More than one frame needed to make a movie."
@@ -81,72 +142,106 @@ class MovieRenderer:
             # 'ranges':     self.image.intensity_ranges
         })
 
-    def render(self, filename=None, test=False):
+    def render(self, filename=None):
         """
-        Render the movie into an mp4 file.
+        Render frames of a movie in parallel.
         """
 
         def make_frame_mpl(t):
             self.time = t
             # calculate frame given time
-            self.frame = int(round(self.fps * t) + 1)
+            self.frame = int(round(self.fps * t))
 
             if self.frame == self._last_f:
                 return self._render
 
+            self._last_f = self.frame
+            self._render = imageio.imread(self._tmp.joinpath(f"f{self.frame:05d}.png"))
+            return self._render
+
+        async def render_frame(frame, rq):
+            # make a copy of this instance so it can run in parallel
+            mvr = self.__deepcopy__()
+
+            mvr.frame = frame
+
             # clear axes of all objects
-            self.ax.cla()
-            for ovrl in self.layers:
+            mvr.ax.cla()
+            for ovrl in mvr.layers:
                 if ovrl.ax is not None:
                     ovrl.ax.cla()
-            for imgp in self.image_pipeline:
+            for imgp in mvr.image_pipeline:
                 if imgp.ax is not None:
                     imgp.ax.cla()
-                if not self.show_axis and imgp.ax is not None:
+                if not mvr.show_axis and imgp.ax is not None:
                     imgp.ax.set_xticklabels([])
                     imgp.ax.set_yticklabels([])
                     imgp.ax.set_xticks([])
                     imgp.ax.set_yticks([])
 
-            for imgp in self.image_pipeline:
+            for imgp in mvr.image_pipeline:
                 try:
-                    ppu = self.pix_per_um if self.pix_per_um is not None else 1
-                    ext = [0, self.width / ppu, 0, self.height / ppu]
-                    ax = imgp.ax if imgp.ax is not None else self.ax
+                    ppu = mvr.pix_per_um if mvr.pix_per_um is not None else 1
+                    ext = [0, mvr.width / ppu, 0, mvr.height / ppu]
+                    ax = imgp.ax if imgp.ax is not None else mvr.ax
                     ax.imshow(imgp(), cmap='gray', extent=ext, origin='lower',
                               interpolation='none', aspect='equal',
                               zorder=0)
                 except FrameNotFoundError:
                     continue
 
-            for ovrl in self.layers:
-                kwargs = self._kwargs.copy()
-                kwargs.update(**ovrl._kwargs, show_axis=self.show_axis)
-                ovrl.plot(ax=self.ax if ovrl.ax is None else None, **kwargs)
+            for ovrl in mvr.layers:
+                kwargs = mvr._kwargs.copy()
+                kwargs.update(**ovrl._kwargs, show_axis=mvr.show_axis)
+                ovrl.plot(ax=mvr.ax if ovrl.ax is None else None, **kwargs)
 
-            for ovrl in self.layers:
+            for ovrl in mvr.layers:
                 if not ovrl.show_axis and ovrl.ax is not None:
                     ovrl.ax.set_xticklabels([])
                     ovrl.ax.set_yticklabels([])
                     ovrl.ax.set_xticks([])
                     ovrl.ax.set_yticks([])
-            self.fig.tight_layout()
+            mvr.fig.tight_layout()
 
-            self._last_f = self.frame
-            self._render = mplfig_to_npimage(self.ax.get_figure())  # RGB image of the figure
-            return self._render
+            img = mplfig_to_npimage(mvr.fig)  # RGB image of the figure
+            img_path = mvr._tmp.joinpath(f"f{frame:05d}.png")
+            imageio.imwrite(img_path, img)
 
-        # Start of method
+            del mvr
+
+            await rq.put(f"finished render of frame {frame}")
+
+        async def result_reader(queue):
+            while True:
+                value = await queue.get()
+                if value is None:
+                    break
+                print("Got value! -> {}".format(value))
+
+        async def run():
+            result_queue = asyncio.Queue()
+            reader_future = asyncio.ensure_future(result_reader(result_queue), loop=loop)
+            num_procs = os.cpu_count() * 2
+
+            # Start a worker pool with num_procs coroutines, invokes `render_frame` and waits for it to complete.
+            async with asyncpool.AsyncPool(loop, num_workers=num_procs,
+                                           name="RenderPool",
+                                           logger=logging.getLogger("RenderPool"),
+                                           worker_co=render_frame,
+                                           log_every_n=10) as pool:
+                for i in self.image.frames:
+                    await pool.push(i, result_queue)
+
+            await result_queue.put(None)
+            await reader_future
+
+        # Start of video render method
         if filename is None:
             _, filename = os.path.split(self._file)
             filename += ".mp4"
 
-        if test:
-            im = make_frame_mpl(0)
-            self.ax.axis('on')
-            path, img_name = os.path.split(filename)
-            self.ax.get_figure().savefig(os.path.join(path, img_name + ".test.png"))
-            return
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(run())
 
         animation = mpy.VideoClip(make_frame_mpl, duration=self.duration)
         animation.write_videofile(filename, fps=self.fps, bitrate=self.bitrate)
