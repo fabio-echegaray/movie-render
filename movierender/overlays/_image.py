@@ -8,8 +8,9 @@ class ScaleBar(Overlay):
         assert ax is not None, "No axes found to plot overlay."
 
         x0, y0 = xy
-        ax.plot([x0, x0 + um], [y0, y0], c='w', lw=lw)
-        ax.text(x0 + um / 2, y0 + 2.5, f'{um} um', color='w', fontdict=fontdict, horizontalalignment='center')
+        ax.plot([x0, x0 + um], [y0, y0], c='w', lw=lw, zorder=1000)
+        ax.text(x0 + um / 2, y0 + um / 10 + 0.1, f'{um} um', color='w', fontdict=fontdict, horizontalalignment='center',
+                zorder=1000)
 
 
 class Timestamp(Overlay):
@@ -43,4 +44,4 @@ class Timestamp(Overlay):
                 raise Exception("Timestamp string format not implemented.")
 
         txt = f'{self._renderer.frame}  {txt}'
-        ax.text(x0, y0, txt, color='w', fontdict=fontdict, verticalalignment=va)
+        ax.text(x0, y0, txt, color='w', fontdict=fontdict, verticalalignment=va, zorder=1000)
