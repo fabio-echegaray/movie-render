@@ -4,7 +4,8 @@ import time as tim
 import numpy as np
 import pandas as pd
 from matplotlib import dates
-from movierender.overlays import Overlay
+
+from .overlay import Overlay
 
 
 class DataTimeseries(Overlay):

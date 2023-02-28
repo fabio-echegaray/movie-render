@@ -1,4 +1,4 @@
-from movierender.overlays import Overlay
+from .overlay import Overlay
 
 
 class Text(Overlay):
