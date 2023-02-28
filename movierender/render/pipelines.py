@@ -64,6 +64,19 @@ class SingleImage(ImagePipeline):
 
 
 class CompositeRGBImage(ImagePipeline):
+    def _img(self, channel):
+        r = self._renderer
+
+        if type(self.zstack) == int:
+            ix = r.image.ix_at(c=channel, z=self.zstack, t=r.frame)
+            self.logger.debug(f"Retrieving frame {r.frame} of channel {channel} at z-stack={self.zstack} "
+                              f"(index={ix})")
+
+            return r.image.image(ix).image
+        elif type(self.zstack) == str:
+            if self.zstack == "all-max":  # max projection
+                return r.image.z_projection(frame=r.frame, channel=channel).image
+
     def __call__(self, *args, **kwargs):
         if 'channeldict' not in self._kwargs:
             raise Exception("Channel parameters needed to apply this pipeline.")
@@ -74,11 +87,7 @@ class CompositeRGBImage(ImagePipeline):
         background = np.zeros(r.image.image(0).image.shape + (3,), dtype=np.float64)
         for name, settings in channeldict.items():
             channel = settings['id']
-            ix = r.image.ix_at(c=channel, z=self.zstack, t=r.frame)
-            self.logger.debug(f"Retrieving frame {r.frame} of channel {channel} at z-stack={self.zstack} "
-                              f"(index={ix})")
-
-            _img = r.image.image(ix).image
+            _img = self._img(channel)
 
             # Contrast enhancing by stretching the histogram
             if 'rescale' in settings:
