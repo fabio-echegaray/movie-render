@@ -2,27 +2,25 @@ from __future__ import annotations
 
 import asyncio
 import io
-import multiprocessing
-import os
 import logging
+import os
 import pickle
-import copy
 from pathlib import Path
-from uuid import uuid4
+from typing import List, TYPE_CHECKING
 
 import asyncpool
 import imageio
+import matplotlib.pyplot as plt
 import moviepy.editor as mpy
 import numpy as np
 from matplotlib.figure import Figure
+# from memory_profiler import profile
 from moviepy.video.io.bindings import mplfig_to_npimage
 
-from typing import List, TYPE_CHECKING
-
+from fileops.image import ImageFile
 from fileops.image.exceptions import FrameNotFoundError
 from fileops.pathutils import ensure_dir
 from movierender.render.pipelines import SingleImage, ImagePipeline
-from fileops.image import ImageFile
 
 if TYPE_CHECKING:
     from movierender.overlays import Overlay
@@ -30,6 +28,7 @@ if TYPE_CHECKING:
 
 class MovieRenderer:
     layers: List[Overlay]
+    image: ImageFile
 
     def __init__(self, fig: Figure, image: ImageFile, fps=1, bitrate="4000k", show_axis=False, **kwargs):
         self._kwargs = {
@@ -56,7 +55,7 @@ class MovieRenderer:
         self._render = np.zeros((image.width, image.height), dtype=float)
         self._load_image()
 
-        self._tmp = Path(image.render_path).joinpath('tmp')
+        self._tmp = Path(os.curdir) / 'tmp' / 'render' / Path(image.base_path).name
         ensure_dir(self._tmp)
 
     def __iter__(self):
@@ -122,6 +121,19 @@ class MovieRenderer:
 
         return new_mvr
 
+    def _mem_clean(self):
+        self._renderer = None
+        self.image_pipeline = None
+        self.fig = None
+        self.ax = None
+        self.layers = None
+        self.logger = None
+        self.image_pipeline = None
+        self.image = None
+        self._last_f = None
+        self._render = None
+        self._tmp = None
+
     def _load_image(self):
         assert len(self.image.frames) > 1, "More than one frame needed to make a movie."
         self.logger.info(f"Loaded {self.image.image_path}. WxH({self.image.width},{self.image.height}), "
@@ -157,9 +169,16 @@ class MovieRenderer:
 
             self._last_f = self.frame
             self._render = imageio.imread(self._tmp.joinpath(f"f{self.frame:05d}.png"))
+            # self.logger.debug(f"loaded image of shape {self._render.shape}")
             return self._render
 
+        # @profile
         async def render_frame(frame, rq):
+            img_path = self._tmp.joinpath(f"f{frame:05d}.png")
+            if os.path.exists(img_path):
+                self.logger.warning(f"skipping frame {frame}.")
+                return
+
             # make a copy of this instance so it can run in parallel
             mvr = self.__deepcopy__()
 
@@ -204,19 +223,20 @@ class MovieRenderer:
             mvr.fig.tight_layout()
 
             img = mplfig_to_npimage(mvr.fig)  # RGB image of the figure
-            img_path = mvr._tmp.joinpath(f"f{frame:05d}.png")
             imageio.imwrite(img_path, img)
 
+            plt.close(mvr.fig)
+            mvr._mem_clean()
             del mvr
 
-            await rq.put(f"finished render of frame {frame}")
+            await rq.put(f"Frame {frame} saved to {img_path}.")
 
         async def result_reader(queue):
             while True:
                 value = await queue.get()
                 if value is None:
                     break
-                print("Got value! -> {}".format(value))
+                self.logger.debug("Got value! -> {}".format(value))
 
         async def run():
             result_queue = asyncio.Queue()
