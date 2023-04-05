@@ -8,7 +8,7 @@ from .overlay import Overlay
 
 class ImagejROI(Overlay):
     def __init__(self, roi_list: List[ImagejRoi] = None, **kwargs):
-        # assert roi_list is not None, "Need ROIs to render on axes."
+        assert all(r is not None for r in roi_list), "Need ROIs to render on axes."
         self.roi_lst = roi_list
         super().__init__(**kwargs)
 
