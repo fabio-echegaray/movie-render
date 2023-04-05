@@ -1,5 +1,5 @@
 from ._experiment import Treatment
-from ._histogram import ImageHistogram
+# from ._histogram import ImageHistogram
 from ._image import ScaleBar, Timestamp
 from ._roi import ImagejROI
 from ._text import Text
