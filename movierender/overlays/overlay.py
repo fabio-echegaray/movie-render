@@ -1,4 +1,4 @@
-from movierender.render.movie import MovieRenderer
+from movierender.render import MovieRenderer
 
 
 class Overlay(object):

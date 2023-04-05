@@ -26,7 +26,7 @@ if TYPE_CHECKING:
     from movierender.overlays import Overlay
 
 
-class MovieRenderer:
+class ParallelMovieRenderer:
     layers: List[Overlay]
     image: ImageFile
 
