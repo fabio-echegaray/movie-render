@@ -30,7 +30,8 @@ class MovieRenderer:
     layers: List[Overlay]
     image: ImageFile
 
-    def __init__(self, fig: Figure, image: ImageFile, fps=1, bitrate="4000k", show_axis=False, **kwargs):
+    def __init__(self, fig: Figure, image: ImageFile, fps=1, bitrate="4000k", show_axis=False, invert_y=False,
+                 **kwargs):
         self._kwargs = {
             'fontdict': {'size': 10},
         }
@@ -51,6 +52,7 @@ class MovieRenderer:
 
         self.image_pipeline: List[ImagePipeline] = []
         self.image = image
+        self.inv_y = invert_y
         self._last_f = image.frames[-1]
         self._render = np.zeros((image.width, image.height), dtype=float)
         self._load_image()
@@ -203,7 +205,8 @@ class MovieRenderer:
                     ppu = mvr.pix_per_um if mvr.pix_per_um is not None else 1
                     ext = [0, mvr.width / ppu, 0, mvr.height / ppu]
                     ax = imgp.ax if imgp.ax is not None else mvr.ax
-                    ax.imshow(imgp(), cmap='gray', extent=ext, origin='lower',
+                    ax.imshow(imgp(), cmap='gray', extent=ext,
+                              origin='upper' if self.inv_y else 'lower',
                               interpolation='none', aspect='equal',
                               zorder=0)
                 except FrameNotFoundError:

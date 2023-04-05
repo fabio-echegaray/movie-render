@@ -43,6 +43,7 @@ def make_movie(cfg: ExportConfig):
     movren = MovieRenderer(fig=fig,
                            image=imf,
                            fps=10,
+                           invert_y=True,
                            bitrate="6M",
                            fontdict={'size': 12}) + \
              ovl.ScaleBar(ax=ax, um=scalebar[mag], lw=3, xy=t.xy_ratio_to_um(0.80, 0.05), fontdict={'size': 9}) + \
