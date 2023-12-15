@@ -13,8 +13,30 @@ class ScaleBar(Overlay):
                 zorder=1000)
 
 
+def secs_to_string(secs: int, string_format="hh:mm:ss"):
+    mins = int(secs / 60)
+    hours = int(mins / 60)
+    mins -= hours * 60
+    secs -= hours * 3600 + mins * 60
+
+    if string_format == "hh:mm:ss":
+        txt = f'{hours:02d}:{mins:02d}:{int(secs):02d}'
+    elif string_format == "hh:mm":
+        txt = f'{hours:02d}:{mins:02d}'
+    elif string_format == "mm:ss":
+        if hours < 0:
+            txt = f'{mins:02d}:{secs:02d}'
+        else:
+            txt = f'{hours:02d}:{mins:02d}:{secs:02d}'
+    else:
+        raise Exception("Timestamp string format not implemented.")
+
+    return txt
+
+
 class Timestamp(Overlay):
-    def plot(self, ax=None, xy=(0, 0), string_format="hh:mm:ss", timestamps=None, fontdict=None, va=None, **kwargs):
+    def plot(self, ax=None, xy=(0, 0), string_format="hh:mm:ss", timestamps=None, fontdict=None, va=None, color='white',
+             **kwargs):
         if ax is None:
             ax = self.ax
         assert ax is not None, "No axes found to plot overlay."
@@ -23,25 +45,11 @@ class Timestamp(Overlay):
         x0, y0 = xy
         txt = ''
         if timestamps:
-            secs = timestamps[self._renderer.frame - 1] if len(timestamps) >= self._renderer.frame else timestamps[-1]
+            _secs0 = timestamps[self._renderer.frame - 1] if len(timestamps) >= self._renderer.frame else timestamps[-1]
+            _secs1 = (self._renderer.frame - 1) * self._renderer.image.time_interval
 
-            secs = int(secs)
-            mins = int(secs / 60)
-            hours = int(mins / 60)
-            mins -= hours * 60
-            secs -= hours * 3600 + mins * 60
-
-            if string_format == "hh:mm:ss":
-                txt = f'{hours:02d}:{mins:02d}:{int(secs):02d}'
-            elif string_format == "hh:mm":
-                txt = f'{hours:02d}:{mins:02d}'
-            elif string_format == "mm:ss":
-                if hours < 0:
-                    txt = f'{mins:02d}:{secs:02d}'
-                else:
-                    txt = f'{hours:02d}:{mins:02d}:{secs:02d}'
-            else:
-                raise Exception("Timestamp string format not implemented.")
+            secs = int(max(_secs0, _secs1))
+            txt = secs_to_string(secs, string_format)
 
         txt = f'{self._renderer.frame}  {txt}'
-        ax.text(x0, y0, txt, color='w', fontdict=fontdict, verticalalignment=va, zorder=1000)
+        ax.text(x0, y0, txt, color=color, fontdict=fontdict, verticalalignment=va, zorder=1000)
