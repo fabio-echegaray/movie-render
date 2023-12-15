@@ -69,13 +69,14 @@ def make_movie(cfg: ExportConfig):
 
 
 if __name__ == "__main__":
+    base_path = Path("/home/lab/Documents/Fabio/Blender/Low light")
     cfg_paths = [
-        Path("/home/lab/Documents/Fabio/Blender/fig-1a/export_definition.cfg"),
-        Path("/home/lab/Documents/Fabio/Blender/fig-1b/export_definition.cfg"),
-        Path("/home/lab/Documents/Fabio/Blender/fig-1c/export_definition.cfg"),
-        Path("/home/lab/Documents/Fabio/Blender/fig-1d/export_definition.cfg"),
-        Path("/home/lab/Documents/Fabio/Blender/fig-1e/export_definition.cfg"),
-        Path("/home/lab/Documents/Fabio/Blender/fig-1f/export_definition.cfg"),
+        base_path / "fig-1a" / "export_definition.cfg",
+        base_path / "fig-1b" / "export_definition.cfg",
+        base_path / "fig-1c" / "export_definition.cfg",
+        base_path / "fig-1d" / "export_definition.cfg",
+        base_path / "fig-1e" / "export_definition.cfg",
+        base_path / "fig-1f" / "export_definition.cfg",
     ]
 
     for cfg_path in cfg_paths:
