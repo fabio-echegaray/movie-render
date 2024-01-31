@@ -5,9 +5,7 @@ matplotlib==3.2.0
 moviepy==1.0.3
 numpy>=1.16.0
 pandas~=1.2.5
-python-bioformats~=4.0
-python-javabridge~=4.0.0
-roifile~=2023.2.12
 scikit_image==0.15.0
+scipy~=1.10
 Shapely~=1.7.0
 vtk~=9.2.0
