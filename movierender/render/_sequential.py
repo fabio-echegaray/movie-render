@@ -5,6 +5,8 @@ from pathlib import Path
 
 import moviepy.editor as mpy
 import numpy as np
+import skimage
+
 from fileops.pathutils import ensure_dir
 from matplotlib.figure import Figure
 from moviepy.video.io.bindings import mplfig_to_npimage
@@ -123,7 +125,7 @@ class SequentialMovieRenderer:
                     ppu = self.pix_per_um if self.pix_per_um is not None else 1
                     ext = [0, self.width / ppu, 0, self.height / ppu]
                     ax = imgp.ax if imgp.ax is not None else self.ax
-                    ax.imshow(imgp(), cmap='gray', extent=ext,
+                    ax.imshow(skimage.util.img_as_float(imgp()), cmap='gray', extent=ext,
                               origin='upper' if self.inv_y else 'lower',
                               interpolation='none', aspect='equal',
                               zorder=0)
