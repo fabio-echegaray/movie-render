@@ -54,7 +54,7 @@ class SingleImage(ImagePipeline):
         self.logger.debug(f"Retrieving frame {r.frame} of channel {channel} at z-stack={self.zstack} "
                           f"(index={ix})")
         mimg = r.image.image(ix)
-        img = mimg.image if (type(mimg) == MetadataImage and mimg.image is not None) else np.zeros((r.width, r.height))
+        img = mimg.image if (type(mimg) is MetadataImage and mimg.image is not None) else np.zeros((r.width, r.height))
         if adjust_exposure:
             p2, p98 = np.percentile(img, (2, 98))
             img = exposure.rescale_intensity(img, in_range=(p2, p98))
@@ -65,13 +65,13 @@ class CompositeRGBImage(ImagePipeline):
     def _img(self, channel):
         r = self._renderer
 
-        if type(self.zstack) == int:
+        if type(self.zstack) is int:
             ix = r.image.ix_at(c=channel, z=self.zstack, t=r.frame)
             self.logger.debug(f"Retrieving frame {r.frame} of channel {channel} at z-stack={self.zstack} "
                               f"(index={ix})")
 
             return r.image.image(ix).image
-        elif type(self.zstack) == str:
+        elif type(self.zstack) is str:
             if self.zstack == "all-max":  # max projection
                 return r.image.z_projection(frame=r.frame, channel=channel).image
 
