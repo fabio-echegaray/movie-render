@@ -1,5 +1,4 @@
 import logging
-from uuid import uuid4
 
 import numpy as np
 from skimage import color, exposure
@@ -13,7 +12,6 @@ class PipelineException(Exception):
 
 class ImagePipeline:
     def __init__(self, *args, ax=None, zstack=0, **kwargs):
-        self.uuid = uuid4()
         self._kwargs = kwargs
         self.ax = ax
         self.zstack = zstack
