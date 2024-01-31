@@ -15,12 +15,13 @@ silence_loggers(loggers=["tifffile"])
 if __name__ == "__main__":
     cfg_path_list = search_config_files(Path("/media/lab/cache/export/Nikon/"))
 
-    silence_loggers(loggers=["MicroManagerSingleImageStack", "tifffile"], output_log_file="silenced.log")
+    silence_loggers(loggers=["tifffile"], output_log_file="silenced.log")
 
     for cfg_path in cfg_path_list:
         try:
             log.info(f"Reading configuration file {cfg_path}")
             cfg = read_config(cfg_path)
+            silence_loggers(loggers=[cfg.image_file.__class__.__name__], output_log_file="silenced.log")
 
             channels = dict()
 
