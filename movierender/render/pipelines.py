@@ -73,6 +73,7 @@ class CompositeRGBImage(ImagePipeline):
             return r.image.image(ix).image
         elif type(self.zstack) is str:
             if self.zstack == "all-max":  # max projection
+                self.logger.debug(f"Retrieving max z projection of frame {r.frame} and channel {channel}")
                 return r.image.z_projection(frame=r.frame, channel=channel).image
 
     def __call__(self, *args, **kwargs):
@@ -82,20 +83,23 @@ class CompositeRGBImage(ImagePipeline):
 
         r = self._renderer
 
-        background = np.zeros(r.image.image(0).image.shape + (3,), dtype=np.float64)
+        dtype = None
+        background = np.zeros((r.image.width, r.image.height) + (3,), dtype=np.float64)
         for name, settings in channeldict.items():
             channel = settings['id']
             _img = self._img(channel)
+            if dtype is None:
+                dtype = _img.dtype
 
             # Contrast enhancing by stretching the histogram
-            if 'rescale' in settings:
-                if hasattr(r, 'ranges'):
-                    mini, maxi = r.ranges[channel * 2], r.ranges[channel * 2 + 1]
+            if 'rescale' in settings and settings['rescale']:
+                if type(settings['rescale']) is dict:
+                    mini, maxi = settings['rescale']['range']
                     _img = exposure.rescale_intensity(_img, in_range=(mini, maxi))
-                else:
-                    _img = exposure.rescale_intensity(_img, in_range=tuple(np.percentile(_img, (2, 99))))
+                elif type(settings['rescale']) is bool and settings['rescale']:
+                    _img = exposure.rescale_intensity(_img, in_range=tuple(np.percentile(_img, (0.1, 99.9))))
 
             _img = color.gray2rgb(_img)
             background += _img * settings['color'] * settings['intensity']
 
-        return exposure.rescale_intensity(background)
+        return background.astype(dtype)
