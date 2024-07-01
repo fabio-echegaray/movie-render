@@ -1,21 +1,21 @@
 from __future__ import annotations
-import os
-import logging
-from pathlib import Path
 
+import logging
+import os
+import uuid
+from pathlib import Path
+from typing import List, TYPE_CHECKING
+
+import imageio.v3 as iio
 import moviepy.editor as mpy
 import numpy as np
 import skimage
-
+from fileops.image import ImageFile
+from fileops.image.exceptions import FrameNotFoundError
 from fileops.pathutils import ensure_dir
 from matplotlib.figure import Figure
-from moviepy.video.io.bindings import mplfig_to_npimage
 
-from typing import List, TYPE_CHECKING
-
-from fileops.image.exceptions import FrameNotFoundError
 from movierender.render.pipelines import SingleImage
-from fileops.image import ImageFile
 
 if TYPE_CHECKING:
     from movierender.overlays import Overlay
@@ -106,6 +106,32 @@ class SequentialMovieRenderer:
             if self.frame == self._last_f:
                 return self._render
 
+            try:
+                self._render = iio.imread(self._tmp.joinpath(f"f{self.frame:05d}.png"))
+                self._last_f = self.frame
+
+                # row, col, ch = self._render.shape
+                # if ch == 3:
+                #     self._render = self._render[:, :, 0:3]
+                self._render = self._render[:, :, 0:3]
+            except FileNotFoundError:
+                self.logger.warning(f"frame {self.frame} not rendered, so using last rendered one")
+
+            # self.logger.debug(f"loaded image of shape {self._render.shape}")
+            return self._render
+
+        def render_frame(frame):
+
+            self.logger.info(f"rendering frame {frame}")
+            self.frame = frame
+            # calculate time given frame
+            self.time = frame / self.fps
+
+            img_path = self._tmp.joinpath(f"f{frame:05d}.png")
+            if os.path.exists(img_path):
+                self.logger.warning(f'File {img_path.name} already exists in folder {img_path.parent.name}.')
+                return
+
             # clear axes of all objects
             self.ax.cla()
             for ovrl in self.layers:
@@ -121,48 +147,44 @@ class SequentialMovieRenderer:
                     imgp.ax.set_yticks([])
 
             for imgp in self.image_pipeline:
-                try:
-                    ppu = self.pix_per_um if self.pix_per_um is not None else 1
-                    ext = [0, self.width / ppu, 0, self.height / ppu]
-                    ax = imgp.ax if imgp.ax is not None else self.ax
-                    ax.imshow(skimage.util.img_as_float(imgp()), cmap='gray', extent=ext,
-                              origin='upper' if self.inv_y else 'lower',
-                              interpolation='none', aspect='equal',
-                              zorder=0)
-                except FrameNotFoundError:
-                    continue
+                ppu = self.pix_per_um if self.pix_per_um is not None else 1
+                ext = [0, self.width / ppu, 0, self.height / ppu]
+                ax = imgp.ax if imgp.ax is not None else self.ax
+                img = imgp()
+                img = skimage.util.img_as_float(img)
+                ax.imshow(img, cmap='gray', extent=ext,
+                          origin='upper' if self.inv_y else 'lower',
+                          interpolation='none', aspect='equal',
+                          zorder=0)
+                for ovrl in self.layers:
+                    kwargs = self._kwargs.copy()
+                    kwargs.update(**ovrl._kwargs, show_axis=self.show_axis)
+                    ovrl.plot(ax=self.ax if ovrl.ax is None else None, **kwargs)
 
-            for ovrl in self.layers:
-                kwargs = self._kwargs.copy()
-                kwargs.update(**ovrl._kwargs, show_axis=self.show_axis)
-                ovrl.plot(ax=self.ax if ovrl.ax is None else None, **kwargs)
-
-            for ovrl in self.layers:
-                if not ovrl.show_axis and ovrl.ax is not None:
-                    ovrl.ax.set_xticklabels([])
-                    ovrl.ax.set_yticklabels([])
-                    ovrl.ax.set_xticks([])
-                    ovrl.ax.set_yticks([])
-            self.fig.tight_layout()
-
-            self._last_f = self.frame
-            self._render = mplfig_to_npimage(self.ax.get_figure())  # RGB image of the figure
-            return self._render
+                for ovrl in self.layers:
+                    if not ovrl.show_axis and ovrl.ax is not None:
+                        ovrl.ax.set_xticklabels([])
+                        ovrl.ax.set_yticklabels([])
+                        ovrl.ax.set_xticks([])
+                        ovrl.ax.set_yticks([])
+                self.fig.tight_layout()
+                self.fig.savefig(img_path, facecolor='white', transparent=False)
 
         # Start of method
         if filename is None:
             _, filename = os.path.split(self._file)
             filename += ".mp4"
+        rendered_frames = list()
+        for fr in self.image.frames:
+            try:
+                render_frame(fr)
+                rendered_frames.append(fr)
+            except FrameNotFoundError:
+                continue
 
-        if test:
-            im = make_frame_mpl(0)
-            self.ax.axis('on')
-            path, img_name = os.path.split(filename)
-            self.ax.get_figure().savefig(os.path.join(path, img_name + ".test.png"))
-            return
-
-        animation = mpy.VideoClip(make_frame_mpl, duration=self.duration)
-        animation.write_videofile(filename, fps=self.fps, bitrate=self.bitrate)
+        dur = len(rendered_frames) / self.fps
+        animation = mpy.VideoClip(make_frame_mpl, duration=dur)
+        animation.write_videofile(filename, fps=self.fps, bitrate=self.bitrate, codec='libx264')
         animation.close()
 
     def __repr__(self):
