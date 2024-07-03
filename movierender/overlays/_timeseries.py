@@ -56,8 +56,8 @@ class DataTimeseries(Overlay):
         ax.set_xlim([xmin, xmax])
         ax.set_ylim([ymin, ymax])
 
-        xmin_locator = dates.MinuteLocator(interval=30)
-        xmaj_locator = dates.MinuteLocator(interval=60)
+        xmin_locator = dates.HourLocator(interval=1)
+        xmaj_locator = dates.HourLocator(byhour=[0, 3, 6, 9, 12, 15, 18, 21, 24, 27])
         ax.xaxis.set_minor_locator(xmin_locator)
         ax.xaxis.set_major_locator(xmaj_locator)
         formatter = dates.DateFormatter('%H:%M')
