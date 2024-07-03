@@ -84,7 +84,7 @@ class CompositeRGBImage(ImagePipeline):
         r = self._renderer
 
         dtype = None
-        background = np.zeros((r.image.width, r.image.height) + (3,), dtype=np.float64)
+        background = np.zeros((r.image.height, r.image.width) + (3,), dtype=np.float64)
         for name, settings in channeldict.items():
             channel = settings['id']
             _img = self._img(channel)
