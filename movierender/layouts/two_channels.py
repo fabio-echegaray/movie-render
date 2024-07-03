@@ -32,9 +32,9 @@ def make_movie(im: ImageFile, id_red=0, id_green=1, zstack='all-max',
     t = PixelTools(im)
 
     ar = float(im.height) / float(im.width)
-    log.info(f'aspect ratio={ar}.')
+    log.debug(f'aspect ratio={ar}.')
 
-    fig = plt.figure(frameon=False, figsize=(10, 5.5), dpi=300)
+    fig = plt.figure(figsize=(10, 5.5), dpi=150)
     gs = gridspec.GridSpec(nrows=1, ncols=2)
     fig.suptitle(fig_title)
 

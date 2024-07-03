@@ -20,9 +20,12 @@ green = [0, 1, 0]
 blue = [0, 0, 1]
 
 
-def make_movie(im: ImageFile, prefix='', suffix='', folder='.'):
+def make_movie(im: ImageFile, id_red=0, id_green=1, zstack='all-max',
+               prefix='', name='', suffix='', folder='.',
+               fig_title='', fps=10):
     assert len(im.channels) >= 2, 'Image series contains less than two channels.'
-    filename = prefix + im.image_path.name + suffix + ".twoch.mp4"
+    fname = name if len(name) > 0 else os.path.basename(im.image_path)
+    filename = prefix + fname + suffix + ".twochcmp.mp4"
     base_folder = os.path.abspath(folder)
     path = os.path.join(base_folder, filename)
     if os.path.exists(path):
@@ -38,28 +41,29 @@ def make_movie(im: ImageFile, prefix='', suffix='', folder='.'):
 
     fig = Figure(frameon=False, figsize=(10, 10), dpi=150)
     ax = fig.gca()
+    fig.suptitle(fig_title)
 
     movren = MovieRenderer(fig=fig,
                            image=im,
-                           fps=15,
+                           fps=fps,
                            bitrate="15M",
                            fontdict={'size': 12}) + \
              ovl.ScaleBar(um=10, lw=3, xy=t.xy_ratio_to_um(0.10, 0.05), fontdict={'size': 9}, ax=ax) + \
              ovl.Timestamp(xy=t.xy_ratio_to_um(0.02, 0.95), va='center', ax=ax) + \
              CompositeRGBImage(ax=ax,
-                               zstack="all-max",
+                               zstack=zstack,
                                channeldict={
                                    'H2-RFP':  {
-                                       'id':        0,
+                                       'id':        id_red,
                                        'color':     red,
                                        'rescale':   True,
-                                       'intensity': 0.5
+                                       'intensity': 1
                                    },
                                    'Sqh-GFP': {
-                                       'id':        1,
+                                       'id':        id_green,
                                        'color':     alexa_488,
                                        'rescale':   True,
-                                       'intensity': 0.5
+                                       'intensity': 1
                                    },
                                })
     movren.render(filename=path)
