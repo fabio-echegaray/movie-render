@@ -102,7 +102,8 @@ dependencies = [
     "scipy~=1.14",
     "Shapely~=2.0.4",
     "tifffile~=2024.6.18",
-    "vtk~=9.2.0",
+    "imgfileops>=0.1.0",
+    "typer>=0.9.0",
 ]
 
 # List additional groups of dependencies here (e.g. development
@@ -127,8 +128,8 @@ dependencies = [
 
 # The following would provide a command line executable called `sample`
 # which executes the function `main` from this package when invoked.
-#[project.scripts]
-#config = "movierender.scripts:config.app"
+[project.scripts]
+movierender = "movierender.scripts:render.app"
 
 [build-system]
 # These are the assumed default build requirements from pip:
