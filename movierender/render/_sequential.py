@@ -52,7 +52,7 @@ class SequentialMovieRenderer:
         self._render = np.zeros((image.width, image.height), dtype=float)
         self._load_image()
 
-        self._tmp = Path(os.curdir) / 'tmp' / 'render' / Path(image.base_path).name
+        self._tmp = Path(os.curdir) / 'tmp' / 'render' / Path(image.base_path).name / str(uuid.uuid4())
         ensure_dir(self._tmp)
 
     def __iter__(self):
