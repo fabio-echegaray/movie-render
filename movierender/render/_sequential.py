@@ -184,7 +184,15 @@ class SequentialMovieRenderer:
 
         dur = len(rendered_frames) / self.fps
         animation = mpy.VideoClip(make_frame_mpl, duration=dur)
-        animation.write_videofile(filename, fps=self.fps, bitrate=self.bitrate, codec='libx264')
+        animation.write_videofile(filename,
+                                  fps=self.fps,
+                                  bitrate=self.bitrate,
+                                  # codec='libx264',
+                                  # audio_codec='pcm_s32le',
+                                  ffmpeg_params=[
+                                      '-vf', 'pad=ceil(iw/2)*2:ceil(ih/2)*2',
+                                      '-pix_fmt', 'yuv420p'
+                                  ])
         animation.close()
 
     def __repr__(self):
