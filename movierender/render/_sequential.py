@@ -161,14 +161,14 @@ class SequentialMovieRenderer:
                     kwargs.update(**ovrl._kwargs, show_axis=self.show_axis)
                     ovrl.plot(ax=self.ax if ovrl.ax is None else None, **kwargs)
 
-                for ovrl in self.layers:
-                    if not ovrl.show_axis and ovrl.ax is not None:
-                        ovrl.ax.set_xticklabels([])
-                        ovrl.ax.set_yticklabels([])
-                        ovrl.ax.set_xticks([])
-                        ovrl.ax.set_yticks([])
-                self.fig.tight_layout()
-                self.fig.savefig(img_path, facecolor='white', transparent=False)
+            for ovrl in self.layers:
+                if not ovrl.show_axis and ovrl.ax is not None:
+                    ovrl.ax.set_xticklabels([])
+                    ovrl.ax.set_yticklabels([])
+                    ovrl.ax.set_xticks([])
+                    ovrl.ax.set_yticks([])
+            self.fig.tight_layout()
+            self.fig.savefig(img_path, facecolor='white', transparent=False)
 
         # Start of method
         if filename is None:
