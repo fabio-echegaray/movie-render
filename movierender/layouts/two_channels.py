@@ -16,7 +16,7 @@ red = [1, 0, 0]
 
 
 def make_movie(im: ImageFile, id_red=0, id_green=1, zstack='all-max',
-               prefix='', name='', suffix='', folder='.',
+               prefix='', name='', suffix='', folder='.', overwrite=False,
                fig_title='', fps=10):
     assert len(im.channels) >= 2, 'Image series contains less than two channels.'
     fname = name if len(name) > 0 else os.path.basename(im.image_path)
@@ -25,7 +25,8 @@ def make_movie(im: ImageFile, id_red=0, id_green=1, zstack='all-max',
     path = os.path.join(base_folder, filename)
     if os.path.exists(path):
         log.warning(f'File {filename} already exists in folder {base_folder}.')
-        return
+        if not overwrite:
+            return
 
     Path(path).touch()
     log.info(f'Making movie {filename} from file {os.path.basename(im.image_path)} in folder {base_folder}.')
