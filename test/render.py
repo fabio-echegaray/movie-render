@@ -17,3 +17,7 @@ class TestRender(TestCase):
         result = self.runner.invoke(app, args)
 
         self.assertEqual(result.exit_code, 0)
+
+
+if __name__ == "__main__":
+    app()
