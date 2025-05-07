@@ -24,6 +24,7 @@ def plotimg(data, panel=None, **kwargs):
 
     w_um, h_um = imf.width * imf.um_per_pix, imf.height * imf.um_per_pix
     sbar = ovl.ScaleBar(um=panel.scalebar, lw=3, xy=t.xy_ratio_to_um(0.05, 0.9), fontdict={'size': 9})
+    hst = ovl.ImageHistogram(ax=ax, bins=50, color='white')
 
     if data["z"].unique().size > 1 and data["frame"].unique().size == 1 and data["channel"].unique().size == 1:
         _fr = data["frame"].iloc[0]
@@ -35,17 +36,7 @@ def plotimg(data, panel=None, **kwargs):
             ch_par = panel.channel_render_parameters[f"channel-{_ch}"]
             if "overlays" in ch_par and "histogram" in ch_par["overlays"]:
                 # Overlay the histogram on the image plot
-                axi = ax.inset_axes(
-                    (0.5, 0.5, 0.47, 0.47),
-                    facecolor='white',
-                    frameon=False
-                )
-                hist, bins = np.histogram(img.image.ravel(), bins=50)
-                axi.hist(bins[:-1], bins, weights=hist, histtype='step', color='white', zorder=10)
-                # axi.hist(img.ravel(), bins=50, log=False, histtype='step', color='white', zorder=10)
-                # axi.set_xlabel('intensity', color='white')
-                # axi.set_ylabel('pixel count', color='white')
-                axi.tick_params(axis='both', colors='white')
+                hst.plot(img)
             if "color" in ch_par:
                 imgf = exposure.rescale_intensity(imgf, in_range=tuple(np.percentile(imgf, (2, 99))), out_range=(0, 0.85))
                 imgf = np.stack((imgf,) * 3, axis=-1) * panel.channel_render_parameters[f"channel-{_ch}"]["color"][1:4]
