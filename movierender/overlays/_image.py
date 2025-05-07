@@ -2,15 +2,21 @@ from .overlay import Overlay
 
 
 class ScaleBar(Overlay):
-    def plot(self, ax=None, um=10, xy=(0, 0), lw=1, fontdict=None, **kwargs):
+    def plot(self, ax=None, um=None, xy=None, lw=None, fontdict=None, **kwargs):
         if ax is None:
             ax = self.ax
         assert ax is not None, "No axes found to plot overlay."
 
-        x0, y0 = xy
+        lw = lw if lw is not None else self._kwargs.get("lw", 1)
+        um = um if um is not None else self._kwargs.get("um", 1)
+        x0, y0 = xy if xy is not None else self._kwargs.get("xy", (0, 0))
+
         ax.plot([x0, x0 + um], [y0, y0], c='w', lw=lw, zorder=1000)
-        ax.text(x0 + um / 2, y0 + um / 10 + 0.1, f'{um} um', color='w', fontdict=fontdict, horizontalalignment='center',
-                zorder=1000)
+        if kwargs.get("show_text", True):
+            # Add text below the scalebar
+            sbar_lw2_um = 352.77778 * lw / 100 / 2
+            ax.text(x0 + um / 2, y0 + sbar_lw2_um, f'{um} um', color='w', fontdict=fontdict,
+                    horizontalalignment='center', zorder=1000)
 
 
 def secs_to_string(secs: int, string_format="hh:mm:ss"):
