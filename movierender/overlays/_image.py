@@ -8,8 +8,11 @@ class ScaleBar(Overlay):
         assert ax is not None, "No axes found to plot overlay."
 
         lw = lw if lw is not None else self._kwargs.get("lw", 1)
-        um = um if um is not None else self._kwargs.get("um", 1)
+        um = um if um is not None else self._kwargs.get("um", None)
         x0, y0 = xy if xy is not None else self._kwargs.get("xy", (0, 0))
+
+        if um is None:
+            return
 
         ax.plot([x0, x0 + um], [y0, y0], c='w', lw=lw, zorder=1000)
         if kwargs.get("show_text", True):
