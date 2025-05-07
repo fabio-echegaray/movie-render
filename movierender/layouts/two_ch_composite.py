@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 
-from fileops.image import ImageFile
+from fileops.export.config import ConfigMovie
 from fileops.logger import get_logger
 from matplotlib.figure import Figure
 
@@ -20,9 +20,10 @@ green = [0, 1, 0]
 blue = [0, 0, 1]
 
 
-def make_movie(im: ImageFile, id_red=0, id_green=1, zstack='all-max',
+def make_movie(movie: ConfigMovie, id_red=0, id_green=1, zstack='all-max',
                prefix='', name='', suffix='', folder='.', overwrite=False,
                fig_title='', fps=10):
+    im = movie.image_file
     assert len(im.channels) >= 2, 'Image series contains less than two channels.'
     fname = name if len(name) > 0 else os.path.basename(im.image_path)
     filename = prefix + fname + suffix + ".twochcmp.mp4"
@@ -49,7 +50,7 @@ def make_movie(im: ImageFile, id_red=0, id_green=1, zstack='all-max',
                            fps=fps,
                            bitrate="15M",
                            fontdict={'size': 12}) + \
-             ovl.ScaleBar(um=10, lw=3, xy=t.xy_ratio_to_um(0.10, 0.05), fontdict={'size': 9}, ax=ax) + \
+             ovl.ScaleBar(um=movie.scalebar, lw=3, xy=t.xy_ratio_to_um(0.10, 0.05), fontdict={'size': 9}, ax=ax) + \
              ovl.Timestamp(xy=t.xy_ratio_to_um(0.02, 0.95), va='center', ax=ax) + \
              CompositeRGBImage(ax=ax,
                                zstack=zstack,

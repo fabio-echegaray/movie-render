@@ -2,9 +2,8 @@ import os
 from pathlib import Path
 
 import numpy as np
-from fileops.image import ImageFile
+from fileops.export.config import ConfigMovie
 from fileops.logger import get_logger
-from fileops.movielayouts import scalebar
 from matplotlib import pyplot as plt, gridspec
 
 import movierender.overlays as ovl
@@ -16,7 +15,8 @@ log = get_logger(name='movielayout')
 green = [0, 1, 0]
 
 
-def make_movie(im: ImageFile, prefix='', suffix='', folder='.'):
+def make_movie(movie: ConfigMovie, prefix='', suffix='', folder='.'):
+    im = movie.image_file
     assert len(im.channels) >= 2, 'Image series contains less than two channels.'
     print(im.info)
     print(im.zstacks)
@@ -33,7 +33,6 @@ def make_movie(im: ImageFile, prefix='', suffix='', folder='.'):
 
     n_cols = 4
     n_rows = int(np.ceil(len(im.zstacks) / n_cols))
-    mag = im.magnification
     ar = float(im.height) / float(im.width)
     log.info(f'aspect ratio={ar}.')
     log.info(f'number of stacks={len(im.zstacks)}, n_rows={n_rows}.')
@@ -53,7 +52,7 @@ def make_movie(im: ImageFile, prefix='', suffix='', folder='.'):
                            fps=15,
                            bitrate="15M",
                            fontdict={'size': 12}) + \
-             ovl.ScaleBar(um=scalebar[mag], lw=3, xy=scale_xy, fontdict={'size': 7}, ax=ax_ch1) + \
+             ovl.ScaleBar(um=movie.scalebar, lw=3, xy=scale_xy, fontdict={'size': 7}, ax=ax_ch1) + \
              ovl.Timestamp(xy=t.xy_ratio_to_um(0.02, 0.95), va='center', ax=ax_ch1) + \
              SingleImage(ax=ax_ch1, channel=0)
 
@@ -73,6 +72,6 @@ def make_movie(im: ImageFile, prefix='', suffix='', folder='.'):
                              'intensity': 1.0
                          },
                      }) + \
-                     ovl.ScaleBar(um=scalebar[mag], lw=3, xy=scale_xy, fontdict={'size': 7}, ax=ax_z) + \
+                     ovl.ScaleBar(um=movie.scalebar, lw=3, xy=scale_xy, fontdict={'size': 7}, ax=ax_z) + \
                      ovl.Text(f'z={zpos * im.um_per_z} [um]', xy=ztext_xy, fontdict={'size': 7}, ax=ax_z)
     movren.render(filename=path, test=False)
