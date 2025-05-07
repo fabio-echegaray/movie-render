@@ -46,9 +46,7 @@ def make_movie(movie: ConfigMovie, id_red=0, id_green=1, zstack='all-max',
     fig.suptitle(fig_title)
 
     movren = MovieRenderer(fig=fig,
-                           image=im,
-                           fps=movie.fps,
-                           bitrate=movie.bitrate,
+                           config=movie,
                            fontdict={'size': 12}) + \
              ovl.ScaleBar(um=movie.scalebar, lw=3, xy=t.xy_ratio_to_um(0.10, 0.05), fontdict={'size': 9}, ax=ax) + \
              ovl.Timestamp(xy=t.xy_ratio_to_um(0.02, 0.95), va='center', ax=ax) + \

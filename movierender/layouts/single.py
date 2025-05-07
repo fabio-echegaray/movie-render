@@ -27,11 +27,9 @@ def make_movie(movie: ConfigMovie, movie_name=None, prefix='', suffix='', folder
     t = PixelTools(im)
 
     fig = plt.figure(frameon=False, figsize=(5, 5), dpi=150)
-    movren = MovieRenderer(image=im,
-                           fig=fig,
-                           fps=movie.fps,
+    movren = MovieRenderer(fig=fig,
+                           config=movie,
                            show_axis=False,
-                           bitrate=movie.bitrate,
                            fontdict={'size': 12}) + \
              ovl.ScaleBar(um=movie.scalebar, lw=3, xy=t.xy_ratio_to_um(0.70, 0.05), fontdict={'size': 9}) + \
              ovl.Timestamp(xy=t.xy_ratio_to_um(0.02, 0.95), va='center') + \

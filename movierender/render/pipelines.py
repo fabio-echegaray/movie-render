@@ -69,7 +69,6 @@ class CompositeRGBImage(ImagePipeline):
             ix = r.image.ix_at(c=channel, z=self.zstack, t=r.frame)
             self.logger.debug(f"Retrieving frame {r.frame} of channel {channel} at z-stack={self.zstack} "
                               f"(index={ix})")
-
             return r.image.image(ix).image
         elif type(self.zstack) is str:
             if self.zstack == "all-max":  # max projection
