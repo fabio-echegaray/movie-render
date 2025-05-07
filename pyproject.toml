@@ -97,6 +97,7 @@ dependencies = [
     "numpy>=1.16.0",
     "pandas~=1.5",
     "pyqt5~=5.15.2",
+    "seaborn~=0.13",
     "scikit_image~=0.24",
     "scipy~=1.14",
     "Shapely~=2.0.4",

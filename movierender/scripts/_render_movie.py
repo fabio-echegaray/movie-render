@@ -3,6 +3,7 @@ import sys
 from pathlib import Path
 
 import typer
+from movierender.layouts._static_panel import render_static_montage
 from typing_extensions import Annotated
 
 sys.path.append(Path(os.path.realpath(__file__)).parent.parent.parent.as_posix())
@@ -49,6 +50,15 @@ def render_configuration_file(
                     make_movie_2ch_comp(mov.image_file, **mv_kwargs)
             elif len(mov.image_file.frames) == 1:
                 log.warning("only one frame, skipping static image")
+
+        # render panels specified in configuration file
+        for pan in cfg.panels:
+            silence_loggers(loggers=[pan.image_file.__class__.__name__], output_log_file="silenced.log")
+            if show_file_info:
+                log.info(f"file {cfg_path}\r\n{pan.image_file.info.squeeze(axis=0)}")
+            render_static_montage(pan, row=pan.rows, col=pan.columns)
+
+
 
     except Exception as e:
         import traceback

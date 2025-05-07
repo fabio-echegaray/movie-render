@@ -1,3 +1,5 @@
+from ._static_panel import render_static_montage
+
 scalebar = {
     None: 0,
     0:    0,
