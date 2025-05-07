@@ -15,9 +15,9 @@ green = [0, 1, 0]
 red = [1, 0, 0]
 
 
-def make_movie(movie: ConfigMovie, id_red=0, id_green=1, zstack='all-max',
+def make_movie(movie: ConfigMovie, id_red=0, id_green=1,
                prefix='', name='', suffix='', folder='.', overwrite=False,
-               fig_title='', fps=10):
+               fig_title=''):
     im = movie.image_file
     assert len(im.channels) >= 2, 'Image series contains less than two channels.'
     fname = name if len(name) > 0 else os.path.basename(im.image_path)
@@ -45,15 +45,15 @@ def make_movie(movie: ConfigMovie, id_red=0, id_green=1, zstack='all-max',
     fig.subplots_adjust(left=0.125, right=0.9, bottom=0.1, top=0.99, wspace=0.01, hspace=0.01)
     movren = MovieRenderer(fig=fig,
                            image=im,
-                           fps=fps,
-                           bitrate="25M",
+                           fps=movie.fps,
+                           bitrate=movie.bitrate,
                            fontdict={'size': 12}) + \
              ovl.ScaleBar(um=movie.scalebar, lw=3, xy=t.xy_ratio_to_um(0.80, 0.05), fontdict={'size': 9}, ax=ax_ch1) + \
              ovl.ScaleBar(um=movie.scalebar, lw=3, xy=t.xy_ratio_to_um(0.80, 0.05), fontdict={'size': 9}, ax=ax_ch2) + \
              ovl.Timestamp(xy=t.xy_ratio_to_um(0.02, 0.95), va='center', ax=ax_ch1) + \
              ovl.Timestamp(xy=t.xy_ratio_to_um(0.02, 0.95), va='center', ax=ax_ch2) + \
              CompositeRGBImage(ax=ax_ch1,
-                               zstack=zstack,
+                               zstack=movie.zstack_fn,
                                channeldict={
                                    'Channel1': {
                                        'id':        id_red,
@@ -63,7 +63,7 @@ def make_movie(movie: ConfigMovie, id_red=0, id_green=1, zstack='all-max',
                                    },
                                }) + \
              CompositeRGBImage(ax=ax_ch2,
-                               zstack=zstack,
+                               zstack=movie.zstack_fn,
                                channeldict={
                                    'Channel2': {
                                        'id':        id_green,

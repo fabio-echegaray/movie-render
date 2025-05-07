@@ -36,18 +36,16 @@ def render_configuration_file(
             if show_file_info:
                 log.info(f"file {cfg_path}\r\n{mov.image_file.info.squeeze(axis=0)}")
             if len(mov.image_file.frames) > 1:
-                mv_kwargs = dict(zstack="all-max",
-                                 fig_title=mov.title,
-                                 fps=mov.fps,
+                mv_kwargs = dict(fig_title=mov.title,
                                  prefix=cfg.path.name + "-",
                                  name=mov.movie_filename,
                                  folder=cfg_path.parent.parent,
                                  overwrite=overwrite_movie_file)
                 # what follows is a list of supported layouts
                 if mov.layout in ["twoch", "two-ch"]:
-                    make_movie_2ch(mov.image_file, **mv_kwargs)
+                    make_movie_2ch(mov, **mv_kwargs)
                 elif mov.layout == "twoch-comp":
-                    make_movie_2ch_comp(mov.image_file, **mv_kwargs)
+                    make_movie_2ch_comp(mov, **mv_kwargs)
             elif len(mov.image_file.frames) == 1:
                 log.warning("only one frame, skipping static image")
 

@@ -49,8 +49,8 @@ def make_movie(movie: ConfigMovie, prefix='', suffix='', folder='.'):
     fig.subplots_adjust(left=0.125, right=0.9, bottom=0.1, top=0.99, wspace=0.01, hspace=0.01)
     movren = MovieRenderer(fig=fig,
                            image=im,
-                           fps=15,
-                           bitrate="15M",
+                           fps=movie.fps,
+                           bitrate=movie.bitrate,
                            fontdict={'size': 12}) + \
              ovl.ScaleBar(um=movie.scalebar, lw=3, xy=scale_xy, fontdict={'size': 7}, ax=ax_ch1) + \
              ovl.Timestamp(xy=t.xy_ratio_to_um(0.02, 0.95), va='center', ax=ax_ch1) + \

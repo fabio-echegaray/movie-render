@@ -22,7 +22,7 @@ blue = [0, 0, 1]
 
 def make_movie(movie: ConfigMovie, id_red=0, id_green=1, zstack='all-max',
                prefix='', name='', suffix='', folder='.', overwrite=False,
-               fig_title='', fps=10):
+               fig_title=''):
     im = movie.image_file
     assert len(im.channels) >= 2, 'Image series contains less than two channels.'
     fname = name if len(name) > 0 else os.path.basename(im.image_path)
@@ -47,8 +47,8 @@ def make_movie(movie: ConfigMovie, id_red=0, id_green=1, zstack='all-max',
 
     movren = MovieRenderer(fig=fig,
                            image=im,
-                           fps=fps,
-                           bitrate="15M",
+                           fps=movie.fps,
+                           bitrate=movie.bitrate,
                            fontdict={'size': 12}) + \
              ovl.ScaleBar(um=movie.scalebar, lw=3, xy=t.xy_ratio_to_um(0.10, 0.05), fontdict={'size': 9}, ax=ax) + \
              ovl.Timestamp(xy=t.xy_ratio_to_um(0.02, 0.95), va='center', ax=ax) + \
