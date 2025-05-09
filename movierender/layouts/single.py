@@ -12,15 +12,16 @@ from movierender.overlays.pixel_tools import PixelTools
 log = get_logger(name='movielayout')
 
 
-def make_movie(movie: ConfigMovie, movie_name=None, prefix='', suffix='', folder='.'):
+def make_movie(movie: ConfigMovie, movie_name=None, prefix='', suffix='', folder='.', overwrite=False):
     im = movie.image_file
     movie_name = movie_name if movie_name is not None else os.path.basename(im.image_path)
     filename = prefix + movie_name + suffix + ".mp4"
     base_folder = os.path.abspath(folder)
     path = os.path.join(base_folder, filename)
     if os.path.exists(path):
-        log.warning(f'File {filename} already exists in folder {base_folder}.')
-        return
+        if not overwrite:
+            log.warning(f'File {filename} already exists in folder {base_folder}.')
+            return
 
     Path(path).touch()
     log.info(f'Making movie {filename} from file {os.path.basename(im.image_path)} in folder {base_folder}.')

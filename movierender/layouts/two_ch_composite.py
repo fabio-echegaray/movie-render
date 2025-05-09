@@ -30,8 +30,8 @@ def make_movie(movie: ConfigMovie, id_red=0, id_green=1, zstack='all-max',
     base_folder = os.path.abspath(folder)
     path = os.path.join(base_folder, filename)
     if os.path.exists(path):
-        log.warning(f'File {filename} already exists in folder {base_folder}.')
         if not overwrite:
+            log.warning(f'File {filename} already exists in folder {base_folder}.')
             return
 
     Path(path).touch()

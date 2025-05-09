@@ -15,7 +15,7 @@ log = get_logger(name='movielayout')
 green = [0, 1, 0]
 
 
-def make_movie(movie: ConfigMovie, prefix='', suffix='', folder='.'):
+def make_movie(movie: ConfigMovie, prefix='', suffix='', folder='.', overwrite=False):
     im = movie.image_file
     assert len(im.channels) >= 2, 'Image series contains less than two channels.'
     print(im.info)
@@ -24,8 +24,9 @@ def make_movie(movie: ConfigMovie, prefix='', suffix='', folder='.'):
     base_folder = os.path.abspath(folder)
     path = os.path.join(base_folder, filename)
     if os.path.exists(path):
-        log.warning(f'File {filename} already exists in folder {base_folder}.')
-        return
+        if not overwrite:
+            log.warning(f'File {filename} already exists in folder {base_folder}.')
+            return
 
     Path(path).touch()
     log.info(f'Making movie {filename} from file {os.path.basename(im.image_path)} in folder {base_folder}.')
