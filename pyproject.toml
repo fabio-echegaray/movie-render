@@ -6,7 +6,7 @@ name = "movierender"
 #
 # For a discussion on single-sourcing the version, see
 # https://packaging.python.org/guides/single-sourcing-package-version/
-version = "0.1"
+version = "0.2"
 
 # This is a one-line description or tagline of what your project does. This
 # corresponds to the "Summary" metadata field:
@@ -67,8 +67,7 @@ classifiers = [# Optional
     #   5 - Production/Stable
     "Development Status :: 3 - Alpha",
     # Indicate who your project is intended for
-    "Intended Audience :: Scientists",
-    "Scientific/Engineering :: Bio-Informatics",
+    "Intended Audience :: Science/Research",
     # Pick your license as you wish
     "License :: OSI Approved :: GNU Affero General Public License v3",
     # Specify the Python versions you support here. In particular, ensure
@@ -98,11 +97,13 @@ dependencies = [
     "numpy>=1.16.0",
     "pandas~=1.5",
     "pyqt5~=5.15.2",
+    "seaborn~=0.13",
     "scikit_image~=0.24",
     "scipy~=1.14",
     "Shapely~=2.0.4",
     "tifffile~=2024.6.18",
-    "vtk~=9.2.0",
+    "imgfileops>=0.1.0",
+    "typer>=0.9.0",
 ]
 
 # List additional groups of dependencies here (e.g. development
@@ -127,8 +128,8 @@ dependencies = [
 
 # The following would provide a command line executable called `sample`
 # which executes the function `main` from this package when invoked.
-#[project.scripts]
-#config = "movierender.scripts:config.app"
+[project.scripts]
+movierender = "movierender.scripts:render.app"
 
 [build-system]
 # These are the assumed default build requirements from pip:
