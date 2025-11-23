@@ -67,8 +67,7 @@ classifiers = [# Optional
     #   5 - Production/Stable
     "Development Status :: 3 - Alpha",
     # Indicate who your project is intended for
-    "Intended Audience :: Scientists",
-    "Scientific/Engineering :: Bio-Informatics",
+    "Intended Audience :: Science/Research",
     # Pick your license as you wish
     "License :: OSI Approved :: GNU Affero General Public License v3",
     # Specify the Python versions you support here. In particular, ensure
@@ -98,6 +97,7 @@ dependencies = [
     "numpy>=1.16.0",
     "pandas~=1.5",
     "pyqt5~=5.15.2",
+    "seaborn~=0.13",
     "scikit_image~=0.24",
     "scipy~=1.14",
     "Shapely~=2.0.4",

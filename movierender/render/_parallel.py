@@ -13,13 +13,14 @@ import imageio
 import matplotlib.pyplot as plt
 import moviepy.editor as mpy
 import numpy as np
+from fileops.export.config import ConfigMovie
+from fileops.image import ImageFile
+from fileops.image.exceptions import FrameNotFoundError
+from fileops.pathutils import ensure_dir
 from matplotlib.figure import Figure
 # from memory_profiler import profile
 from moviepy.video.io.bindings import mplfig_to_npimage
 
-from fileops.image import ImageFile
-from fileops.image.exceptions import FrameNotFoundError
-from fileops.pathutils import ensure_dir
 from movierender.render.pipelines import SingleImage, ImagePipeline
 
 if TYPE_CHECKING:
@@ -30,8 +31,7 @@ class ParallelMovieRenderer:
     layers: List[Overlay]
     image: ImageFile
 
-    def __init__(self, fig: Figure, image: ImageFile, fps=1, bitrate="4000k", show_axis=False, invert_y=False,
-                 **kwargs):
+    def __init__(self, fig: Figure, config: ConfigMovie, show_axis=False, invert_y=False, **kwargs):
         self._kwargs = {
             'fontdict': {'size': 10},
         }
@@ -46,18 +46,22 @@ class ParallelMovieRenderer:
 
         self.time = 0
         self.frame = 0
-        self.fps = fps
+        self.fps = config.fps
         self.duration = None
-        self.bitrate = bitrate
+        self.bitrate = config.bitrate
 
+        imf = config.image_file
+        self._cfg = config
         self.image_pipeline: List[ImagePipeline] = []
-        self.image = image
+        self.image = imf
         self.inv_y = invert_y
-        self._last_f = image.frames[-1]
-        self._render = np.zeros((image.width, image.height), dtype=float)
+        self._last_f = imf.frames[-1]
+        self._max_frame = max(self._cfg.frames)
+        self._frame_offset = min(self._cfg.frames)  # used when frames start at a number greater than zero
+        self._render = np.zeros((imf.width, imf.height), dtype=float)
         self._load_image()
 
-        self._tmp = Path(os.curdir) / 'tmp' / 'render' / Path(image.base_path).name
+        self._tmp = Path(os.curdir) / 'tmp' / 'render' / Path(imf.base_path).name
         ensure_dir(self._tmp)
 
     def __iter__(self):
@@ -68,9 +72,9 @@ class ParallelMovieRenderer:
             imp = self.image_pipeline
         else:
             imp = SingleImage(self)
-        self.time = (self.time + 1) % self.n_frames
+        self.time = (self.time + 1) % self._max_frame
 
-        return imp()
+        return imp(invert_y=self.inv_y)
 
     def __getattr__(self, name):
         if name in self._kwargs:
@@ -164,7 +168,8 @@ class ParallelMovieRenderer:
         def make_frame_mpl(t):
             self.time = t
             # calculate frame given time
-            self.frame = int(round(self.fps * t))
+            _fr_from_t = int(round(self.fps * t)) + self._frame_offset
+            self.frame = min(_fr_from_t, self._max_frame)
 
             if self.frame == self._last_f:
                 return self._render
