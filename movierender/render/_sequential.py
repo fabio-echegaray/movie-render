@@ -152,8 +152,8 @@ class SequentialMovieRenderer:
                     imgp.ax.set_yticks([])
 
             for imgp in self.image_pipeline:
-                ppu = self.pix_per_um if self.pix_per_um is not None else 1
-                ext = [0, self.width / ppu, 0, self.height / ppu]
+                ppu = self.image.pix_per_um if self.image.pix_per_um is not None else 1
+                ext = (0, self.image.width / ppu, 0, self.image.height / ppu)
                 ax = imgp.ax if imgp.ax is not None else self.ax
                 img = imgp()
                 img = skimage.util.img_as_float(img)
