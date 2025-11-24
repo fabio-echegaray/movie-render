@@ -3,7 +3,6 @@ from pathlib import Path
 
 from fileops.export.config import ConfigMovie
 from fileops.logger import get_logger
-from fileops.pathutils import ensure_dir
 from matplotlib.figure import Figure
 
 import movierender.overlays as ovl
@@ -22,13 +21,13 @@ blue = [0, 0, 1]
 
 
 def make_movie(movie: ConfigMovie, id_red=0, id_green=1, zstack='all-max',
-               prefix='', name='', suffix='', folder='.', overwrite=False,
+               prefix='', name='', suffix='', overwrite=False,
                fig_title='', **kwargs):
     im = movie.image_file
     assert len(im.channels) >= 2, 'Image series contains less than two channels.'
     fname = name if len(name) > 0 else os.path.basename(im.image_path)
     filename = prefix + fname + suffix + ".twochcmp.mp4"
-    base_folder = ensure_dir(os.path.abspath(folder))
+    base_folder = movie.configfile.parent
     path = os.path.join(base_folder, filename)
     if os.path.exists(path):
         if os.path.getsize(path) == 0:
