@@ -3,8 +3,9 @@ import sys
 from pathlib import Path
 
 import typer
-from movierender.layouts._static_panel import render_static_montage
 from typing_extensions import Annotated
+
+from movierender.layouts._static_panel import render_static_montage
 
 sys.path.append(Path(os.path.realpath(__file__)).parent.parent.parent.as_posix())
 
@@ -22,7 +23,7 @@ def render_configuration_file(
         show_file_info: Annotated[
             bool, typer.Argument(help="To show file metadata information before rendering the movie")] = True,
         overwrite_movie_file: Annotated[
-            bool, typer.Argument(help="Set true if you want to overwrite the file")] = False,
+            bool, typer.Option(help="Set true if you want to overwrite the file")] = False,
 ):
     if cfg_path.parent.name[0:3] == "bad":
         return
@@ -41,6 +42,8 @@ def render_configuration_file(
                                  name=mov.movie_filename,
                                  folder=cfg_path.parent.parent,
                                  overwrite=overwrite_movie_file)
+                if mov.include_tracks:
+                    mv_kwargs.update({'tracks': cfg.tracks})
                 # what follows is a list of supported layouts
                 if mov.layout in ["twoch", "two-ch"]:
                     make_movie_2ch(mov, **mv_kwargs)
