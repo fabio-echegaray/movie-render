@@ -1,1 +1,2 @@
 from ._static_panel import render_static_montage
+from ._column_composer import LayoutColumnComposer
