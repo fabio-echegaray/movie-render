@@ -1,7 +1,10 @@
 import os
+from pathlib import Path
 
 from fileops.export.config import ConfigMovie
 from fileops.logger import get_logger
+
+from movierender.render import MovieRenderer
 
 
 class BaseLayoutComposer:
@@ -13,7 +16,7 @@ class BaseLayoutComposer:
                  **kwargs):
         self._overwrite = overwrite
         self._movie_configuration_params = movie
-        self.renderer = None
+        self.renderer: MovieRenderer | None = None
         self.dpi = 326
 
         self.fig_title = movie.title
@@ -26,7 +29,8 @@ class BaseLayoutComposer:
             self.filename += "." + suffix
         self.filename += ".mp4"
         self.base_folder = movie.configfile.parent
-        self.save_file_path = os.path.join(self.base_folder, self.filename)
+        self.save_file_path = Path(self.base_folder) / self.filename
+
         if os.path.exists(self.save_file_path):
             if os.path.getsize(self.save_file_path) < 300:  # if size is too small, treat it as if the file didn't exist
                 overwrite = True
@@ -39,4 +43,6 @@ class BaseLayoutComposer:
 
     def render(self):
         self.log.info(f"Rendering movie into file {self.save_file_path}.")
-        self.renderer.render(filename=self.save_file_path, test=False)
+        if self.renderer is None:
+            raise AttributeError("Need to call method make_layout before trying to render.")
+        self.renderer.render(filename=str(self.save_file_path), test=False)

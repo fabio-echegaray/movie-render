@@ -27,16 +27,16 @@ class LayoutCompositeComposer(BaseLayoutComposer):
         ax = fig.gca()
         self.ax_lst.append(ax)
 
-        self._movren = MovieRenderer(fig=fig,
+        self.renderer = MovieRenderer(fig=fig,
                                      config=movie,
                                      fontdict={'size': 12})
 
-        self._movren += ovl.ScaleBar(um=movie.scalebar, lw=3,
+        self.renderer += ovl.ScaleBar(um=movie.scalebar, lw=3,
                                      xy=t.xy_ratio_to_um(0.80, 0.05),
                                      fontdict={'size': 9},
                                      ax=ax)
-        self._movren += ovl.Timestamp(xy=t.xy_ratio_to_um(0.02, 0.95), va='center', ax=ax)
-        self._movren += CompositeRGBImage(ax=ax,
+        self.renderer += ovl.Timestamp(xy=t.xy_ratio_to_um(0.02, 0.95), va='center', ax=ax)
+        self.renderer += CompositeRGBImage(ax=ax,
                                           zstack=movie.zstack_fn,
                                           channeldict={
                                               ch_cfg['name']: {
