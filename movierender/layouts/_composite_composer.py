@@ -28,21 +28,24 @@ class LayoutCompositeComposer(BaseLayoutComposer):
         self.ax_lst.append(ax)
 
         self.renderer = MovieRenderer(fig=fig,
-                                     config=movie,
-                                     fontdict={'size': 12})
+                                      config=movie,
+                                      fontdict={'size': 12})
 
         self.renderer += ovl.ScaleBar(um=movie.scalebar, lw=3,
-                                     xy=t.xy_ratio_to_um(0.80, 0.05),
-                                     fontdict={'size': 9},
-                                     ax=ax)
+                                      xy=t.xy_ratio_to_um(0.80, 0.05),
+                                      fontdict={'size': 9},
+                                      ax=ax)
         self.renderer += ovl.Timestamp(xy=t.xy_ratio_to_um(0.02, 0.95), va='center', ax=ax)
         self.renderer += CompositeRGBImage(ax=ax,
-                                          zstack=movie.zstack_fn,
-                                          channeldict={
-                                              ch_cfg['name']: {
-                                                  'id':        cix,
-                                                  'color':     ch_cfg['color'][1:] if len(ch_cfg['color']) > 3 else
-                                                               ch_cfg['color'],
-                                                  'rescale':   True,
-                                                  'intensity': 1.0
-                                              } for cix, ch_cfg in movie.channel_render_parameters.items()})
+                                           zstack=movie.zstack_fn,
+                                           channeldict={
+                                               ch_cfg['name']: {
+                                                   'id':        cix,
+                                                   'color':     ch_cfg['color'][1:] if (
+                                                           isinstance(ch_cfg['color'], tuple) and
+                                                           len(ch_cfg['color']) > 3
+                                                   ) else
+                                                                ch_cfg['color'],
+                                                   'rescale':   True,
+                                                   'intensity': 1.0
+                                               } for cix, ch_cfg in movie.channel_render_parameters.items()})
