@@ -1,8 +1,2 @@
-scalebar = {
-    None: 0,
-    0:    0,
-    20:   50,
-    40:   20,
-    63:   10,
-    100:  10,
-}
+from ._static_panel import render_static_montage
+from ._column_composer import LayoutColumnComposer
