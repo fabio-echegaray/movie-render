@@ -1,5 +1,5 @@
 # Movie Render
-This package renders movies from configuration files referencig microscopy data.
+This package renders movies from configuration files referencing microscopy data.
 
 ## Table of contents
 * [Documentation](#documentation)

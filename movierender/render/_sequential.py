@@ -10,12 +10,13 @@ import imageio.v3 as iio
 import moviepy.editor as mpy
 import numpy as np
 import skimage
+from fileops.export.config import ConfigMovie
 from fileops.image import ImageFile
 from fileops.image.exceptions import FrameNotFoundError
 from fileops.pathutils import ensure_dir
 from matplotlib.figure import Figure
 
-from movierender.render.pipelines import SingleImage
+from movierender.render.pipelines import SingleImage, ImagePipeline
 
 if TYPE_CHECKING:
     from movierender.overlays import Overlay
@@ -25,8 +26,7 @@ class SequentialMovieRenderer:
     layers: List[Overlay]
     image: ImageFile
 
-    def __init__(self, fig: Figure, image: ImageFile, fps=1, bitrate="4000k", show_axis=False, invert_y=False,
-                 **kwargs):
+    def __init__(self, fig: Figure, config: ConfigMovie, show_axis=False, invert_y=False, **kwargs):
         self._kwargs = {
             'fontdict': {'size': 10},
         }
@@ -41,18 +41,22 @@ class SequentialMovieRenderer:
 
         self.time = 0
         self.frame = 0
-        self.fps = fps
+        self.fps = config.fps
         self.duration = None
-        self.bitrate = bitrate
+        self.bitrate = config.bitrate
 
-        self.image_pipeline = []
-        self.image = image
+        imf = config.image_file
+        self._cfg = config
+        self.image_pipeline: List[ImagePipeline] = []
+        self.image = imf
         self.inv_y = invert_y
-        self._last_f = image.frames[-1]
-        self._render = np.zeros((image.width, image.height), dtype=float)
+        self._last_f = imf.frames[-1]
+        self._max_frame = max(self._cfg.frames)
+        self._frame_offset = min(self._cfg.frames)  # used when frames start at a number greater than zero
+        self._render = np.zeros((imf.width, imf.height), dtype=float)
         self._load_image()
 
-        self._tmp = Path(os.curdir) / 'tmp' / 'render' / Path(image.base_path).name / str(uuid.uuid4())
+        self._tmp = Path(os.curdir) / 'tmp' / 'render' / Path(imf.base_path).name / str(uuid.uuid4())
         ensure_dir(self._tmp)
 
     def __iter__(self):
@@ -63,7 +67,7 @@ class SequentialMovieRenderer:
             imp = self.image_pipeline
         else:
             imp = SingleImage(self)
-        self.time = (self.time + 1) % self.n_frames
+        self.time = (self.time + 1) % self._max_frame
 
         return imp(invert_y=self.inv_y)
 
@@ -101,7 +105,8 @@ class SequentialMovieRenderer:
         def make_frame_mpl(t):
             self.time = t
             # calculate frame given time
-            self.frame = int(round(self.fps * t))
+            _fr_from_t = int(round(self.fps * t)) + self._frame_offset
+            self.frame = min(_fr_from_t, self._max_frame)
 
             if self.frame == self._last_f:
                 return self._render
@@ -125,7 +130,7 @@ class SequentialMovieRenderer:
             self.logger.info(f"rendering frame {frame}")
             self.frame = frame
             # calculate time given frame
-            self.time = frame / self.fps
+            self.time = (frame - self._frame_offset) / self.fps
 
             img_path = self._tmp.joinpath(f"f{frame:05d}.png")
             if os.path.exists(img_path):
@@ -147,8 +152,8 @@ class SequentialMovieRenderer:
                     imgp.ax.set_yticks([])
 
             for imgp in self.image_pipeline:
-                ppu = self.pix_per_um if self.pix_per_um is not None else 1
-                ext = [0, self.width / ppu, 0, self.height / ppu]
+                ppu = self.image.pix_per_um if self.image.pix_per_um is not None else 1
+                ext = (0, self.image.width / ppu, 0, self.image.height / ppu)
                 ax = imgp.ax if imgp.ax is not None else self.ax
                 img = imgp()
                 img = skimage.util.img_as_float(img)
@@ -161,21 +166,21 @@ class SequentialMovieRenderer:
                     kwargs.update(**ovrl._kwargs, show_axis=self.show_axis)
                     ovrl.plot(ax=self.ax if ovrl.ax is None else None, **kwargs)
 
-                for ovrl in self.layers:
-                    if not ovrl.show_axis and ovrl.ax is not None:
-                        ovrl.ax.set_xticklabels([])
-                        ovrl.ax.set_yticklabels([])
-                        ovrl.ax.set_xticks([])
-                        ovrl.ax.set_yticks([])
-                self.fig.tight_layout()
-                self.fig.savefig(img_path, facecolor='white', transparent=False)
+            for ovrl in self.layers:
+                if not ovrl.show_axis and ovrl.ax is not None:
+                    ovrl.ax.set_xticklabels([])
+                    ovrl.ax.set_yticklabels([])
+                    ovrl.ax.set_xticks([])
+                    ovrl.ax.set_yticks([])
+            self.fig.tight_layout()
+            self.fig.savefig(img_path, facecolor='white', transparent=False)
 
         # Start of method
         if filename is None:
             _, filename = os.path.split(self._file)
             filename += ".mp4"
         rendered_frames = list()
-        for fr in self.image.frames:
+        for fr in sorted(self._cfg.frames):
             try:
                 render_frame(fr)
                 rendered_frames.append(fr)
@@ -185,8 +190,8 @@ class SequentialMovieRenderer:
         dur = len(rendered_frames) / self.fps
         animation = mpy.VideoClip(make_frame_mpl, duration=dur)
         animation.write_videofile(filename,
-                                  fps=self.fps,
-                                  bitrate=self.bitrate,
+                                  fps=self._cfg.fps,
+                                  bitrate=self._cfg.bitrate,
                                   # codec='libx264',
                                   # audio_codec='pcm_s32le',
                                   ffmpeg_params=[

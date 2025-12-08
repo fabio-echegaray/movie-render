@@ -7,10 +7,10 @@ from typing_extensions import Annotated
 
 from movierender.scripts._render_movie import render_configuration_file
 
-log = get_logger(name='search-folder')
+log = get_logger(name='render-folder')
 
 
-def render(
+def render_folder(
         path: Annotated[
             Path, typer.Argument(help="Path where configuration files are located. "
                                       "If no path is given, the current folder will be used.")] = None,
