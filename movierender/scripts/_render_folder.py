@@ -5,12 +5,12 @@ from fileops.export.config import search_config_files
 from fileops.logger import get_logger
 from typing_extensions import Annotated
 
-from movierender.scripts._render_movie import render_configuration_file
+from movierender.scripts.render import render_configuration_file_cmd
 
-log = get_logger(name='search-folder')
+log = get_logger(name='render-folder')
 
 
-def render(
+def render_folder_cmd(
         path: Annotated[
             Path, typer.Argument(help="Path where configuration files are located. "
                                       "If no path is given, the current folder will be used.")] = None,
@@ -20,9 +20,13 @@ def render(
         path = Path('.').absolute()
     cfg_path_list = search_config_files(path)
 
+    total_rendered = 0
     for cfg_path in cfg_path_list:
         if cfg_path.parent.name[0:3] == "bad":
             continue
 
         log.info(f"Reading configuration file {cfg_path}")
-        render_configuration_file(cfg_path)
+        render_configuration_file_cmd(cfg_path)
+        total_rendered += 1
+
+    return total_rendered

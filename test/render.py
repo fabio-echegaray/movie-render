@@ -10,15 +10,33 @@ class TestRender(TestCase):
         super().__init__(*args)
         self.runner = CliRunner()
 
-    def test_render_file(self):
-        command_name = "file"
+    def test_render_movie_different_frames(self):
+        command_name = "movie"
+
+        args = [command_name, "example_data/test_frames_movie.cfg"]
+        result = self.runner.invoke(app, args)
+        self.assertEqual(result.exit_code, 0)
+
+    def test_render_movie_swap_channels(self):
+        command_name = "movie"
+
+        args = [command_name, "example_data/test_frames_movie_ch_swap.cfg"]
+        result = self.runner.invoke(app, args)
+        self.assertEqual(result.exit_code, 0)
+
+    def test_render_panel(self):
+        command_name = "panel"
 
         args = [command_name, "example_data/test_panels.cfg"]
         result = self.runner.invoke(app, args)
         self.assertEqual(result.exit_code, 0)
 
-        args = [command_name, "example_data/test_frames_movie.cfg"]
+    def test_render_folder(self):
+        command_name = "folder"
+
+        args = [command_name, "example_data"]
         result = self.runner.invoke(app, args)
+        self.assertEqual(result.return_value, 0)
         self.assertEqual(result.exit_code, 0)
 
 
