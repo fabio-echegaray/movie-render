@@ -5,7 +5,7 @@ from ._render_configfile import render_configuration_file_cmd
 from ._render_folder import render_folder_cmd
 from ._render_movie import render_movie_cmd
 
-log = get_logger(name='render')
+log = get_logger(name='render', debug=False)
 silence_loggers(loggers=["tifffile", "matplotlib", "PIL"], output_log_file="silenced.log")
 app = Typer()
 
