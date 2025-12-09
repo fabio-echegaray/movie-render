@@ -201,4 +201,4 @@ class SequentialMovieRenderer:
         animation.close()
 
     def __repr__(self):
-        return f"<MovieRender object at {hex(id(self))}> with {len(self._kwargs)} arguments."
+        return f"<MovieRender object (sequential) at {hex(id(self))}> with {len(self._kwargs)} arguments."
