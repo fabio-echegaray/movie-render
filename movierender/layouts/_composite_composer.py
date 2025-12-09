@@ -44,8 +44,7 @@ class LayoutCompositeComposer(BaseLayoutComposer):
                                                    'color':     ch_cfg['color'][1:] if (
                                                            isinstance(ch_cfg['color'], tuple) and
                                                            len(ch_cfg['color']) > 3
-                                                   ) else
-                                                                ch_cfg['color'],
+                                                   ) else ch_cfg['color'],
                                                    'rescale':   True,
                                                    'intensity': 1.0
                                                } for cix, ch_cfg in movie.channel_render_parameters.items()})

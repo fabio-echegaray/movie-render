@@ -57,8 +57,10 @@ class LayoutColumnComposer(BaseLayoutComposer):
                                                channeldict={
                                                    ch_cfg['name']: {
                                                        'id':        ch_cfg_ix,
-                                                       'color':     ch_cfg['color'][1:] if len(ch_cfg['color']) > 3 else
-                                                                    ch_cfg['color'],
+                                                       'color':     ch_cfg['color'][1:] if (
+                                                               isinstance(ch_cfg['color'], tuple) and
+                                                               len(ch_cfg['color']) > 3
+                                                       ) else ch_cfg['color'],
                                                        'rescale':   True,
                                                        'intensity': 1.0
                                                    },
@@ -72,4 +74,3 @@ class LayoutColumnComposer(BaseLayoutComposer):
             _o = copy.deepcopy(overlay)
             _o.ax = ax
             self.renderer += _o
-
