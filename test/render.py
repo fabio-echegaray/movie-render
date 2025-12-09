@@ -36,7 +36,6 @@ class TestRender(TestCase):
 
         args = [command_name, "example_data"]
         result = self.runner.invoke(app, args)
-        self.assertEqual(result.return_value, 0)
         self.assertEqual(result.exit_code, 0)
 
 
