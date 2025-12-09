@@ -5,8 +5,7 @@ from pathlib import Path
 import typer
 from typing_extensions import Annotated
 
-from layouts import LayoutCompositeComposer
-from movierender.layouts import LayoutColumnComposer
+from movierender.layouts import LayoutColumnComposer, LayoutCompositeComposer
 
 sys.path.append(Path(os.path.realpath(__file__)).parent.parent.parent.as_posix())
 

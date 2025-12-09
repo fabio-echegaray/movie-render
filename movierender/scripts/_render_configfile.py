@@ -6,7 +6,7 @@ import typer
 from typing_extensions import Annotated
 
 from movierender.layouts import render_static_montage
-from scripts._render_movie import render_movie
+from movierender.scripts._render_movie import render_movie
 
 sys.path.append(Path(os.path.realpath(__file__)).parent.parent.parent.as_posix())
 
