@@ -1,4 +1,3 @@
-import copy
 import itertools
 import math
 
@@ -69,9 +68,3 @@ class LayoutChannelColumnComposer(BaseLayoutComposer):
             self.renderer += ovl.Text(f'{ch_cfg["name"]}',
                                       xy=t.xy_ratio_to_um(0.70, 0.95),
                                       fontdict={'size': 7, 'color': 'white'}, ax=ax)
-
-    def add_overlay(self, overlay: ovl.Overlay):
-        for ax in self.ax_lst:
-            _o = copy.deepcopy(overlay)
-            _o.ax = ax
-            self.renderer += _o
