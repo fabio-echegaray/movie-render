@@ -172,7 +172,7 @@ class SequentialMovieRenderer:
                     ovrl.ax.set_yticklabels([])
                     ovrl.ax.set_xticks([])
                     ovrl.ax.set_yticks([])
-            self.fig.tight_layout()
+
             self.fig.savefig(img_path, facecolor='white', transparent=False)
 
         # Start of method
