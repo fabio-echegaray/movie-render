@@ -23,7 +23,7 @@ def render_movie(mov: ConfigMovie, overwrite=False):
         mv_kwargs = dict(overwrite=overwrite)
         # what follows is a list of supported layouts
         if mov.layout in ["twoch", "two-ch"]:
-            lytcomposer = LayoutColumnComposer(mov, columns=2, **mv_kwargs)
+            lytcomposer = LayoutChannelColumnComposer(mov, columns=2, **mv_kwargs)
         elif mov.layout == "twoch-comp":
             lytcomposer = LayoutCompositeComposer(mov, **mv_kwargs)
         else:

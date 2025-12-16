@@ -1,4 +1,5 @@
 import copy
+import itertools
 import math
 
 from fileops.export.config import ConfigMovie
@@ -11,8 +12,8 @@ from movierender.overlays.pixel_tools import PixelTools
 from ._base_composer import BaseLayoutComposer
 
 
-class LayoutColumnComposer(BaseLayoutComposer):
-    log = get_logger(name='LayoutColumnComposer')
+class LayoutChannelColumnComposer(BaseLayoutComposer):
+    log = get_logger(name='LayoutChannelColumnComposer')
 
     def __init__(self,
                  movie: ConfigMovie,

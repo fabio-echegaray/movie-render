@@ -1,3 +1,3 @@
-from ._column_composer import LayoutColumnComposer
+from ._channel_column_composer import LayoutChannelColumnComposer
 from ._composite_composer import LayoutCompositeComposer
 from ._static_panel import render_static_montage
