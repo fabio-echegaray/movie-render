@@ -5,7 +5,7 @@ from pathlib import Path
 import typer
 from typing_extensions import Annotated
 
-from movierender.layouts import LayoutColumnComposer, LayoutCompositeComposer
+from movierender.layouts import LayoutChannelColumnComposer, LayoutZStackColumnComposer, LayoutCompositeComposer
 
 sys.path.append(Path(os.path.realpath(__file__)).parent.parent.parent.as_posix())
 
@@ -22,7 +22,10 @@ def render_movie(mov: ConfigMovie, overwrite=False):
     elif len(mov.image_file.frames) > 1:
         mv_kwargs = dict(overwrite=overwrite)
         # what follows is a list of supported layouts
-        if mov.layout in ["twoch", "two-ch"]:
+        if mov.layout in [f"z-{n}-col" for n in range(1, 9)]:
+            cols = min(int(mov.layout.split("-")[1]), mov.image_file.n_zstacks)
+            lytcomposer = LayoutZStackColumnComposer(mov, columns=cols, **mv_kwargs)
+        elif mov.layout in ["twoch", "two-ch"]:
             lytcomposer = LayoutChannelColumnComposer(mov, columns=2, **mv_kwargs)
         elif mov.layout == "twoch-comp":
             lytcomposer = LayoutCompositeComposer(mov, **mv_kwargs)

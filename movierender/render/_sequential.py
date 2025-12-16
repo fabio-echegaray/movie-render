@@ -16,7 +16,7 @@ from fileops.image.exceptions import FrameNotFoundError
 from fileops.pathutils import ensure_dir
 from matplotlib.figure import Figure
 
-from movierender.render.pipelines import SingleImage, ImagePipeline
+from movierender.render.pipelines import SingleImage, ImagePipeline, NullImage
 
 if TYPE_CHECKING:
     from movierender.overlays import Overlay
@@ -152,6 +152,8 @@ class SequentialMovieRenderer:
                     imgp.ax.set_yticks([])
 
             for imgp in self.image_pipeline:
+                if type(imgp) == NullImage:
+                    continue
                 ppu = self.image.pix_per_um if self.image.pix_per_um is not None else 1
                 ext = (0, self.image.width / ppu, 0, self.image.height / ppu)
                 ax = imgp.ax if imgp.ax is not None else self.ax
