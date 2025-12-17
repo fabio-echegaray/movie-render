@@ -150,7 +150,10 @@ class SequentialMovieRenderer:
                     imgp.ax.set_yticklabels([])
                     imgp.ax.set_xticks([])
                     imgp.ax.set_yticks([])
-
+                    imgp.ax.spines['top'].set_visible(False)
+                    imgp.ax.spines['right'].set_visible(False)
+                    imgp.ax.spines['bottom'].set_visible(False)
+                    imgp.ax.spines['left'].set_visible(False)
             for imgp in self.image_pipeline:
                 if type(imgp) == NullImage:
                     continue
@@ -174,6 +177,10 @@ class SequentialMovieRenderer:
                     ovrl.ax.set_yticklabels([])
                     ovrl.ax.set_xticks([])
                     ovrl.ax.set_yticks([])
+                    ovrl.ax.spines['top'].set_visible(False)
+                    ovrl.ax.spines['right'].set_visible(False)
+                    ovrl.ax.spines['bottom'].set_visible(False)
+                    ovrl.ax.spines['left'].set_visible(False)
 
             self.fig.savefig(img_path, facecolor='white', transparent=False)
 
