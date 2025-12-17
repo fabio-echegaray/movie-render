@@ -57,7 +57,6 @@ class SequentialMovieRenderer:
         self._load_image()
 
         self._tmp = Path(os.curdir) / 'tmp' / 'render' / Path(imf.base_path).name / str(uuid.uuid4())
-        ensure_dir(self._tmp)
 
     def __iter__(self):
         return self
@@ -172,7 +171,8 @@ class SequentialMovieRenderer:
                     ovrl.ax.set_yticklabels([])
                     ovrl.ax.set_xticks([])
                     ovrl.ax.set_yticks([])
-            self.fig.tight_layout()
+
+            ensure_dir(self._tmp)
             self.fig.savefig(img_path, facecolor='white', transparent=False)
 
         # Start of method
