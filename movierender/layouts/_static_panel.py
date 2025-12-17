@@ -75,8 +75,9 @@ def render_static_montage(panel: ConfigPanel,
          .add_legend()
          )
 
-    # g.fig.tight_layout()
+    g.figure.tight_layout()
     plt.subplots_adjust(hspace=0, wspace=0.01, left=0, right=1, top=1, bottom=0)
 
-    g.savefig(panel.filename)
+    filepath = panel.configfile.parent / panel.filename
+    g.savefig(filepath)
     return g

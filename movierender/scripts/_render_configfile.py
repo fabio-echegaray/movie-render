@@ -5,35 +5,18 @@ from pathlib import Path
 import typer
 from typing_extensions import Annotated
 
-from movierender.layouts import LayoutColumnComposer, LayoutCompositeComposer
+from movierender.layouts import render_static_montage
+from movierender.scripts._render_movie import render_movie
 
 sys.path.append(Path(os.path.realpath(__file__)).parent.parent.parent.as_posix())
 
-from fileops.export.config import read_config, ConfigMovie
+from fileops.export.config import read_config
 from fileops.logger import get_logger, silence_loggers
 
 log = get_logger(name='render-movie')
 
 
-def render_movie(mov: ConfigMovie, overwrite=False):
-    if len(mov.image_file.frames) == 1:
-        log.warning("only one frame, skipping static image")
-        return
-    elif len(mov.image_file.frames) > 1:
-        mv_kwargs = dict(overwrite=overwrite)
-        # what follows is a list of supported layouts
-        if mov.layout in ["twoch", "two-ch"]:
-            lytcomposer = LayoutColumnComposer(mov, columns=2, **mv_kwargs)
-        elif mov.layout == "twoch-comp":
-            lytcomposer = LayoutCompositeComposer(mov, **mv_kwargs)
-        else:
-            raise ValueError(f"No supported layout in the rendering of {mov.movie_filename}.")
-
-        lytcomposer.make_layout()
-        lytcomposer.render()
-
-
-def render_movie_cmd(
+def render_configuration_file_cmd(
         cfg_path: Annotated[
             Path, typer.Argument(help="Name of the configuration file of the movie to be rendered")],
         show_file_info: Annotated[
@@ -43,6 +26,7 @@ def render_movie_cmd(
 ):
     if cfg_path.parent.name[0:3] == "bad":
         return
+
     log.info(f"Reading configuration file {cfg_path}")
     cfg = read_config(cfg_path)
 
@@ -51,4 +35,11 @@ def render_movie_cmd(
         silence_loggers(loggers=[mov.image_file.__class__.__name__], output_log_file="silenced.log")
         if show_file_info:
             log.info(f"file {cfg_path}\r\n{mov.image_file.info.squeeze(axis=0)}")
-            render_movie(mov, overwrite=overwrite_movie_file)
+        render_movie(mov, overwrite=overwrite_movie_file)
+
+    # render panels specified in configuration file
+    for pan in cfg.panels:
+        silence_loggers(loggers=[pan.image_file.__class__.__name__], output_log_file="silenced.log")
+        if show_file_info:
+            log.info(f"file {cfg_path}\r\n{pan.image_file.info.squeeze(axis=0)}")
+        render_static_montage(pan, row=pan.rows, col=pan.columns)

@@ -1,3 +1,4 @@
+import matplotlib.colors as mcolors
 import numpy as np
 from skimage import color, exposure
 
@@ -42,6 +43,8 @@ class CompositeRGBImage(ImagePipeline):
                     _img = exposure.rescale_intensity(_img, in_range=tuple(np.percentile(_img, (0.1, 99.9))))
 
             _img = color.gray2rgb(_img)
-            background += _img * settings['color'] * settings['intensity']
+            rgb_vector_color = mcolors.to_rgb(settings['color'])
+            assert isinstance(rgb_vector_color, tuple)
+            background += _img * rgb_vector_color * settings['intensity']
 
         return background.astype(dtype)
