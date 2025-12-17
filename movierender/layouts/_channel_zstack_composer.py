@@ -27,10 +27,6 @@ class LayoutZStackColumnComposer(BaseLayoutComposer):
         movie = self._movie_configuration_params
         t = PixelTools(movie.image_file)
 
-        # for m in get_monitors():
-        #     print(str(m))
-        # monitor = get_monitors()[0]
-
         imf = movie.image_file
         z_ax_dct = dict()
         if imf.n_zstacks > 1:
