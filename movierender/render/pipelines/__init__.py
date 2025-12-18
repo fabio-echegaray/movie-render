@@ -1,4 +1,5 @@
 from ._exception import PipelineException
 from ._image_pipeline_base import ImagePipeline
 from ._image_pipeline_composite_rgb import CompositeRGBImage
+from ._image_pipeline_null import NullImage
 from ._image_pipeline_single import SingleImage
