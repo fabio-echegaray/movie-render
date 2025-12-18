@@ -16,7 +16,7 @@ from fileops.image.exceptions import FrameNotFoundError
 from fileops.pathutils import ensure_dir
 from matplotlib.figure import Figure
 
-from movierender.render.pipelines import SingleImage, ImagePipeline
+from movierender.render.pipelines import SingleImage, ImagePipeline, NullImage
 
 if TYPE_CHECKING:
     from movierender.overlays import Overlay
@@ -149,8 +149,13 @@ class SequentialMovieRenderer:
                     imgp.ax.set_yticklabels([])
                     imgp.ax.set_xticks([])
                     imgp.ax.set_yticks([])
-
+                    imgp.ax.spines['top'].set_visible(False)
+                    imgp.ax.spines['right'].set_visible(False)
+                    imgp.ax.spines['bottom'].set_visible(False)
+                    imgp.ax.spines['left'].set_visible(False)
             for imgp in self.image_pipeline:
+                if type(imgp) == NullImage:
+                    continue
                 ppu = self.image.pix_per_um if self.image.pix_per_um is not None else 1
                 ext = (0, self.image.width / ppu, 0, self.image.height / ppu)
                 ax = imgp.ax if imgp.ax is not None else self.ax
@@ -171,6 +176,10 @@ class SequentialMovieRenderer:
                     ovrl.ax.set_yticklabels([])
                     ovrl.ax.set_xticks([])
                     ovrl.ax.set_yticks([])
+                    ovrl.ax.spines['top'].set_visible(False)
+                    ovrl.ax.spines['right'].set_visible(False)
+                    ovrl.ax.spines['bottom'].set_visible(False)
+                    ovrl.ax.spines['left'].set_visible(False)
 
             ensure_dir(self._tmp)
             self.fig.savefig(img_path, facecolor='white', transparent=False)
