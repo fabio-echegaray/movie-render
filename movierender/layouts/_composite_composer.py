@@ -29,7 +29,8 @@ class LayoutCompositeComposer(BaseLayoutComposer):
 
         self.renderer = MovieRenderer(fig=fig,
                                       config=movie,
-                                      fontdict={'size': 12})
+                                      fontdict={'size': 12},
+                                      **self._renderer_params)
 
         self.renderer += ovl.ScaleBar(um=movie.scalebar, lw=3,
                                       xy=t.xy_ratio_to_um(0.80, 0.05),

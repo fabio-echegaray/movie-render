@@ -44,7 +44,8 @@ class LayoutChannelColumnComposer(BaseLayoutComposer):
 
         self.renderer = MovieRenderer(fig=fig,
                                       config=movie,
-                                      fontdict={'size': 12})
+                                      fontdict={'size': 12},
+                                      **self._renderer_params)
 
         for ax, ch_cfg_ix in zip(self.ax_lst, movie.channel_render_parameters):
             ch_cfg = movie.channel_render_parameters[ch_cfg_ix]

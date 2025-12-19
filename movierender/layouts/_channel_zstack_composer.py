@@ -48,7 +48,8 @@ class LayoutZStackColumnComposer(BaseLayoutComposer):
         fig.suptitle(self.fig_title)
         self.renderer = MovieRenderer(fig=fig,
                                       config=movie,
-                                      fontdict={'size': 12})
+                                      fontdict={'size': 12},
+                                      **self._renderer_params)
 
         ch_indexes = sorted(movie.channel_render_parameters.keys())
         ch_cfg = movie.channel_render_parameters[ch_indexes[0]]  # we take the first channel regardless of their number

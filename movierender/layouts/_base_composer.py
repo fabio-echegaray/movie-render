@@ -17,6 +17,7 @@ class BaseLayoutComposer:
         self._overwrite = overwrite
         self._movie_configuration_params = movie
         self.renderer: MovieRenderer | None = None
+        self._renderer_params = dict(temp_folder=str(uuid.uuid4()))
         self.dpi = 326
 
         self.fig_title = movie.title
