@@ -2,7 +2,7 @@ from movierender.render import MovieRenderer
 
 
 class Overlay(object):
-    def __init__(self, ax=None,  **kwargs):
+    def __init__(self, ax=None, **kwargs):
         self.layers = [self]
         self._kwargs = kwargs
         self._renderer: MovieRenderer | None = None
