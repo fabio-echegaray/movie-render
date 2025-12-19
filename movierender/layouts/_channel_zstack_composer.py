@@ -31,8 +31,6 @@ class LayoutZStackColumnComposer(BaseLayoutComposer):
         z_ax_dct = dict()
         if imf.n_zstacks > 1:
             rows = math.ceil(imf.n_zstacks / self.n_columns)
-            # fig = plt.figure(figsize=(monitor.width * 0.775 / self.n_columns, monitor.height * 0.94 / rows),
-            #                  dpi=self.dpi)
             fig = plt.figure(figsize=(14, 9), dpi=self.dpi)
 
             gs = gridspec.GridSpec(nrows=rows, ncols=self.n_columns)

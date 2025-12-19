@@ -20,7 +20,7 @@ class LayoutCompositeComposer(BaseLayoutComposer):
         movie = self._movie_configuration_params
         t = PixelTools(movie.image_file)
 
-        fig = plt.figure(figsize=(5, 5.5), dpi=self.dpi)
+        fig = plt.figure(figsize=(5.5, 5.5), dpi=self.dpi)
         fig.suptitle(self.fig_title)
 
         # only one axes is rendered
