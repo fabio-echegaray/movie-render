@@ -26,18 +26,21 @@ class SequentialMovieRenderer:
     layers: List[Overlay]
     image: ImageFile
 
-    def __init__(self, fig: Figure, config: ConfigMovie, show_axis=False, invert_y=False, **kwargs):
+    def __init__(self, fig: Figure, config: ConfigMovie, show_axis=False, invert_y=False, temp_folder=None, **kwargs):
         self._kwargs = {
             'fontdict': {'size': 10},
         }
         self._kwargs.update(**kwargs)
+        self.logger = logging.getLogger(__name__)
+        self.logger.debug(f"temp_folder {temp_folder}")
+        if temp_folder is None:
+            temp_folder = str(uuid.uuid4())
 
         self.fig = fig
         self.show_axis = show_axis
         self.ax = fig.gca()
 
         self.layers = []
-        self.logger = logging.getLogger(__name__)
 
         self.time = 0
         self.frame = 0
@@ -56,7 +59,9 @@ class SequentialMovieRenderer:
         self._render = np.zeros((imf.width, imf.height), dtype=float)
         self._load_image()
 
-        self._tmp = Path(os.curdir) / 'tmp' / 'render' / Path(imf.base_path).name / str(uuid.uuid4())
+        self._tmp = Path(os.curdir) / 'tmp' / 'render' / Path(imf.base_path).name
+        if temp_folder:
+            self._tmp = self._tmp / temp_folder
 
     def __iter__(self):
         return self
