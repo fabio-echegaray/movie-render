@@ -1,1 +1,1 @@
-from .render import MovieRenderer, ImagePipeline, SingleImage, CompositeRGBImage
+from .render import MovieRenderer, ImagePipeline, SingleImage, CompositeRGBImage, NullImage

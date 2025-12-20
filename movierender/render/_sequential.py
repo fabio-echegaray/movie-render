@@ -16,7 +16,7 @@ from fileops.image.exceptions import FrameNotFoundError
 from fileops.pathutils import ensure_dir
 from matplotlib.figure import Figure
 
-from movierender.render.pipelines import SingleImage, ImagePipeline
+from movierender.render.pipelines import SingleImage, ImagePipeline, NullImage
 
 if TYPE_CHECKING:
     from movierender.overlays import Overlay
@@ -26,18 +26,21 @@ class SequentialMovieRenderer:
     layers: List[Overlay]
     image: ImageFile
 
-    def __init__(self, fig: Figure, config: ConfigMovie, show_axis=False, invert_y=False, **kwargs):
+    def __init__(self, fig: Figure, config: ConfigMovie, show_axis=False, invert_y=False, temp_folder=None, **kwargs):
         self._kwargs = {
             'fontdict': {'size': 10},
         }
         self._kwargs.update(**kwargs)
+        self.logger = logging.getLogger(__name__)
+        self.logger.debug(f"temp_folder {temp_folder}")
+        if temp_folder is None:
+            temp_folder = str(uuid.uuid4())
 
         self.fig = fig
         self.show_axis = show_axis
         self.ax = fig.gca()
 
         self.layers = []
-        self.logger = logging.getLogger(__name__)
 
         self.time = 0
         self.frame = 0
@@ -56,8 +59,9 @@ class SequentialMovieRenderer:
         self._render = np.zeros((imf.width, imf.height), dtype=float)
         self._load_image()
 
-        self._tmp = Path(os.curdir) / 'tmp' / 'render' / Path(imf.base_path).name / str(uuid.uuid4())
-        ensure_dir(self._tmp)
+        self._tmp = Path(os.curdir) / 'tmp' / 'render' / Path(imf.base_path).name
+        if temp_folder:
+            self._tmp = self._tmp / temp_folder
 
     def __iter__(self):
         return self
@@ -70,12 +74,6 @@ class SequentialMovieRenderer:
         self.time = (self.time + 1) % self._max_frame
 
         return imp(invert_y=self.inv_y)
-
-    def __getattr__(self, name):
-        if name in self._kwargs:
-            return self._kwargs[name]
-        else:
-            raise AttributeError("No such attribute: " + name)
 
     def _load_image(self):
         assert len(self.image.frames) > 1, "More than one frame needed to make a movie."
@@ -150,8 +148,13 @@ class SequentialMovieRenderer:
                     imgp.ax.set_yticklabels([])
                     imgp.ax.set_xticks([])
                     imgp.ax.set_yticks([])
-
+                    imgp.ax.spines['top'].set_visible(False)
+                    imgp.ax.spines['right'].set_visible(False)
+                    imgp.ax.spines['bottom'].set_visible(False)
+                    imgp.ax.spines['left'].set_visible(False)
             for imgp in self.image_pipeline:
+                if type(imgp) == NullImage:
+                    continue
                 ppu = self.image.pix_per_um if self.image.pix_per_um is not None else 1
                 ext = (0, self.image.width / ppu, 0, self.image.height / ppu)
                 ax = imgp.ax if imgp.ax is not None else self.ax
@@ -172,7 +175,12 @@ class SequentialMovieRenderer:
                     ovrl.ax.set_yticklabels([])
                     ovrl.ax.set_xticks([])
                     ovrl.ax.set_yticks([])
-            self.fig.tight_layout()
+                    ovrl.ax.spines['top'].set_visible(False)
+                    ovrl.ax.spines['right'].set_visible(False)
+                    ovrl.ax.spines['bottom'].set_visible(False)
+                    ovrl.ax.spines['left'].set_visible(False)
+
+            ensure_dir(self._tmp)
             self.fig.savefig(img_path, facecolor='white', transparent=False)
 
         # Start of method
@@ -201,4 +209,4 @@ class SequentialMovieRenderer:
         animation.close()
 
     def __repr__(self):
-        return f"<MovieRender object at {hex(id(self))}> with {len(self._kwargs)} arguments."
+        return f"<MovieRender object (sequential) at {hex(id(self))}> with {len(self._kwargs)} arguments."
