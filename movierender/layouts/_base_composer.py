@@ -39,6 +39,27 @@ class BaseLayoutComposer:
                 self.log.warning(f'File {self.filename} already exists in folder {self.base_folder}.')
                 raise FileExistsError
 
+    @property
+    def configuration(self):
+        cfg = dict()
+
+        cfg["renderer"] = dict()
+        cfg["renderer_name"] = self.__class__.__name__
+        for d in self.__dict__:
+            if d not in ['uuid', 'ax', 'ax_lst', '_movie_configuration_params', 'renderer', '_renderer_params']:
+                cfg["renderer"].update({d: self.__dict__[d]})
+
+        cfg["layers"] = list()
+        for ly in self.renderer.layers:
+            cfg["layers"].append({"name": ly.__class__.__name__, "config": ly.configuration})
+        return cfg
+
+    @configuration.setter
+    def configuration(self, cfg):
+        assert type(cfg) is dict
+        for key, val in cfg.items():
+            self.__setattr__(key, val)
+
     def make_layout(self):
         raise NotImplementedError
 
