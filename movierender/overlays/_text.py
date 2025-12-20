@@ -8,10 +8,14 @@ class Text(Overlay):
         self._kwargs = kwargs
         super().__init__(**kwargs)
 
-    def plot(self, ax=None, xy=(0, 0), fontdict=None, **kwargs):
+    def plot(self, ax=None, xy=None, fontdict=None, **kwargs):
         if ax is None:
             ax = self.ax
         assert ax is not None, "No axes found to plot overlay."
+        if fontdict is None:
+            fontdict = self._kwargs["fontdict"] if "fontdict" in self._kwargs else None
+        if xy is None:
+            xy = self._kwargs["xy"] if "xy" in self._kwargs else None
 
         x0, y0 = xy
-        ax.text(x0, y0, self.text, color='w', fontdict=fontdict)
+        ax.text(x0, y0, self.text, **fontdict)
