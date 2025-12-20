@@ -15,7 +15,7 @@ from fileops.logger import get_logger, silence_loggers
 log = get_logger(name='render-movie')
 
 
-def render_movie(mov: ConfigMovie, overwrite=False):
+def render_movie(mov: ConfigMovie, overwrite=False, parallel=False):
     if len(mov.image_file.frames) == 1:
         log.warning("only one frame, skipping static image")
         return
@@ -33,7 +33,7 @@ def render_movie(mov: ConfigMovie, overwrite=False):
             raise ValueError(f"No supported layout in the rendering of {mov.movie_filename}.")
 
         lytcomposer.make_layout()
-        lytcomposer.render()
+        lytcomposer.render(parallel=parallel | True)  # set temporarily for debug purposes
 
 
 def render_movie_cmd(

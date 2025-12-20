@@ -3,10 +3,9 @@ import math
 
 from fileops.export.config import ConfigMovie
 from fileops.logger import get_logger
-from matplotlib import pyplot as plt, gridspec
 
 import movierender.overlays as ovl
-from movierender import MovieRenderer
+from movierender import MovieRenderer, plt, gridspec
 from movierender.overlays.pixel_tools import PixelTools
 from movierender.render.pipelines import NullImage, CompositeRGBImage
 from ._base_composer import BaseLayoutComposer

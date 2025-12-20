@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import copy
 import logging
 import os
+import threading
 import uuid
 from pathlib import Path
 from typing import List, TYPE_CHECKING
@@ -20,6 +22,8 @@ from movierender.render.pipelines import SingleImage, ImagePipeline, NullImage
 
 if TYPE_CHECKING:
     from movierender.overlays import Overlay
+
+reading_image_lock = threading.Lock()
 
 
 class SequentialMovieRenderer:
@@ -185,15 +189,27 @@ class SequentialMovieRenderer:
             ppu = self.image.pix_per_um if self.image.pix_per_um is not None else 1
             ext = (0, self.image.width / ppu, 0, self.image.height / ppu)
             ax = imgp.ax if imgp.ax is not None else self.ax
-            img = imgp()
-            img = skimage.util.img_as_float(img)
-            ax.imshow(img, cmap='gray', extent=ext,
-                      origin='upper' if self.inv_y else 'lower',
-                      interpolation='none', aspect='equal',
-                      zorder=0)
+            with reading_image_lock:
+                try:
+                    img = imgp()
+                    img = skimage.util.img_as_float(img)
+                    ax.imshow(img, cmap='gray', extent=ext,
+                              origin='upper' if self.inv_y else 'lower',
+                              interpolation='none', aspect='equal',
+                              zorder=0)
+                except TypeError as e:
+                    self.logger.error(e)
+                except FrameNotFoundError as e:
+                    self.logger.error(e)
+                    return f"failed to render frame {frame}"
+                self.logger.debug(f"frame {frame}: image retrieved OK.")
             for ovrl in self.layers:
                 kwargs = self._kwargs.copy()
                 kwargs.update(**ovrl._kwargs, show_axis=self.show_axis)
+                kwargs.update(show_axis=self.show_axis)
+                kwargs.update(**ovrl._kwargs)
+                _kwa = copy.copy(kwargs)
+                _kwa.pop("timestamps")
                 ovrl.plot(ax=self.ax if ovrl.ax is None else None, **kwargs)
 
         for ovrl in self.layers:
