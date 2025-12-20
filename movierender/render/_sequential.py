@@ -70,12 +70,6 @@ class SequentialMovieRenderer:
 
         return imp(invert_y=self.inv_y)
 
-    def __getattr__(self, name):
-        if name in self._kwargs:
-            return self._kwargs[name]
-        else:
-            raise AttributeError("No such attribute: " + name)
-
     def _load_image(self):
         assert len(self.image.frames) > 1, "More than one frame needed to make a movie."
         self.logger.info(f"Loaded {self.image.image_path}. WxH({self.image.width},{self.image.height}), "
