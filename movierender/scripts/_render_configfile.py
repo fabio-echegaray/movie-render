@@ -35,7 +35,11 @@ def render_configuration_file_cmd(
         silence_loggers(loggers=[mov.image_file.__class__.__name__], output_log_file="silenced.log")
         if show_file_info:
             log.info(f"file {cfg_path}\r\n{mov.image_file.info.squeeze(axis=0)}")
-        render_movie(mov, overwrite=overwrite_movie_file)
+        try:
+            render_movie(mov, overwrite=overwrite_movie_file)
+        except FileExistsError:
+            if not overwrite_movie_file:
+                log.warning(f"file {cfg_path} already exists in folder.")
 
     # render panels specified in configuration file
     for pan in cfg.panels:

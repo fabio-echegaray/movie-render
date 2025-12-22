@@ -14,6 +14,8 @@ def render_folder_cmd(
         path: Annotated[
             Path, typer.Argument(help="Path where configuration files are located. "
                                       "If no path is given, the current folder will be used.")] = None,
+        overwrite_files: Annotated[
+            bool, typer.Option(help="Set true if you want to overwrite the files")] = False,
 ):
     if path is None:
         log.info(f"No path provided")
@@ -26,7 +28,7 @@ def render_folder_cmd(
             continue
 
         log.info(f"Reading configuration file {cfg_path}")
-        render_configuration_file_cmd(cfg_path)
+        render_configuration_file_cmd(cfg_path, overwrite_movie_file=overwrite_files)
         total_rendered += 1
 
     return total_rendered
