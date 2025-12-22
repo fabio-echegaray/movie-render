@@ -16,11 +16,11 @@ class LayoutZStackColumnComposer(BaseLayoutComposer):
 
     def __init__(self,
                  movie: ConfigMovie,
-                 columns: int = 2,
+                 n_columns: int = 2,
                  **kwargs):
         super().__init__(movie, **kwargs)
 
-        self.n_columns = columns
+        self.n_columns = n_columns
 
     def make_layout(self):
         if self._layout_done:

@@ -24,9 +24,9 @@ def render_movie(mov: ConfigMovie, overwrite=False, parallel=False):
         # what follows is a list of supported layouts
         if mov.layout in [f"z-{n}-col" for n in range(1, 9)]:
             cols = min(int(mov.layout.split("-")[1]), mov.image_file.n_zstacks)
-            lytcomposer = LayoutZStackColumnComposer(mov, columns=cols, **mv_kwargs)
+            lytcomposer = LayoutZStackColumnComposer(mov, n_columns=cols, **mv_kwargs)
         elif mov.layout in ["twoch", "two-ch"]:
-            lytcomposer = LayoutChannelColumnComposer(mov, columns=2, **mv_kwargs)
+            lytcomposer = LayoutChannelColumnComposer(mov, n_columns=2, **mv_kwargs)
         elif mov.layout == "twoch-comp":
             lytcomposer = LayoutCompositeComposer(mov, **mv_kwargs)
         else:
