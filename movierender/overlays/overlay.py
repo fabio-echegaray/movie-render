@@ -64,8 +64,8 @@ class Overlay(object):
             self._renderer = ovrl
             self.show_axis = self._renderer.show_axis
             return ovrl
-
-        self.layers.append(ovrl)
+        elif isinstance(ovrl, Overlay):
+            self.layers.append(ovrl)
         return self
 
     def __eq__(self, other: 'Overlay'):
@@ -93,17 +93,18 @@ class Overlay(object):
             if d not in ['uuid', 'ax', 'layers', '_renderer', '_kwargs']:
                 cfg.update({d: self.__dict__[d]})
 
-        fig = self._renderer.fig
-        is_part_of_gridspec = self.ax in fig.get_axes() and self.ax.get_subplotspec() is not None
-        cfg.update({"ax_on_grid": is_part_of_gridspec})
-        if is_part_of_gridspec:
-            n_rows, n_cols, start, stop = self.ax.get_subplotspec().get_geometry()
-            cfg.update({"gridspec": {
-                "n_rows": n_rows,
-                "n_cols": n_cols,
-                "start":  start,
-                "stop":   stop
-            }})
+        if self._renderer is not None:
+            fig = self._renderer.fig
+            is_part_of_gridspec = self.ax in fig.get_axes() and self.ax.get_subplotspec() is not None
+            cfg.update({"ax_on_grid": is_part_of_gridspec})
+            if is_part_of_gridspec:
+                n_rows, n_cols, start, stop = self.ax.get_subplotspec().get_geometry()
+                cfg.update({"gridspec": {
+                    "n_rows": n_rows,
+                    "n_cols": n_cols,
+                    "start":  start,
+                    "stop":   stop
+                }})
 
         return cfg
 

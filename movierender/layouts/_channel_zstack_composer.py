@@ -23,6 +23,9 @@ class LayoutZStackColumnComposer(BaseLayoutComposer):
         self.n_columns = columns
 
     def make_layout(self):
+        if self._layout_done:
+            return
+
         movie = self._movie_configuration_params
         t = PixelTools(movie.image_file)
 
@@ -77,3 +80,6 @@ class LayoutZStackColumnComposer(BaseLayoutComposer):
         for zk in z_ax_dct.keys():
             if zk > imf.n_zstacks - 1:
                 self.renderer += NullImage(ax=z_ax_dct[zk])
+
+        self._layout_done = True
+        super().make_layout()

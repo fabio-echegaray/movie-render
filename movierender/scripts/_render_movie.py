@@ -32,7 +32,6 @@ def render_movie(mov: ConfigMovie, overwrite=False, parallel=False):
         else:
             raise ValueError(f"No supported layout in the rendering of {mov.movie_filename}.")
 
-        lytcomposer.make_layout()
         lytcomposer.render(parallel=parallel | True)  # set temporarily for debug purposes
 
 

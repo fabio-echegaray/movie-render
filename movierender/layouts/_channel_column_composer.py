@@ -22,6 +22,9 @@ class LayoutChannelColumnComposer(BaseLayoutComposer):
         self.n_columns = columns
 
     def make_layout(self):
+        if self._layout_done:
+            return
+
         movie = self._movie_configuration_params
         t = PixelTools(movie.image_file)
 
@@ -69,3 +72,6 @@ class LayoutChannelColumnComposer(BaseLayoutComposer):
             self.renderer += ovl.Text(f'{ch_cfg["name"]}',
                                       xy=t.xy_ratio_to_um(0.70, 0.95),
                                       fontdict={'size': 7, 'color': 'white'}, ax=ax)
+
+        self._layout_done = True
+        super().make_layout()

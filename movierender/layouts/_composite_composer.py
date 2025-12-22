@@ -16,6 +16,9 @@ class LayoutCompositeComposer(BaseLayoutComposer):
         super().__init__(movie, **kwargs)
 
     def make_layout(self):
+        if self._layout_done:
+            return
+
         movie = self._movie_configuration_params
         t = PixelTools(movie.image_file)
 
@@ -48,3 +51,6 @@ class LayoutCompositeComposer(BaseLayoutComposer):
                                                    'rescale':   True,
                                                    'intensity': 1.0
                                                } for cix, ch_cfg in movie.channel_render_parameters.items()})
+
+        self._layout_done = True
+        super().make_layout()

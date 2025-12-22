@@ -2,6 +2,7 @@ import concurrent
 import importlib
 import os
 import uuid
+from collections import deque
 from concurrent import futures
 from pathlib import Path
 
@@ -10,6 +11,7 @@ from fileops.export.config import ConfigMovie
 from fileops.logger import get_logger
 
 from movierender.render import MovieRenderer
+from overlays import Overlay
 
 
 class BaseLayoutComposer:
@@ -28,6 +30,8 @@ class BaseLayoutComposer:
 
         self.fig_title = movie.title
         self.ax_lst = list()
+        self._layout_done = False
+        self._pending_overlays = deque()
 
         im = movie.image_file
         fname = movie.movie_filename if len(movie.movie_filename) > 0 else im.image_path.name
@@ -45,6 +49,11 @@ class BaseLayoutComposer:
                 self.log.warning(f'File {self.filename} already exists in folder {self.base_folder}.')
                 raise FileExistsError
 
+    def __add__(self, elem):
+        if isinstance(elem, Overlay):
+            self._pending_overlays.appendleft(elem)
+        return self
+
     @property
     def configuration(self):
         cfg = dict()
@@ -57,8 +66,9 @@ class BaseLayoutComposer:
         cfg["renderer"]["overwrite"] = cfg["renderer"].pop("_overwrite")
 
         cfg["layers"] = list()
-        for ly in self.renderer.layers:
-            cfg["layers"].append({"name": ly.__class__.__name__, "config": ly.configuration})
+        if self.renderer is not None and hasattr(self.renderer, "layers"):
+            for ly in self.renderer.layers:
+                cfg["layers"].append({"name": ly.__class__.__name__, "config": ly.configuration})
         return cfg
 
     @configuration.setter
@@ -68,7 +78,10 @@ class BaseLayoutComposer:
             self.__setattr__(key, val)
 
     def make_layout(self):
-        raise NotImplementedError
+        # include to the renderer any overlays that were added before the making of the layout
+        while self._pending_overlays:
+            ovrl = self._pending_overlays.pop()
+            self.renderer += ovrl
 
     def _render_parallel(self):
         n_cpus = os.cpu_count()
@@ -82,7 +95,6 @@ class BaseLayoutComposer:
         for i in range(n_workers):
             composer_instance = lcls(self._movie_configuration_params, **cfg["renderer"])
             composer_instance._renderer_params = self._renderer_params
-            composer_instance.make_layout()
 
             # obtain overlay layers that are not coming from make_layout
             c1 = cfg["layers"]
@@ -98,6 +110,8 @@ class BaseLayoutComposer:
                     continue
                 additional_overlays.append(d1)
 
+            additional_overlays.extend(
+                [{"name": ovrl.__class__.__name__, "config": ovrl.configuration} for ovrl in self._pending_overlays])
             for o in additional_overlays:
                 ovl_module = importlib.import_module(f"movierender.overlays")
                 ovrl = getattr(ovl_module, o['name'])
@@ -114,8 +128,8 @@ class BaseLayoutComposer:
         future_to_mapping = dict()
         with futures.ProcessPoolExecutor(max_workers=n_workers) as executor:
             for k, fr in enumerate(mov.frames):
-                renderer = composer_array[k % len(composer_array)].renderer
-                future = executor.submit(renderer.render_frame, fr)
+                composer = composer_array[k % len(composer_array)]
+                future = executor.submit(run_job, composer, fr)
                 future_to_mapping[future] = k  # Store the index k as the value for the future
 
             for future in concurrent.futures.as_completed(future_to_mapping):
@@ -124,6 +138,7 @@ class BaseLayoutComposer:
                     self.log.error(f"exception {e.__class__.__name__}({e}) found at ix {k}")
                 self.log.debug(f"finished ix {k}; file {future.result()}.")
 
+        self.make_layout()
         self.renderer.render(filename=str(self.save_file_path), test=False)
 
     def render(self, parallel=False):
@@ -134,3 +149,8 @@ class BaseLayoutComposer:
             if self.renderer is None:
                 raise AttributeError("Need to call method make_layout before trying to render.")
             self.renderer.render(filename=str(self.save_file_path), test=False)
+
+
+def run_job(cmpsr: BaseLayoutComposer, frame):
+    cmpsr.make_layout()
+    return cmpsr.renderer.render_frame(frame)
