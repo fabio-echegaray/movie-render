@@ -7,6 +7,7 @@ from concurrent import futures
 from pathlib import Path
 
 import matplotlib
+import matplotlib.pyplot as plt
 from fileops.export.config import ConfigMovie
 from fileops.logger import get_logger
 
@@ -153,4 +154,8 @@ class BaseLayoutComposer:
 
 def run_job(cmpsr: BaseLayoutComposer, frame):
     cmpsr.make_layout()
-    return cmpsr.renderer.render_frame(frame)
+    out = cmpsr.renderer.render_frame(frame)
+    # close figure of renderer to prevent memory leak
+    plt.close(cmpsr.renderer.fig)
+
+    return out
