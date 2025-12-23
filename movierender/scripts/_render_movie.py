@@ -50,5 +50,5 @@ def render_movie_cmd(
     for mov in cfg.movies:
         silence_loggers(loggers=[mov.image_file.__class__.__name__], output_log_file="silenced.log")
         if show_file_info:
-            log.info(f"file {cfg_path}\r\n{mov.image_file.info.squeeze(axis=0)}")
-            render_movie(mov, overwrite=overwrite_movie_file)
+            log.info(f"file {cfg_path}\r\n{nfo.squeeze(axis=0)}")
+        render_movie(mov, overwrite=overwrite_movie_file)

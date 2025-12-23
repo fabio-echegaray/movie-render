@@ -50,6 +50,8 @@ class Timestamp(Overlay):
             ax = self.ax
         assert ax is not None, "No axes found to plot overlay."
         assert timestamps is not None, "Need timestamps to render on axes."
+        if va is None:
+            va = 'center'
 
         x0, y0 = xy
         txt = ''
