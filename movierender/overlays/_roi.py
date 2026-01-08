@@ -10,6 +10,7 @@ class ImagejROI(Overlay):
     def __init__(self, roi_list: List[ImagejRoi] = None, **kwargs):
         assert all(r is not None for r in roi_list), "Need ROIs to render on axes."
         self.roi_lst = roi_list
+        self._kwargs = kwargs
         super().__init__(**kwargs)
 
     def plot(self, ax=None, xy=(0, 0), fontdict=None, **kwargs):

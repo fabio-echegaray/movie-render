@@ -15,7 +15,7 @@ from fileops.logger import get_logger, silence_loggers
 log = get_logger(name='render-movie')
 
 
-def render_movie(mov: ConfigMovie, overwrite=False):
+def render_movie(mov: ConfigMovie, overwrite=False, parallel=False):
     if len(mov.image_file.frames) == 1:
         log.warning("only one frame, skipping static image")
         return
@@ -24,16 +24,15 @@ def render_movie(mov: ConfigMovie, overwrite=False):
         # what follows is a list of supported layouts
         if mov.layout in [f"z-{n}-col" for n in range(1, 9)]:
             cols = min(int(mov.layout.split("-")[1]), mov.image_file.n_zstacks)
-            lytcomposer = LayoutZStackColumnComposer(mov, columns=cols, **mv_kwargs)
+            lytcomposer = LayoutZStackColumnComposer(mov, n_columns=cols, **mv_kwargs)
         elif mov.layout in ["twoch", "two-ch"]:
-            lytcomposer = LayoutChannelColumnComposer(mov, columns=2, **mv_kwargs)
+            lytcomposer = LayoutChannelColumnComposer(mov, n_columns=2, **mv_kwargs)
         elif mov.layout == "twoch-comp":
             lytcomposer = LayoutCompositeComposer(mov, **mv_kwargs)
         else:
             raise ValueError(f"No supported layout in the rendering of {mov.movie_filename}.")
 
-        lytcomposer.make_layout()
-        lytcomposer.render()
+        lytcomposer.render(parallel=parallel | True)  # set temporarily for debug purposes
 
 
 def render_movie_cmd(

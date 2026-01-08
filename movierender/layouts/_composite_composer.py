@@ -1,9 +1,8 @@
 from fileops.export.config import ConfigMovie
 from fileops.logger import get_logger
-from matplotlib import pyplot as plt
 
 import movierender.overlays as ovl
-from movierender import MovieRenderer, CompositeRGBImage
+from movierender import MovieRenderer, CompositeRGBImage, plt
 from movierender.overlays.pixel_tools import PixelTools
 from ._base_composer import BaseLayoutComposer
 
@@ -17,10 +16,13 @@ class LayoutCompositeComposer(BaseLayoutComposer):
         super().__init__(movie, **kwargs)
 
     def make_layout(self):
+        if self._layout_done:
+            return
+
         movie = self._movie_configuration_params
         t = PixelTools(movie.image_file)
 
-        fig = plt.figure(figsize=(5, 5.5), dpi=self.dpi)
+        fig = plt.figure(figsize=(5.5, 5.5), dpi=self.dpi)
         fig.suptitle(self.fig_title)
 
         # only one axes is rendered
@@ -29,7 +31,8 @@ class LayoutCompositeComposer(BaseLayoutComposer):
 
         self.renderer = MovieRenderer(fig=fig,
                                       config=movie,
-                                      fontdict={'size': 12})
+                                      fontdict={'size': 12},
+                                      **self._renderer_params)
 
         self.renderer += ovl.ScaleBar(um=movie.scalebar, lw=3,
                                       xy=t.xy_ratio_to_um(0.80, 0.05),
@@ -48,3 +51,6 @@ class LayoutCompositeComposer(BaseLayoutComposer):
                                                    'rescale':   True,
                                                    'intensity': 1.0
                                                } for cix, ch_cfg in movie.channel_render_parameters.items()})
+
+        self._layout_done = True
+        super().make_layout()

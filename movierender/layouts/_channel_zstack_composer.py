@@ -3,10 +3,9 @@ import math
 
 from fileops.export.config import ConfigMovie
 from fileops.logger import get_logger
-from matplotlib import pyplot as plt, gridspec
 
 import movierender.overlays as ovl
-from movierender import MovieRenderer
+from movierender import MovieRenderer, plt, gridspec
 from movierender.overlays.pixel_tools import PixelTools
 from movierender.render.pipelines import NullImage, CompositeRGBImage
 from ._base_composer import BaseLayoutComposer
@@ -17,13 +16,16 @@ class LayoutZStackColumnComposer(BaseLayoutComposer):
 
     def __init__(self,
                  movie: ConfigMovie,
-                 columns: int = 2,
+                 n_columns: int = 2,
                  **kwargs):
         super().__init__(movie, **kwargs)
 
-        self.n_columns = columns
+        self.n_columns = n_columns
 
     def make_layout(self):
+        if self._layout_done:
+            return
+
         movie = self._movie_configuration_params
         t = PixelTools(movie.image_file)
 
@@ -31,8 +33,6 @@ class LayoutZStackColumnComposer(BaseLayoutComposer):
         z_ax_dct = dict()
         if imf.n_zstacks > 1:
             rows = math.ceil(imf.n_zstacks / self.n_columns)
-            # fig = plt.figure(figsize=(monitor.width * 0.775 / self.n_columns, monitor.height * 0.94 / rows),
-            #                  dpi=self.dpi)
             fig = plt.figure(figsize=(14, 9), dpi=self.dpi)
 
             gs = gridspec.GridSpec(nrows=rows, ncols=self.n_columns)
@@ -50,7 +50,8 @@ class LayoutZStackColumnComposer(BaseLayoutComposer):
         fig.suptitle(self.fig_title)
         self.renderer = MovieRenderer(fig=fig,
                                       config=movie,
-                                      fontdict={'size': 12})
+                                      fontdict={'size': 12},
+                                      **self._renderer_params)
 
         ch_indexes = sorted(movie.channel_render_parameters.keys())
         ch_cfg = movie.channel_render_parameters[ch_indexes[0]]  # we take the first channel regardless of their number
@@ -79,3 +80,6 @@ class LayoutZStackColumnComposer(BaseLayoutComposer):
         for zk in z_ax_dct.keys():
             if zk > imf.n_zstacks - 1:
                 self.renderer += NullImage(ax=z_ax_dct[zk])
+
+        self._layout_done = True
+        super().make_layout()
