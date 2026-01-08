@@ -12,12 +12,12 @@ import imageio.v3 as iio
 import moviepy.editor as mpy
 import numpy as np
 import skimage
-from fileops.export.config import ConfigMovie
 from fileops.image import ImageFile
 from fileops.image.exceptions import FrameNotFoundError
 from fileops.pathutils import ensure_dir
 from matplotlib.figure import Figure
 
+from movierender.config import ConfigMovie
 from movierender.render.pipelines import SingleImage, ImagePipeline, NullImage
 
 if TYPE_CHECKING:

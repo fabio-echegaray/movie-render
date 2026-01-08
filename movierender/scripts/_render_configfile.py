@@ -31,26 +31,27 @@ def render_configuration_file_cmd(
     cfg = read_config(cfg_path)
 
     # make movies specified in configuration file
-    for mov in cfg.movies:
-        silence_loggers(loggers=[mov.image_file.__class__.__name__], output_log_file="silenced.log")
-        if show_file_info:
-            try:
-                if show_file_info:
+    if hasattr(cfg, 'movies'):  # attribute gets added by the plugin system should the file have a valid movie section
+        for mov in cfg.movies:
+            silence_loggers(loggers=[mov.image_file.__class__.__name__], output_log_file="silenced.log")
+            if show_file_info:
+                try:
                     log.info(f"file {cfg_path}\r\n{mov.image_file.info.squeeze(axis=0)}")
-            except Exception as e:
-                log.error(e)
-        try:
-            render_movie(mov, overwrite=overwrite_movie_file)
-        except FileExistsError:
-            if not overwrite_movie_file:
-                log.warning(f"file {cfg_path} already exists in folder.")
+                except Exception as e:
+                    log.error(e)
+            try:
+                render_movie(mov, overwrite=overwrite_movie_file)
+            except FileExistsError:
+                if not overwrite_movie_file:
+                    log.warning(f"file {cfg_path} already exists in folder.")
 
     # render panels specified in configuration file
-    for pan in cfg.panels:
-        silence_loggers(loggers=[pan.image_file.__class__.__name__], output_log_file="silenced.log")
-        if show_file_info:
-            try:
-                log.info(f"file {cfg_path}\r\n{mov.image_file.info.squeeze(axis=0)}")
-            except Exception as e:
-                log.error(e)
-        render_static_montage(pan, row=pan.rows, col=pan.columns)
+    if hasattr(cfg, 'panels'):  # attribute gets added by the plugin system should the file have a valid movie section
+        for pan in cfg.panels:
+            silence_loggers(loggers=[pan.image_file.__class__.__name__], output_log_file="silenced.log")
+            if show_file_info:
+                try:
+                    log.info(f"file {cfg_path}\r\n{mov.image_file.info.squeeze(axis=0)}")
+                except Exception as e:
+                    log.error(e)
+            render_static_montage(pan, row=pan.rows, col=pan.columns)

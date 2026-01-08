@@ -125,6 +125,14 @@ dependencies = [
 # "Say Thanks!" = "http://saythanks.io/to/example"
 "Source" = "https://github.com/fabio-echegaray/movierender"
 
+[project.entry-points.'fileops.plugins.config.types']
+movie = 'movierender.config:ConfigMovie'
+panel = 'movierender.config:ConfigPanel'
+
+[project.entry-points.'fileops.plugins.config.header_readers']
+movie_header_reader = 'movierender.config:MovieHeaderReaderPlugin'
+panel_header_reader = 'movierender.config:PanelHeaderReaderPlugin'
+
 [tool.setuptools.packages.find]
 include = ["movierender*"] # Only include the 'movierender' package and its subpackages
 
