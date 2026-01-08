@@ -34,12 +34,23 @@ def render_configuration_file_cmd(
     for mov in cfg.movies:
         silence_loggers(loggers=[mov.image_file.__class__.__name__], output_log_file="silenced.log")
         if show_file_info:
-            log.info(f"file {cfg_path}\r\n{mov.image_file.info.squeeze(axis=0)}")
-        render_movie(mov, overwrite=overwrite_movie_file)
+            try:
+                if show_file_info:
+                    log.info(f"file {cfg_path}\r\n{mov.image_file.info.squeeze(axis=0)}")
+            except Exception as e:
+                log.error(e)
+        try:
+            render_movie(mov, overwrite=overwrite_movie_file)
+        except FileExistsError:
+            if not overwrite_movie_file:
+                log.warning(f"file {cfg_path} already exists in folder.")
 
     # render panels specified in configuration file
     for pan in cfg.panels:
         silence_loggers(loggers=[pan.image_file.__class__.__name__], output_log_file="silenced.log")
         if show_file_info:
-            log.info(f"file {cfg_path}\r\n{pan.image_file.info.squeeze(axis=0)}")
+            try:
+                log.info(f"file {cfg_path}\r\n{mov.image_file.info.squeeze(axis=0)}")
+            except Exception as e:
+                log.error(e)
         render_static_montage(pan, row=pan.rows, col=pan.columns)
