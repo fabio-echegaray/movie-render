@@ -133,8 +133,8 @@ movie = 'movierender.config:ConfigMovie'
 panel = 'movierender.config:ConfigPanel'
 
 [project.entry-points.'fileops.plugins.config.header_readers']
-movie_header_reader = 'movierender.config:MovieHeaderReaderPlugin'
-panel_header_reader = 'movierender.config:PanelHeaderReaderPlugin'
+movie_header_reader = 'movierender.plugins.fileops:MovieHeaderReaderPlugin'
+panel_header_reader = 'movierender.plugins.fileops:PanelHeaderReaderPlugin'
 
 [tool.setuptools.packages.find]
 include = ["movierender*"] # Only include the 'movierender' package and its subpackages
