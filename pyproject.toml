@@ -7,6 +7,9 @@ name = "movierender"
 # For a discussion on single-sourcing the version, see
 # https://packaging.python.org/guides/single-sourcing-package-version/
 version = "0.2.0"
+# bump 0.1.0 (to 0.3.0)
+# - now frames are rendered using threads in parallel
+# - add classes to read header MOVIE from fileops config files; these are implemented as plugins of fileops
 
 # This is a one-line description or tagline of what your project does. This
 # corresponds to the "Summary" metadata field:
