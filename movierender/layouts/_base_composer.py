@@ -8,11 +8,12 @@ from pathlib import Path
 
 import matplotlib
 import matplotlib.pyplot as plt
+import movierender
 from fileops.logger import get_logger
-
 from movierender.config import ConfigMovie
+from movierender.overlays import Overlay
+from movierender.plugins.overlay import OverlayPlugin
 from movierender.render import MovieRenderer
-from overlays import Overlay
 
 
 class BaseLayoutComposer:
@@ -33,6 +34,8 @@ class BaseLayoutComposer:
         self.ax_lst = list()
         self._layout_done = False
         self._pending_overlays = deque()
+        # add overlays defined in the movie configuration object
+        self._pending_overlays.extendleft(movie.overlays)
 
         im = movie.image_file
         fname = movie.movie_filename if len(movie.movie_filename) > 0 else im.image_path.name
@@ -82,7 +85,10 @@ class BaseLayoutComposer:
         # include to the renderer any overlays that were added before the making of the layout
         while self._pending_overlays:
             ovrl = self._pending_overlays.pop()
-            self.renderer += ovrl
+            if isinstance(ovrl, Overlay):
+                self.renderer += ovrl
+            elif isinstance(ovrl, OverlayPlugin):
+                self.renderer += ovrl.overlay
 
     def _render_parallel(self):
         n_cpus = os.cpu_count()
@@ -115,9 +121,17 @@ class BaseLayoutComposer:
                 [{"name": ovrl.__class__.__name__, "config": ovrl.configuration} for ovrl in self._pending_overlays])
             for o in additional_overlays:
                 ovl_module = importlib.import_module(f"movierender.overlays")
-                ovrl = getattr(ovl_module, o['name'])
                 kwargs = o['config'].pop('_kwargs') if '_kwargs' in o else dict()
-                composer_instance.renderer += ovrl(**o['config'], **kwargs)
+                if hasattr(ovl_module, o['name']):
+                    ovrl = getattr(ovl_module, o['name'])
+                    composer_instance.renderer += ovrl(**o['config'], **kwargs)
+                elif len(p_ovrls := [plg for plg in movierender.overlay_type_plugins if o['name'] in plg.value]) > 0:
+                    for po in p_ovrls:
+                        self.log.debug(f"Loading {po.value}")
+                        clz = po.load()
+                        if not issubclass(clz, OverlayPlugin):
+                            continue
+                        composer_instance.renderer += clz(o['config']['args'], **o['config']['kwargs']).overlay
 
             composer_array.append(composer_instance)
 

@@ -1,9 +1,12 @@
 from pathlib import Path
-from typing import List, Dict, Union, Iterable
+from typing import List, Dict, Union, Iterable, TYPE_CHECKING
 from typing import NamedTuple
 
 from fileops.image import ImageFile
 from roifile import ImagejRoi
+
+if TYPE_CHECKING:
+    from movierender.overlays import Overlay
 
 
 class ConfigMovie(NamedTuple):
@@ -25,3 +28,4 @@ class ConfigMovie(NamedTuple):
     movie_filename: str
     layout: str
     include_tracks: Union[str, bool]
+    overlays: List['Overlay'] | None

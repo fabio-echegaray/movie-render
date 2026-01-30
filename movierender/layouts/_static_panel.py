@@ -9,7 +9,7 @@ from fileops.image.ops import z_projection
 from skimage.exposure import exposure
 
 import movierender.overlays as ovl
-from config import ConfigPanel
+from movierender.config import ConfigPanel
 from movierender.overlays import PixelTools
 
 logger = logging.getLogger(__name__)
