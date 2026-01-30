@@ -14,9 +14,7 @@ class OverlayPlugin(BaseFileOpsPlugin):
 
     @property
     def overlay(self):
-        if self._ovl is None:
-            raise NotImplementedError
-        return self._ovl
+        return self._clz(*self._args, **self._kwargs)
 
     @property
     def configuration(self):
