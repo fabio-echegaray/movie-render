@@ -8,9 +8,9 @@ from pathlib import Path
 
 import matplotlib
 import matplotlib.pyplot as plt
-from fileops.export.config import ConfigMovie
 from fileops.logger import get_logger
 
+from movierender.config import ConfigMovie
 from movierender.render import MovieRenderer
 from overlays import Overlay
 

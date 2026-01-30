@@ -5,11 +5,12 @@ from pathlib import Path
 import typer
 from typing_extensions import Annotated
 
+from movierender.config import ConfigMovie
 from movierender.layouts import LayoutChannelColumnComposer, LayoutZStackColumnComposer, LayoutCompositeComposer
 
 sys.path.append(Path(os.path.realpath(__file__)).parent.parent.parent.as_posix())
 
-from fileops.export.config import read_config, ConfigMovie
+from fileops.export.config import read_config
 from fileops.logger import get_logger, silence_loggers
 
 log = get_logger(name='render-movie')
@@ -52,5 +53,8 @@ def render_movie_cmd(
     for mov in cfg.movies:
         silence_loggers(loggers=[mov.image_file.__class__.__name__], output_log_file="silenced.log")
         if show_file_info:
-            log.info(f"file {cfg_path}\r\n{mov.image_file.info.squeeze(axis=0)}")
+            try:
+                log.info(f"file {cfg_path}\r\n{mov.image_file.info.squeeze(axis=0)}")
+            except Exception as e:
+                log.error(e)
         render_movie(mov, overwrite=overwrite_movie_file)
