@@ -1,9 +1,12 @@
 from pathlib import Path
-from typing import List, Dict, Union
+from typing import List, Dict, Union, TYPE_CHECKING
 from typing import NamedTuple
 
 from fileops.image import ImageFile
 from roifile import ImagejRoi
+
+if TYPE_CHECKING:
+    from movierender.overlays import Overlay
 
 
 class ConfigPanel(NamedTuple):
@@ -25,3 +28,4 @@ class ConfigPanel(NamedTuple):
     title: str
     filename: str
     layout: str
+    overlays: List['Overlay'] | None
