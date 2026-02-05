@@ -17,7 +17,6 @@ class ScaleBar(Overlay):
                                     um=None,
                                     scalebar_length=None,
                                     thickness=1,
-                                    draw_text=1,
                                     lw=1,
                                     alpha=1.0,
                                     zorder=1,
@@ -52,7 +51,7 @@ def secs_to_string(secs: int, string_format="hh:mm:ss"):
     elif string_format == "hh:mm":
         txt = f'{hours:02d}:{mins:02d}'
     elif string_format == "mm:ss":
-        if hours < 0:
+        if hours <= 0:
             txt = f'{mins:02d}:{secs:02d}'
         else:
             txt = f'{hours:02d}:{mins:02d}:{secs:02d}'

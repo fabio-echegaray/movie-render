@@ -37,10 +37,11 @@ def plotimg(data, panel: ConfigPanel = None, **kwargs):
 
     w_um, h_um = imf.width * imf.um_per_pix, imf.height * imf.um_per_pix
     sbar = ovl.ScaleBar(ax=ax, um=panel.scalebar, lw=panel.scalebar_thickness,
-                        draw_text=panel.draw_scalebar_text,
+                        show_text=panel.draw_scalebar_text,
                         xy=t.xy_ratio_to_um(0.05, 0.9), fontdict={'size': panel.fontsize})
     tsmp = ovl.Timestamp(ax=ax, xy=t.xy_ratio_to_um(0.02, 0.05),
                          timestamps=panel.image_file.timestamps,
+                         string_format=panel.timestamp_format,
                          time_interval=panel.image_file.time_interval,
                          draw_frame=panel.draw_frame_in_timestamp,
                          fontdict={'size': panel.fontsize, 'color': 'white'})
