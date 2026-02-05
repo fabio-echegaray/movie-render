@@ -36,7 +36,7 @@ class ConfigPanel(NamedTuple):
     title: str
     description: str
     timestamp_format: str
-    draw_frame_in_timestamp: str
+    draw_frame_in_timestamp: bool
     filename: str
     layout: str
     fontsize: int
