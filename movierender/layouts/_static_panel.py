@@ -1,11 +1,16 @@
 import logging
+from pathlib import Path
 
+import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
 import skimage
+from fileops.image.exceptions import FrameNotFoundError
 from fileops.image.ops import z_projection
+from matplotlib import colors
+from matplotlib.backends.backend_pdf import PdfPages
 from skimage.exposure import exposure
 
 import movierender.overlays as ovl
@@ -15,7 +20,15 @@ from movierender.overlays import PixelTools
 logger = logging.getLogger(__name__)
 
 
-def plotimg(data, panel=None, **kwargs):
+# function to effectively group plots whe making a FacetGrid
+def grouper(iterable, n, fillvalue=None):
+    from itertools import zip_longest
+    args = [iter(iterable)] * n
+    return zip_longest(*args, fillvalue=fillvalue)
+
+
+# core plotting function
+def plotimg(data, panel: ConfigPanel = None, **kwargs):
     imf = panel.image_file
     t = PixelTools(imf)
 
@@ -23,23 +36,41 @@ def plotimg(data, panel=None, **kwargs):
     ax.cla()
 
     w_um, h_um = imf.width * imf.um_per_pix, imf.height * imf.um_per_pix
-    sbar = ovl.ScaleBar(um=panel.scalebar, lw=3, xy=t.xy_ratio_to_um(0.05, 0.9), fontdict={'size': 9})
+    sbar = ovl.ScaleBar(ax=ax, um=panel.scalebar, lw=panel.scalebar_thickness,
+                        draw_text=panel.draw_scalebar_text,
+                        xy=t.xy_ratio_to_um(0.05, 0.9), fontdict={'size': panel.fontsize})
+    tsmp = ovl.Timestamp(ax=ax, xy=t.xy_ratio_to_um(0.02, 0.05),
+                         timestamps=panel.image_file.timestamps,
+                         time_interval=panel.image_file.time_interval,
+                         draw_frame=panel.draw_frame_in_timestamp,
+                         fontdict={'size': panel.fontsize, 'color': 'white'})
     hst = ovl.ImageHistogram(ax=ax, bins=50, color='white')
 
     if data["z"].unique().size > 1 and data["frame"].unique().size == 1 and data["channel"].unique().size == 1:
         _fr = data["frame"].iloc[0]
         _ch = data["channel"].iloc[0]
-        img = z_projection(imf, _fr, _ch, projection='all-max')
+
+        # if row['z'] >= 0:
+        #     mdi = self.imf.image(self.imf.ix_at(self._channel, row['z'], row['frame']))
+        # else:
+        #     mdi = self.imf.z_projection(row['frame'], self._channel, projection=ZProjection(row['z']).name)
+
+        try:
+            img = z_projection(imf, _fr, _ch, projection='all-max')
+        except FrameNotFoundError as e:
+            ax.set_facecolor('blue')
+            return
 
         imgf = skimage.util.img_as_float(img.image)
-        if f"channel-{_ch}" in panel.channel_render_parameters:
-            ch_par = panel.channel_render_parameters[f"channel-{_ch}"]
+        if _ch in panel.channel_render_parameters:
+            ch_par = panel.channel_render_parameters[_ch]
             if "overlays" in ch_par and "histogram" in ch_par["overlays"]:
                 # Overlay the histogram on the image plot
                 hst.plot(img)
             if "color" in ch_par:
-                imgf = exposure.rescale_intensity(imgf, in_range=tuple(np.percentile(imgf, (2, 99))), out_range=(0, 0.85))
-                imgf = np.stack((imgf,) * 3, axis=-1) * panel.channel_render_parameters[f"channel-{_ch}"]["color"][1:4]
+                imgf = exposure.rescale_intensity(imgf, in_range=tuple(np.percentile(imgf, (2, 99))),
+                                                  out_range=(0, 0.85))
+                imgf = np.stack((imgf,) * 3, axis=-1) * colors.to_rgb(ch_par["color"])
 
         ax.imshow(imgf, cmap='gray', extent=(.0, w_um, h_um, .0),
                   # origin='upper' if self.inv_y else 'lower',
@@ -47,12 +78,16 @@ def plotimg(data, panel=None, **kwargs):
                   interpolation='none', aspect='equal',  # resample=False,
                   zorder=0)
 
-        sbar.plot(ax=ax)
+        sbar.plot()
+        tsmp.plot(frame=_fr)
+
+        for ovrl in panel.overlays:
+            ovrl.overlay.plot(ax=ax, frame=_fr)
+
     ax.set_axis_off()
 
 
-def render_static_montage(panel: ConfigPanel,
-                          row=None, col=None):
+def render_static_montage(panel: ConfigPanel) -> Path:
     logger.debug("Making montage of image.")
 
     # create dataframe of images that will be plotted
@@ -68,16 +103,39 @@ def render_static_montage(panel: ConfigPanel,
     ]
     im_df = pd.DataFrame(img_lst)
 
-    _s = 4.0
-    g = sns.FacetGrid(im_df, row=row, col=col, height=_s)
-    g = (g.map_dataframe(plotimg, panel=panel)
-         .set_titles("{col_name}")
-         .add_legend()
-         )
-
-    g.figure.tight_layout()
-    plt.subplots_adjust(hspace=0, wspace=0.01, left=0, right=1, top=1, bottom=0)
-
+    # ------------------------------------------------------------------------------------------------------------------
+    # save a multipage pdf and associated metadata
+    # ------------------------------------------------------------------------------------------------------------------
     filepath = panel.configfile.parent / panel.filename
-    g.savefig(filepath)
-    return g
+    matplotlib.rc('pdf', fonttype=42)
+    metadata = {
+        'Author':  panel.author,
+        'Title':   panel.title,
+        'Subject': panel.description,
+        'Creator': 'MovieRender (Python package, https://pypi.org/project/movierender)',
+    }
+    with PdfPages(filepath, metadata=metadata) as pdf:
+        for page_lbl, g_df in im_df.groupby(panel.rows):
+            for cols in grouper(g_df[panel.columns].unique(), panel.max_plots_per_page):
+                g = sns.FacetGrid(g_df,
+                                  row=None,
+                                  col=panel.columns,
+                                  col_wrap=panel.max_columns,
+                                  col_order=cols,
+                                  height=panel.height)
+                g = (g.map_dataframe(plotimg, panel=panel)
+                     .set_titles("{col_name}")
+                     .add_legend()
+                     )
+
+                # Remove unused axes
+                for ax in g.axes.flatten():
+                    if not ax.has_data():  # Check if the axis has data
+                        ax.set_visible(False)  # Hide the axis
+
+                g.figure.suptitle(f"{panel.title} ({panel.rows} {page_lbl})")
+                g.figure.tight_layout()
+                plt.subplots_adjust(hspace=0, wspace=0.01, left=0, right=1, top=1, bottom=0)
+                pdf.savefig()
+
+    return filepath
