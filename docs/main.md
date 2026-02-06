@@ -89,8 +89,10 @@ The supported parameters to render a movie from a configuration file are as foll
   Possible options are to select one image from the z-stack or to project a subset of them into a single image when used
   im combination with `zstack_fn`.
   To select a single z-stack, just specify the number of the slice (starting from zero).
+  If the user only wants to specify a projection and not a subset of z values, this parameter can take up a string value
+  as if it was given to `zstack_fn` directly.
 - `zstack_fn`: informs what to do with the z-stack in case the recorded data has this dimension and the user would like
-  to apply a transform.
+  to apply a transform on the subset specified by `zstack`.
   To project the stack data onto a single image, the following options are currently available:
     - `all-max`: uses max projection.
     - `all-min`: uses min of all images, pixel-wise.
@@ -100,8 +102,13 @@ The supported parameters to render a movie from a configuration file are as foll
     - `all-median`, : uses std projection.
 - `roi`: Specifies the file of ROIs that the processing will use.
 - `scalebar`: Set the scalebar size to the specified value in micrometers.
+  If no number is specified, no scalebar will be rendered.
 - `bitrate`: Set the bitrate of the movie in a format compatible with ffmpeg.
 - `filename`: output name of the movie file.
+- `overlays`: a list of all overlays to be included in the rendered movie.
+  The overlays have to be defined using an OVERLAY section, and be posteriorly included in this definition by specifying
+  their IDs.
+  If several channels are being rendered, the overlay will apply to all different channels in the array.
 - `include_tracks`: set to yes or true if you want to include Trackmate data (defined in Trackmate section) as an
   overlay to this movie.
 
