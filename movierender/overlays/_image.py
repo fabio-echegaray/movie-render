@@ -1,4 +1,4 @@
-from fileops import get_logger
+from fileops.logger import get_logger
 
 from .overlay import Overlay, get_kwargs
 
