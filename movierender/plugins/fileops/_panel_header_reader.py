@@ -102,7 +102,8 @@ class PanelHeaderReaderPlugin(HeaderReaderPlugin):
                 description=cfg[pan]["description"] if "description" in cfg[pan] else "",
                 timestamp_format=cfg[pan]["timestamp_format"] if "timestamp_format" in cfg[pan] else "hh:mm:ss",
                 draw_frame_in_timestamp=cfg[pan]["draw_frame_in_timestamp"].lower() in ["true", "yes"]
-                if "timestamp_format" in cfg[pan] else False,
+                if "draw_frame_in_timestamp" in cfg[pan] else False,
+                multipage=cfg[pan]["multipage"].lower() in ["true", "yes"] if "multipage" in cfg[pan] else False,
                 filename=filename,
                 layout=cfg[pan]["layout"] if "layout" in cfg[pan] else "all-frames",
                 fontsize=cfg[pan]["fontsize"] if "fontsize" in cfg[pan] else 7,

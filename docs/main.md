@@ -142,9 +142,12 @@ The supported parameters to render a panel are:
   Possible options are to select one image from the z-stack or to project a subset of them into a single image when used
   im combination with `zstack_fn`.
   To select a single z-stack, just specify the number of the slice (starting from zero).
+- `multipage`: if true, the definition of rows in the plot (e.g., the different channels of the render) will 
+  become different pages of the pdf instead.
+  When multipage is on, the constraint on maximum column number has no effect.
 - `fontsize`: dictates the size of the font (in pt) in which all text of overlays is written.
 - `scalebar`: sets the length of the scalebar in microns if a scalebar shall be drawn.
-  If no number is specified, no scalebar will be rendered.
+  If no number is specified, the scalebar will not be rendered.
 - `scalebar_thickness`: sets the thickness of the scalebar in points.
 - `overlays`: a list of all overlays to be included in the panel.
   The overlays have to be defined using an OVERLAY section, and be posteriorly included in this definition by specifying

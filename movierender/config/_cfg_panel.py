@@ -31,6 +31,7 @@ class ConfigPanel(NamedTuple):
     height: float
     rows: str
     type: str
+    multipage: bool
     um_per_z: float
     author: str
     title: str

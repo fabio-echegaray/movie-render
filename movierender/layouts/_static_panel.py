@@ -108,35 +108,64 @@ def render_static_montage(panel: ConfigPanel) -> Path:
     # save a multipage pdf and associated metadata
     # ------------------------------------------------------------------------------------------------------------------
     filepath = panel.configfile.parent / panel.filename
-    matplotlib.rc('pdf', fonttype=42)
+    matplotlib.rc('pdf', fonttype=42, use14corefonts=True)
     metadata = {
         'Author':  panel.author,
         'Title':   panel.title,
         'Subject': panel.description,
         'Creator': 'MovieRender (Python package, https://pypi.org/project/movierender)',
     }
-    with PdfPages(filepath, metadata=metadata) as pdf:
-        for page_lbl, g_df in im_df.groupby(panel.rows):
-            for cols in grouper(g_df[panel.columns].unique(), panel.max_plots_per_page):
-                g = sns.FacetGrid(g_df,
-                                  row=None,
-                                  col=panel.columns,
-                                  col_wrap=panel.max_columns,
-                                  col_order=cols,
-                                  height=panel.height)
-                g = (g.map_dataframe(plotimg, panel=panel)
-                     .set_titles("{col_name}")
-                     .add_legend()
+    gs_kwargs = dict(left=0.1,  # Left border of the subplots
+                     right=0.95,  # Right border of the subplots
+                     top=0.9,  # Top border of the subplots
+                     bottom=0.15,  # Bottom border of the subplots
+                     wspace=0,  # Horizontal space between subplots
+                     hspace=0.01  # Vertical space between subplots
                      )
 
-                # Remove unused axes
-                for ax in g.axes.flatten():
-                    if not ax.has_data():  # Check if the axis has data
-                        ax.set_visible(False)  # Hide the axis
+    if panel.multipage:
+        with PdfPages(filepath, metadata=metadata) as pdf:
+            for page_lbl, g_df in im_df.groupby(panel.rows):
+                for cols in grouper(g_df[panel.columns].unique(), panel.max_plots_per_page):
+                    g = sns.FacetGrid(g_df,
+                                      row=None,
+                                      col=panel.columns,
+                                      col_wrap=panel.max_columns,
+                                      col_order=cols,
+                                      aspect=1,
+                                      height=panel.height)
+                    g = (g.map_dataframe(plotimg, panel=panel)
+                         # .set_titles("{col_name}")
+                         .add_legend()
+                         )
 
-                g.figure.suptitle(f"{panel.title} ({panel.rows} {page_lbl})")
-                g.figure.tight_layout()
-                plt.subplots_adjust(hspace=0, wspace=0.01, left=0, right=1, top=1, bottom=0)
-                pdf.savefig()
+                    # Remove unused axes
+                    for ax in g.axes.flatten():
+                        if not ax.has_data():  # Check if the axis has data
+                            ax.set_visible(False)  # Hide the axis
+
+                    g.figure.suptitle(f"{panel.title} ({panel.rows} {page_lbl})")
+                    plt.subplots_adjust(**gs_kwargs)  # Manually adjust subplot positions
+                    pdf.savefig(transparent=True)
+    else:
+        g = sns.FacetGrid(im_df,
+                          row=panel.rows,
+                          col=panel.columns,
+                          aspect=1,
+                          height=panel.height)
+        g = (g.map_dataframe(plotimg, panel=panel)
+             # .set_titles("{col_name}")
+             .add_legend()
+             )
+
+        # Remove unused axes
+        for ax in g.axes.flat:
+            if not ax.has_data():  # Check if the axis has data
+                ax.set_visible(False)  # Hide the axis
+
+        g.figure.suptitle(f"{panel.title}")
+        plt.subplots_adjust(**gs_kwargs)  # Manually adjust subplot positions
+
+        g.savefig(filepath, metadata=metadata, transparent=True)
 
     return filepath
