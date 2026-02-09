@@ -38,4 +38,4 @@ def render_panel_cmd(
             except Exception as e:
                 log.error(e)
 
-        render_static_montage(pan)
+        render_static_montage(pan, copyright_info=cfg.copyright)

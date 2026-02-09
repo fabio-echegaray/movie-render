@@ -54,4 +54,4 @@ def render_configuration_file_cmd(
                     log.info(f"file {cfg_path}\r\n{mov.image_file.info.squeeze(axis=0)}")
                 except Exception as e:
                     log.error(e)
-            render_static_montage(pan, row=pan.rows, col=pan.columns)
+            render_static_montage(pan, copyright_info=cfg.copyright)

@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import skimage
+from fileops.export.config import ConfigCopyright
 from fileops.image.exceptions import FrameNotFoundError
 from fileops.image.ops import z_projection
 from matplotlib import colors
@@ -88,7 +89,7 @@ def plotimg(data, panel: ConfigPanel = None, **kwargs):
     ax.set_axis_off()
 
 
-def render_static_montage(panel: ConfigPanel) -> Path:
+def render_static_montage(panel: ConfigPanel, copyright_info: ConfigCopyright = None) -> Path:
     logger.debug("Making montage of image.")
 
     # create dataframe of images that will be plotted
@@ -110,9 +111,9 @@ def render_static_montage(panel: ConfigPanel) -> Path:
     filepath = panel.configfile.parent / panel.filename
     matplotlib.rc('pdf', fonttype=42, use14corefonts=True)
     metadata = {
-        'Author':  panel.author,
         'Title':   panel.title,
         'Subject': panel.description,
+        'Author':  copyright_info.author if copyright_info is not None else "unknown author",
         'Creator': 'MovieRender (Python package, https://pypi.org/project/movierender)',
     }
     gs_kwargs = dict(left=0.1,  # Left border of the subplots

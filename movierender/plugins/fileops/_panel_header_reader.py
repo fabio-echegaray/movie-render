@@ -97,7 +97,6 @@ class PanelHeaderReaderPlugin(HeaderReaderPlugin):
                 height=float(cfg[pan]["height"]) if "height" in cfg[pan] else 2,
                 roi=roi,
                 type=cfg[pan]["layout"] if "layout" in cfg[pan] else "all-frames",
-                author=cfg[pan]["author"] if "author" in cfg[pan] else "",
                 title=title,
                 description=cfg[pan]["description"] if "description" in cfg[pan] else "",
                 timestamp_format=cfg[pan]["timestamp_format"] if "timestamp_format" in cfg[pan] else "hh:mm:ss",

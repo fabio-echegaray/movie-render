@@ -33,7 +33,6 @@ class ConfigPanel(NamedTuple):
     type: str
     multipage: bool
     um_per_z: float
-    author: str
     title: str
     description: str
     timestamp_format: str
