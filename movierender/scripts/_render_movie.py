@@ -39,6 +39,10 @@ def render_movie(mov: ConfigMovie, overwrite=False, parallel=False):
 def render_movie_cmd(
         cfg_path: Annotated[
             Path, typer.Argument(help="Name of the configuration file of the movie to be rendered")],
+        with_root_path: Annotated[
+            Path, typer.Argument(
+                help="Path where image files should be looked in if the path in the configuration file is relative. "
+                     "If no path is given, the current folder will be used.")] = None,
         show_file_info: Annotated[
             bool, typer.Argument(help="To show file metadata information before rendering the movie")] = True,
         overwrite_movie_file: Annotated[
@@ -47,7 +51,7 @@ def render_movie_cmd(
     if cfg_path.parent.name[0:3] == "bad":
         return
     log.info(f"Reading configuration file {cfg_path}")
-    cfg = read_config(cfg_path)
+    cfg = read_config(cfg_path, with_root_path=with_root_path)
 
     # make movies specified in configuration file
     for mov in cfg.movies:

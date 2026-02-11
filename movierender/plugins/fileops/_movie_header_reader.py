@@ -41,7 +41,7 @@ class MovieHeaderReaderPlugin(HeaderReaderPlugin):
                     clz = h.load()
                     if not issubclass(clz, HeaderReaderPlugin):
                         continue
-                    cinst = clz(self._cfg_path)
+                    cinst = clz(self._cfg_path, root_path=self._root_path)
                     if cinst.has_valid_header():
                         overlays.extend(cinst.process())
 

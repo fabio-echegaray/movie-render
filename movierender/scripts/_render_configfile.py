@@ -19,6 +19,10 @@ log = get_logger(name='render-movie')
 def render_configuration_file_cmd(
         cfg_path: Annotated[
             Path, typer.Argument(help="Name of the configuration file of the movie to be rendered")],
+        with_root_path: Annotated[
+            Path, typer.Argument(
+                help="Path where the image file should be looked in if the path in the configuration file is relative. "
+                     "If no path is given, the current folder will be used.")] = None,
         show_file_info: Annotated[
             bool, typer.Argument(help="To show file metadata information before rendering the movie")] = True,
         overwrite_movie_file: Annotated[
@@ -28,7 +32,7 @@ def render_configuration_file_cmd(
         return
 
     log.info(f"Reading configuration file {cfg_path}")
-    cfg = read_config(cfg_path)
+    cfg = read_config(cfg_path, with_root_path=with_root_path)
 
     # make movies specified in configuration file
     if hasattr(cfg, 'movies'):  # attribute gets added by the plugin system should the file have a valid movie section
