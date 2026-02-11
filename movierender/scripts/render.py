@@ -1,3 +1,6 @@
+import os
+from pathlib import Path
+
 from fileops.logger import get_logger, silence_loggers
 from typer import Typer
 
@@ -7,7 +10,7 @@ from ._render_movie import render_movie_cmd
 from ._render_panel import render_panel_cmd
 
 log = get_logger(name='render', debug=False)
-silence_loggers(loggers=["tifffile", "matplotlib", "PIL"], output_log_file="silenced.log")
+silence_loggers(loggers=["tifffile", "matplotlib", "PIL"], output_log_file=Path(os.getcwd()) / "silenced.log")
 app = Typer()
 
 app.command(name='file')(render_configuration_file_cmd)
