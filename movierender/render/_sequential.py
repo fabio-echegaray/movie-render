@@ -3,6 +3,7 @@ from __future__ import annotations
 import copy
 import logging
 import os
+import shutil
 import threading
 import uuid
 from pathlib import Path
@@ -151,6 +152,9 @@ class SequentialMovieRenderer:
                                       '-pix_fmt', 'yuv420p'
                                   ])
         animation.close()
+
+        # delete temporary folder after completing the render
+        shutil.rmtree(self._tmp)
 
     def __repr__(self):
         return f"<MovieRender object (sequential) at {hex(id(self))}> with {len(self._kwargs)} arguments."

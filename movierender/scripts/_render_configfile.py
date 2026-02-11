@@ -37,7 +37,8 @@ def render_configuration_file_cmd(
     # make movies specified in configuration file
     if hasattr(cfg, 'movies'):  # attribute gets added by the plugin system should the file have a valid movie section
         for mov in cfg.movies:
-            silence_loggers(loggers=[mov.image_file.__class__.__name__], output_log_file="silenced.log")
+            silence_loggers(loggers=[mov.image_file.__class__.__name__],
+                            output_log_file=Path(os.getcwd()) / "silenced.log")
             if show_file_info:
                 try:
                     log.info(f"file {cfg_path}\r\n{mov.image_file.info.squeeze(axis=0)}")
@@ -52,7 +53,8 @@ def render_configuration_file_cmd(
     # render panels specified in configuration file
     if hasattr(cfg, 'panels'):  # attribute gets added by the plugin system should the file have a valid movie section
         for pan in cfg.panels:
-            silence_loggers(loggers=[pan.image_file.__class__.__name__], output_log_file="silenced.log")
+            silence_loggers(loggers=[pan.image_file.__class__.__name__],
+                            output_log_file=Path(os.getcwd()) / "silenced.log")
             if show_file_info:
                 try:
                     log.info(f"file {cfg_path}\r\n{mov.image_file.info.squeeze(axis=0)}")

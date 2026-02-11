@@ -31,7 +31,7 @@ def render_panel_cmd(
 
     # render panels specified in configuration file
     for pan in cfg.panels:
-        silence_loggers(loggers=[pan.image_file.__class__.__name__], output_log_file="silenced.log")
+        silence_loggers(loggers=[pan.image_file.__class__.__name__], output_log_file=Path(os.getcwd()) / "silenced.log")
         if show_file_info:
             try:
                 log.info(f"file {cfg_path}\r\n{pan.image_file.info.squeeze(axis=0)}")
