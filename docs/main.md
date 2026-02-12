@@ -3,6 +3,7 @@
 * [Basic usage (quick start)](#quick-start)
 * [Configuration options](#configuration-options)
     * [Render movie](#render-movie)
+    * [Render panel](#render-panel)
     * [Trackmate data](#trackmate-data-section)
 
 
@@ -111,6 +112,46 @@ The supported parameters to render a movie from a configuration file are as foll
 - `include_tracks`: set to yes or true if you want to include Trackmate data (defined in Trackmate section) as an
   overlay to this movie.
 
+## Render panel
+
+Header "PANEL".
+
+The supported parameters to render a panel are:
+
+- `title`: a title that is going to be rendered on top of the array of images in the panel.
+- `description`: an internal parameter to keep track of the description of what the render is about.
+  This gets included in the metadata of the pdf file.
+- `author`: provides author information to inform who this plot is attributed to.
+  Copyright information goes into the metadata of the pdf file.
+- `rows`: specifies the variable to put in the rows of the layout.
+- `columns`: specifies the variable that goes on the columns of the layout.
+- `max_columns`: specifies the maximum number of columns in the layout.
+- `max_plots_per_page`: specifies how many plots are allowed per page in the layout.
+- `width`: specifies the width (in inches) of every plot n the layout. 
+  Whichever parameter is set, the layout will preserve aspect ratio.
+- `height`: specifies the length (in inches) of every plot in the array.
+  Whichever parameter is set, the layout will preserve aspect ratio.
+- `layout`: specifies the layout of the movie when the data has several channels or when many z-slices are meant to be
+  shown in a single frame.
+  Current options are:
+    - `z-array`: every image in the array corresponds to a z-stack.
+      New pages account for different time points.
+    - `time-array`: images in the array represent a different timepoint.
+      Stacks are aggregated using a projection that can be defined in `zstack_fn`.
+- `zstack`: indicates the renderer how many images it should incorporate from the z-stack.
+  Possible options are to select one image from the z-stack or to project a subset of them into a single image when used
+  im combination with `zstack_fn`.
+  To select a single z-stack, just specify the number of the slice (starting from zero).
+- `multipage`: if true, the definition of rows in the plot (e.g., the different channels of the render) will 
+  become different pages of the pdf instead.
+  When multipage is on, the constraint on maximum column number has no effect.
+- `fontsize`: dictates the size of the font (in pt) in which all text of overlays is written.
+- `scalebar`: sets the length of the scalebar in microns if a scalebar shall be drawn.
+  If no number is specified, the scalebar will not be rendered.
+- `scalebar_thickness`: sets the thickness of the scalebar in points.
+- `overlays`: a list of all overlays to be included in the panel.
+  The overlays have to be defined using an OVERLAY section, and be posteriorly included in this definition by specifying
+  their IDs.
 
 ## Trackmate data section
 Trackmate data can be made available to the rendering of a movie.
