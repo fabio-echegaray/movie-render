@@ -13,7 +13,7 @@ class ConfigMovie(NamedTuple):
     header: str
     configfile: Path
     series: int
-    frames: Iterable[int]
+    frames: List[int]
     channels: List[int]
     channel_render_parameters: Dict
     zstack_fn: str
