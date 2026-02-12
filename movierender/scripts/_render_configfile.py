@@ -27,6 +27,8 @@ def render_configuration_file_cmd(
             bool, typer.Argument(help="To show file metadata information before rendering the movie")] = True,
         overwrite_movie_file: Annotated[
             bool, typer.Option(help="Set true if you want to overwrite the file")] = False,
+        run_test: Annotated[
+            bool, typer.Option(help="Only render first frame when rendering a movie")] = False,
 ):
     if cfg_path.parent.name[0:3] == "bad":
         return
@@ -45,7 +47,7 @@ def render_configuration_file_cmd(
                 except Exception as e:
                     log.error(e)
             try:
-                render_movie(mov, overwrite=overwrite_movie_file)
+                render_movie(mov, overwrite=overwrite_movie_file, test=run_test)
             except FileExistsError:
                 if not overwrite_movie_file:
                     log.warning(f"file {cfg_path} already exists in folder.")
