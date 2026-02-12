@@ -31,7 +31,7 @@ class LayoutChannelColumnComposer(BaseLayoutComposer):
         t = PixelTools(movie.image_file)
 
         if len(movie.channels) > 1:
-            fig = plt.figure(figsize=(14, 9), dpi=self.dpi)
+            fig = plt.figure(figsize=(16, 9), dpi=self.dpi)
             n_channels = len(movie.channels)
             rows = math.ceil(n_channels / self.n_columns)
             gs = gridspec.GridSpec(nrows=rows, ncols=self.n_columns)
@@ -39,7 +39,7 @@ class LayoutChannelColumnComposer(BaseLayoutComposer):
 
             for i, k in itertools.product(range(rows), range(self.n_columns), ):
                 self.ax_lst.append(fig.add_subplot(gs[i, k]))
-            fig.subplots_adjust(left=0.125, right=0.9, bottom=0.01, top=0.95, wspace=0.01, hspace=0.01)
+            fig.subplots_adjust(left=0.01, right=0.99, bottom=.0, top=0.90, wspace=0.01, hspace=0.01)
         else:
             fig = plt.figure(figsize=(5.5, 5.5), dpi=self.dpi)
             self.ax_lst.append(fig.gca())

@@ -35,7 +35,7 @@ class LayoutZStackColumnComposer(BaseLayoutComposer):
         z_ax_dct = dict()
         if imf.n_zstacks > 1:
             rows = math.ceil(imf.n_zstacks / self.n_columns)
-            fig = plt.figure(figsize=(14, 9), dpi=self.dpi)
+            fig = plt.figure(figsize=(16, 9), dpi=self.dpi)
 
             gs = gridspec.GridSpec(nrows=rows, ncols=self.n_columns)
             self.log.debug(f"making grid of {rows} rows and {self.n_columns} columns.")
@@ -43,7 +43,7 @@ class LayoutZStackColumnComposer(BaseLayoutComposer):
             for j, (i, k) in enumerate(itertools.product(range(rows), range(self.n_columns), )):
                 z_ax_dct[j] = fig.add_subplot(gs[i, k])
                 self.ax_lst.append(z_ax_dct[j])
-            fig.subplots_adjust(left=0.125, right=0.9, bottom=0.01, top=0.95, wspace=0.01, hspace=0.01)
+            fig.subplots_adjust(left=0.01, right=0.99, bottom=.0, top=0.90, wspace=0.01, hspace=0.01)
         else:
             fig = plt.figure(figsize=(5.5, 5.5), dpi=self.dpi)
             z_ax_dct[0] = fig.gca()
