@@ -1,5 +1,6 @@
 import matplotlib.colors as mcolors
 import numpy as np
+import skimage
 from fileops.image.ops import ZProjection
 from skimage import color, exposure
 
@@ -45,6 +46,7 @@ class CompositeRGBImage(ImagePipeline):
                 dtype = _img.dtype
 
             # Contrast enhancing by stretching the histogram
+            _img = skimage.util.img_as_float(_img)
             if 'rescale' in settings and settings['rescale']:
                 if type(settings['rescale']) is dict:
                     mini, maxi = settings['rescale']['range']
@@ -52,9 +54,16 @@ class CompositeRGBImage(ImagePipeline):
                 elif type(settings['rescale']) is bool and settings['rescale']:
                     _img = exposure.rescale_intensity(_img, in_range=tuple(np.percentile(_img, (0.1, 99.9))))
 
-            _img = color.gray2rgb(_img)
+                _img = exposure.adjust_gamma(_img, gamma=0.8, gain=1.5)
+
             rgb_vector_color = mcolors.to_rgb(settings['color'])
             assert isinstance(rgb_vector_color, tuple)
+
+            _img = color.gray2rgb(_img)
             background += _img * rgb_vector_color * settings['intensity']
 
-        return background.astype(dtype)
+        if dtype is not None:
+            background = background / background.max() * np.iinfo(dtype).max  # normalizes data in range 0 - max
+            return background.astype(dtype)
+        else:
+            return background

@@ -70,8 +70,8 @@ def plotimg(data, panel: ConfigPanel = None, **kwargs):
                 # Overlay the histogram on the image plot
                 hst.plot(img)
             if "color" in ch_par:
-                imgf = exposure.rescale_intensity(imgf, in_range=tuple(np.percentile(imgf, (2, 99))),
-                                                  out_range=(0, 0.85))
+                imgf = exposure.rescale_intensity(imgf, in_range=tuple(np.percentile(imgf, (0.1, 99.9))))
+                imgf = exposure.adjust_gamma(imgf, gamma=0.8, gain=2)
                 imgf = np.stack((imgf,) * 3, axis=-1) * colors.to_rgb(ch_par["color"])
 
         ax.imshow(imgf, cmap='gray', extent=(.0, w_um, h_um, .0),
