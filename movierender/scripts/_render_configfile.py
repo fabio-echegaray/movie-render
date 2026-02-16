@@ -50,7 +50,7 @@ def render_configuration_file_cmd(
                 render_movie(mov, overwrite=overwrite_movie_file, test=run_test)
             except FileExistsError:
                 if not overwrite_movie_file:
-                    log.warning(f"file {cfg_path} already exists in folder.")
+                    log.warning(f"file {mov.movie_filename} already exists in folder.")
 
     # render panels specified in configuration file
     if hasattr(cfg, 'panels'):  # attribute gets added by the plugin system should the file have a valid movie section

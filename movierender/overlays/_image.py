@@ -26,7 +26,7 @@ class ScaleBar(Overlay):
         xy, um, scalebar_length, thickness, lw, alpha, zorder, show_text, fontdict = def_values
 
         if um is None and scalebar_length is None:
-            self.log.warning("no scalebar length when trying to plot their overlay.")
+            self.log.warning("no scalebar length when trying to plot overlay.")
             return
 
         lw = max(lw, thickness)
