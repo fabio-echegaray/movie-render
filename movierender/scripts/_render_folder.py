@@ -34,10 +34,13 @@ def render_folder_cmd(
             continue
 
         log.info(f"Reading configuration file {cfg_path}")
-        render_configuration_file_cmd(cfg_path,
+        try:
+            render_configuration_file_cmd(cfg_path,
                                       overwrite_movie_file=overwrite_files,
                                       with_root_path=with_root_path,
                                       run_test=run_test)
-        total_rendered += 1
+            total_rendered += 1
+        except FileNotFoundError as e:
+            log.error(e)
 
     return total_rendered
