@@ -14,19 +14,17 @@ class CompositeRGBImage(ImagePipeline):
             ix = r.image.ix_at(c=channel, z=self.zstack, t=r.frame)
             self.logger.debug(f"Retrieving frame {r.frame} of channel {channel} at z-stack={self.zstack} "
                               f"(index={ix})")
-            imf = r.image.image(ix)
-            if imf is not None:
-                return r.image.image(ix).image
-            return None
+            mdi = r.image.image(ix)
+            return mdi.image if mdi is not None else None
         elif type(self.zstack) is str or self.zstack < 0:
             if self.zstack.split("-")[1] in ["max", "min", "sum", "std", "avg", "mean", "median", ]:  # max projection
                 self.logger.debug(f"Retrieving max z projection of frame {r.frame} and channel {channel}")
-                return r.image.z_projection(frame=r.frame, channel=channel, projection=self.zstack).image
+                mdi = r.image.z_projection(frame=r.frame, channel=channel, projection=self.zstack)
+                return mdi.image if mdi is not None else None
             elif type(self.zstack) is int:
                 self.logger.debug(f"Retrieving max z projection of frame {r.frame} and channel {channel}")
-                return r.image.z_projection(frame=r.frame, channel=channel,
-                                            projection=ZProjection(self.zstack).name).image
-            return None
+                mdi = r.image.z_projection(frame=r.frame, channel=channel, projection=ZProjection(self.zstack).name)
+                return mdi.image if mdi is not None else None
         return None
 
     def __call__(self, *args, **kwargs):
@@ -41,6 +39,8 @@ class CompositeRGBImage(ImagePipeline):
         for name, settings in channeldict.items():
             channel = settings['id']
             _img = self._img(channel)
+            if _img is None:
+                continue
             if dtype is None:
                 dtype = _img.dtype
 
