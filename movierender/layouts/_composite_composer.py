@@ -1,8 +1,8 @@
-from fileops.export.config import ConfigMovie
 from fileops.logger import get_logger
 
 import movierender.overlays as ovl
 from movierender import MovieRenderer, CompositeRGBImage, plt
+from movierender.config import ConfigMovie
 from movierender.overlays.pixel_tools import PixelTools
 from ._base_composer import BaseLayoutComposer
 

@@ -1,5 +1,6 @@
 import matplotlib.colors as mcolors
 import numpy as np
+from fileops.image.ops import ZProjection
 from skimage import color, exposure
 
 from movierender.render.pipelines._image_pipeline_base import ImagePipeline
@@ -9,7 +10,7 @@ class CompositeRGBImage(ImagePipeline):
     def _img(self, channel):
         r = self._renderer
 
-        if type(self.zstack) is int:
+        if type(self.zstack) is int and self.zstack >= 0:
             ix = r.image.ix_at(c=channel, z=self.zstack, t=r.frame)
             self.logger.debug(f"Retrieving frame {r.frame} of channel {channel} at z-stack={self.zstack} "
                               f"(index={ix})")
@@ -17,10 +18,14 @@ class CompositeRGBImage(ImagePipeline):
             if imf is not None:
                 return r.image.image(ix).image
             return None
-        elif type(self.zstack) is str:
-            if self.zstack == "all-max":  # max projection
+        elif type(self.zstack) is str or self.zstack < 0:
+            if self.zstack.split("-")[1] in ["max", "min", "sum", "std", "avg", "mean", "median", ]:  # max projection
                 self.logger.debug(f"Retrieving max z projection of frame {r.frame} and channel {channel}")
-                return r.image.z_projection(frame=r.frame, channel=channel).image
+                return r.image.z_projection(frame=r.frame, channel=channel, projection=self.zstack).image
+            elif type(self.zstack) is int:
+                self.logger.debug(f"Retrieving max z projection of frame {r.frame} and channel {channel}")
+                return r.image.z_projection(frame=r.frame, channel=channel,
+                                            projection=ZProjection(self.zstack).name).image
             return None
         return None
 

@@ -1,7 +1,7 @@
 from collections.abc import Iterable
+from typing import List, Any, Dict
 
 import numpy as np
-
 from movierender.render import MovieRenderer
 
 
@@ -49,6 +49,26 @@ def dict_elems_eq(d1: dict, d2: dict) -> bool:
             raise ValueError
 
     return True
+
+
+def get_kwargs(kwargs: List[dict], keys_and_default_values: Dict) -> List[Any]:
+    """
+    Search for key in a list of kwargs and returns the first value found for each key in the kwargs list.
+
+    :param kwargs: list of different keyword arguments, sorted by order of relevance (first most relevant)
+    :param keys_and_default_values: dictionary of keys which are needed to be retrieved with a default value in the value field
+    :return: list of all found parameters, or the default values if not found
+    """
+    out = list()
+    for k in keys_and_default_values:
+        added = False
+        for kwa in kwargs:
+            if not added and k in kwa:
+                out.append(kwa.pop(k))
+                added = True
+        if not added:
+            out.append(keys_and_default_values[k])  # add default value in case key was not found
+    return out
 
 
 class Overlay(object):

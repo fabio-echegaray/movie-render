@@ -5,17 +5,18 @@ from pathlib import Path
 import typer
 from typing_extensions import Annotated
 
+from movierender.config import ConfigMovie
 from movierender.layouts import LayoutChannelColumnComposer, LayoutZStackColumnComposer, LayoutCompositeComposer
 
 sys.path.append(Path(os.path.realpath(__file__)).parent.parent.parent.as_posix())
 
-from fileops.export.config import read_config, ConfigMovie
+from fileops.export.config import read_config
 from fileops.logger import get_logger, silence_loggers
 
 log = get_logger(name='render-movie')
 
 
-def render_movie(mov: ConfigMovie, overwrite=False, parallel=False):
+def render_movie(mov: ConfigMovie, overwrite=False, parallel=False, test=False):
     if len(mov.image_file.frames) == 1:
         log.warning("only one frame, skipping static image")
         return
@@ -25,32 +26,41 @@ def render_movie(mov: ConfigMovie, overwrite=False, parallel=False):
         if mov.layout in [f"z-{n}-col" for n in range(1, 9)]:
             cols = min(int(mov.layout.split("-")[1]), mov.image_file.n_zstacks)
             lytcomposer = LayoutZStackColumnComposer(mov, n_columns=cols, **mv_kwargs)
-        elif mov.layout in ["twoch", "two-ch"]:
+        elif mov.layout in ["twoch", "two-ch", "two-col"]:
             lytcomposer = LayoutChannelColumnComposer(mov, n_columns=2, **mv_kwargs)
         elif mov.layout == "twoch-comp":
             lytcomposer = LayoutCompositeComposer(mov, **mv_kwargs)
         else:
             raise ValueError(f"No supported layout in the rendering of {mov.movie_filename}.")
 
-        lytcomposer.render(parallel=parallel | True)  # set temporarily for debug purposes
+        lytcomposer.render(parallel=parallel | True, test=test)  # TODO: remove True value set for debugging purposes
 
 
 def render_movie_cmd(
         cfg_path: Annotated[
             Path, typer.Argument(help="Name of the configuration file of the movie to be rendered")],
+        with_root_path: Annotated[
+            Path, typer.Argument(
+                help="Path where image files should be looked in if the path in the configuration file is relative. "
+                     "If no path is given, the current folder will be used.")] = None,
         show_file_info: Annotated[
             bool, typer.Argument(help="To show file metadata information before rendering the movie")] = True,
         overwrite_movie_file: Annotated[
             bool, typer.Option(help="Set true if you want to overwrite the file")] = False,
+        run_test: Annotated[
+            bool, typer.Option(help="Renders first frame only when true")] = False,
 ):
     if cfg_path.parent.name[0:3] == "bad":
         return
     log.info(f"Reading configuration file {cfg_path}")
-    cfg = read_config(cfg_path)
+    cfg = read_config(cfg_path, with_root_path=with_root_path)
 
     # make movies specified in configuration file
     for mov in cfg.movies:
-        silence_loggers(loggers=[mov.image_file.__class__.__name__], output_log_file="silenced.log")
+        silence_loggers(loggers=[mov.image_file.__class__.__name__], output_log_file=Path(os.getcwd()) / "silenced.log")
         if show_file_info:
-            log.info(f"file {cfg_path}\r\n{mov.image_file.info.squeeze(axis=0)}")
-        render_movie(mov, overwrite=overwrite_movie_file)
+            try:
+                log.info(f"file {cfg_path}\r\n{mov.image_file.info.squeeze(axis=0)}")
+            except Exception as e:
+                log.error(e)
+        render_movie(mov, overwrite=overwrite_movie_file, test=run_test)
