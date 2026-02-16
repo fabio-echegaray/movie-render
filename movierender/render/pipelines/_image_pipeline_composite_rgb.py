@@ -1,4 +1,6 @@
+import matplotlib.colors as mcolors
 import numpy as np
+from fileops.image.ops import ZProjection
 from skimage import color, exposure
 
 from movierender.render.pipelines._image_pipeline_base import ImagePipeline
@@ -8,15 +10,22 @@ class CompositeRGBImage(ImagePipeline):
     def _img(self, channel):
         r = self._renderer
 
-        if type(self.zstack) is int:
+        if type(self.zstack) is int and self.zstack >= 0:
             ix = r.image.ix_at(c=channel, z=self.zstack, t=r.frame)
             self.logger.debug(f"Retrieving frame {r.frame} of channel {channel} at z-stack={self.zstack} "
                               f"(index={ix})")
-            return r.image.image(ix).image
-        elif type(self.zstack) is str:
-            if self.zstack == "all-max":  # max projection
+            mdi = r.image.image(ix)
+            return mdi.image if mdi is not None else None
+        elif type(self.zstack) is str or self.zstack < 0:
+            if self.zstack.split("-")[1] in ["max", "min", "sum", "std", "avg", "mean", "median", ]:  # max projection
                 self.logger.debug(f"Retrieving max z projection of frame {r.frame} and channel {channel}")
-                return r.image.z_projection(frame=r.frame, channel=channel).image
+                mdi = r.image.z_projection(frame=r.frame, channel=channel, projection=self.zstack)
+                return mdi.image if mdi is not None else None
+            elif type(self.zstack) is int:
+                self.logger.debug(f"Retrieving max z projection of frame {r.frame} and channel {channel}")
+                mdi = r.image.z_projection(frame=r.frame, channel=channel, projection=ZProjection(self.zstack).name)
+                return mdi.image if mdi is not None else None
+        return None
 
     def __call__(self, *args, **kwargs):
         if 'channeldict' not in self._kwargs:
@@ -30,6 +39,8 @@ class CompositeRGBImage(ImagePipeline):
         for name, settings in channeldict.items():
             channel = settings['id']
             _img = self._img(channel)
+            if _img is None:
+                continue
             if dtype is None:
                 dtype = _img.dtype
 
@@ -42,6 +53,8 @@ class CompositeRGBImage(ImagePipeline):
                     _img = exposure.rescale_intensity(_img, in_range=tuple(np.percentile(_img, (0.1, 99.9))))
 
             _img = color.gray2rgb(_img)
-            background += _img * settings['color'] * settings['intensity']
+            rgb_vector_color = mcolors.to_rgb(settings['color'])
+            assert isinstance(rgb_vector_color, tuple)
+            background += _img * rgb_vector_color * settings['intensity']
 
         return background.astype(dtype)
