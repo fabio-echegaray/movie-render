@@ -27,9 +27,10 @@ For a complete list, check the dependencies variable of the pyproject.toml file.
 ## Features
 ### Ability to write configuration files for volume export and movie rendering
 This feature helps to programmatically render different versions of the data.
-For example, it is possible to export the data in volumetric formats using either OpenVDB or the VTK library. 
+For example, it is possible to export the data in volumetric formats using either OpenVDB or the VTK library.
 Similarly, it can render the data in a movie format using each channel separately, or in a composite image.
-For more details, see the documentation of the [FileOps project](https://github.com/fabio-echegaray/fileops) where the syntax of configuration files is specified.
+For more details, see the documentation of the [FileOps project](https://github.com/fabio-echegaray/fileops) where the
+syntax of configuration files is specified.
 I'm currently working on the declarative grammar of this feature to make it consistent.
 
 
@@ -45,7 +46,7 @@ Project is active writing and _in progress_.
 Created by [@fabioechegaray](https://twitter.com/fabioechegaray)
 * [fabio.echegaray@gmail.com](mailto:fabio.echegaray@gmail.com)
 * [GitHub](https://github.com/fabio-echegaray)
-Feel free to contact me!
+  Feel free to contact me!
 
 ## License
     Movie-Render
