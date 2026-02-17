@@ -1,5 +1,6 @@
 import concurrent
 import importlib
+import multiprocessing
 import os
 import uuid
 from collections import deque
@@ -7,9 +8,9 @@ from concurrent import futures
 from pathlib import Path
 
 import matplotlib
-import matplotlib.pyplot as plt
-import movierender
 from fileops.logger import get_logger
+
+import movierender
 from movierender.config import ConfigMovie
 from movierender.overlays import Overlay
 from movierender.plugins.overlay import OverlayPlugin
@@ -38,6 +39,10 @@ class BaseLayoutComposer:
         self._pending_overlays.extendleft(movie.overlays)
 
         im = movie.image_file
+        s_lock, s_dict, s_deque = multiprocessing.Manager().Lock(), multiprocessing.Manager().dict(), deque()
+        self.shared_tuple = (s_lock, s_dict, s_deque)
+        im.init_shared(s_lock, s_dict, s_deque)
+
         fname = movie.movie_filename if len(movie.movie_filename) > 0 else im.image_path.name
         self.filename = prefix + fname
         if len(suffix) > 0:
@@ -131,6 +136,7 @@ class BaseLayoutComposer:
                         clz = po.load()
                         if not issubclass(clz, OverlayPlugin):
                             continue
+                        o['config']['kwargs'].update({'shared_tuple': self.shared_tuple})
                         composer_instance.renderer += clz(o['config']['args'], **o['config']['kwargs']).overlay
 
             composer_array.append(composer_instance)
@@ -144,7 +150,13 @@ class BaseLayoutComposer:
         with futures.ProcessPoolExecutor(max_workers=n_workers) as executor:
             for k, fr in enumerate(mov.frames):
                 composer = composer_array[k % len(composer_array)]
-                future = executor.submit(run_job, composer, fr)
+                # preload z-projections using shared structure if needed (TODO: this is a hack)
+                for ch in mov.channels:
+                    key = f"f{fr:05d}_c{ch:02d}"
+                    s_lock, s_dict, s_deque = self.shared_tuple
+                    s_deque.appendleft(key)
+
+                future = executor.submit(run_job, composer, fr, self.shared_tuple)
                 future_to_mapping[future] = k  # Store the index k as the value for the future
 
             for future in concurrent.futures.as_completed(future_to_mapping):
@@ -165,10 +177,14 @@ class BaseLayoutComposer:
             self.renderer.render(filename=str(self.save_file_path), test=test)
 
 
-def run_job(cmpsr: BaseLayoutComposer, frame):
+def run_job(cmpsr: BaseLayoutComposer, frame, shared_tuple):
+    s_lock, s_dict, s_deque = shared_tuple
+    imf = cmpsr._movie_configuration_params.image_file
+    imf.init_shared(s_lock, s_dict, s_deque)
     cmpsr.make_layout()
     out = cmpsr.renderer.render_frame(frame)
     # close figure of renderer to prevent memory leak
+    import matplotlib.pyplot as plt
     plt.close(cmpsr.renderer.fig)
 
     return out
