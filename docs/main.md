@@ -127,7 +127,7 @@ The supported parameters to render a panel are:
 - `columns`: specifies the variable that goes on the columns of the layout.
 - `max_columns`: specifies the maximum number of columns in the layout.
 - `max_plots_per_page`: specifies how many plots are allowed per page in the layout.
-- `width`: specifies the width (in inches) of every plot n the layout. 
+- `width`: specifies the width (in inches) of every plot n the layout.
   Whichever parameter is set, the layout will preserve aspect ratio.
 - `height`: specifies the length (in inches) of every plot in the array.
   Whichever parameter is set, the layout will preserve aspect ratio.
@@ -142,7 +142,7 @@ The supported parameters to render a panel are:
   Possible options are to select one image from the z-stack or to project a subset of them into a single image when used
   im combination with `zstack_fn`.
   To select a single z-stack, just specify the number of the slice (starting from zero).
-- `multipage`: if true, the definition of rows in the plot (e.g., the different channels of the render) will 
+- `multipage`: if true, the definition of rows in the plot (e.g., the different channels of the render) will
   become different pages of the pdf instead.
   When multipage is on, the constraint on maximum column number has no effect.
 - `fontsize`: dictates the size of the font (in pt) in which all text of overlays is written.
