@@ -63,19 +63,22 @@ class LayoutZStackColumnComposer(BaseLayoutComposer):
                                           fontdict={'size': 9},
                                           ax=ax)
             self.renderer += ovl.Timestamp(xy=t.xy_ratio_to_um(0.02, 0.95), va='center', ax=ax)
-            self.renderer += CompositeRGBImage(ax=ax,
-                                               zstack=z_ix,
-                                               channeldict={
-                                                   ch_cfg['name']: {
-                                                       'id':        ch_indexes[0],
-                                                       'color':     ch_cfg['color'][1:] if (
-                                                               isinstance(ch_cfg['color'], tuple) and
-                                                               len(ch_cfg['color']) > 3
-                                                       ) else ch_cfg['color'],
-                                                       'rescale':   True,
-                                                       'intensity': 1.0
-                                                   },
-                                               })
+            self.renderer += CompositeRGBImage(
+                ax=ax,
+                zstack=z_ix,
+                channeldict={
+                    ch_cfg['name']: {
+                        'id':          ch_indexes[0],
+                        'color':       ch_cfg['color'][1:] if (
+                                isinstance(ch_cfg['color'], tuple) and
+                                len(ch_cfg['color']) > 3
+                        ) else ch_cfg['color'],
+                        'gamma_value': ch_cfg['gamma_value'] if 'gamma_value' in ch_cfg else 1,
+                        'gamma_gain':  ch_cfg['gamma_gain'] if 'gamma_gain' in ch_cfg else 1,
+                        'rescale':     True,
+                        'intensity':   1.0
+                    },
+                })
             self.renderer += ovl.Text(f'z{z_ix:02d}',
                                       xy=t.xy_ratio_to_um(0.70, 0.95),
                                       fontdict={'size': 7, 'color': 'white'}, ax=ax)
