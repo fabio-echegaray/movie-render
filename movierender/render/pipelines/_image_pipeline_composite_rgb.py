@@ -53,8 +53,8 @@ class CompositeRGBImage(ImagePipeline):
                     _img = exposure.rescale_intensity(_img, in_range=(mini, maxi))
                 elif type(settings['rescale']) is bool and settings['rescale']:
                     _img = exposure.rescale_intensity(_img, in_range=tuple(np.percentile(_img, (0.1, 99.9))))
-
-                _img = exposure.adjust_gamma(_img, gamma=0.8, gain=1.5)
+            if 'gamma_value' in settings and 'gamma_gain' in settings:
+                _img = exposure.adjust_gamma(_img, gamma=settings['gamma_value'], gain=settings['gamma_gain'])
 
             rgb_vector_color = mcolors.to_rgb(settings['color'])
             assert isinstance(rgb_vector_color, tuple)
