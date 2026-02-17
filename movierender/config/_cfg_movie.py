@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import List, Dict, Union, Iterable, TYPE_CHECKING
+from typing import List, Dict, Union, TYPE_CHECKING
 from typing import NamedTuple
 
 from fileops.image import ImageFile
