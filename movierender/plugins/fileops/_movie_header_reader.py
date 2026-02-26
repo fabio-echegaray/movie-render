@@ -70,6 +70,7 @@ class MovieHeaderReaderPlugin(HeaderReaderPlugin):
                 scalebar=float(cfg[mov]["scalebar"]) if "scalebar" in cfg[mov] else None,
                 override_dt=sec_param_override.dt,
                 image_file=img_file,
+                zstack=cfg[mov]["zstack"] if "zstack" in cfg[mov] else "all",
                 zstack_fn=cfg[mov]["zstack_fn"] if "zstack_fn" in cfg[mov] else "all-max",
                 um_per_z=float(cfg["DATA"]["um_per_z"]) if "um_per_z" in cfg["DATA"] else img_file.um_per_z,
                 roi=roi,
