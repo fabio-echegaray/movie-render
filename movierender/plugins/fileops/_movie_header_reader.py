@@ -58,7 +58,7 @@ class MovieHeaderReaderPlugin(HeaderReaderPlugin):
             if "overlays" in cfg[mov]:
                 ovr_txt = cfg[mov]["overlays"]
                 if ovr_txt[0] == "[" and ovr_txt[-1] == "]":
-                    ovr_ids = ovr_txt[1:-1].split(",")
+                    ovr_ids = [s.strip() for s in ovr_txt[1:-1].split(",")]
 
             movie_def.append(ConfigMovie(
                 header=mov,
