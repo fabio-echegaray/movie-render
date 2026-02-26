@@ -50,7 +50,7 @@ class MovieHeaderReaderPlugin(HeaderReaderPlugin):
         for mov in self._headers:
             title = cfg[mov]["title"]
             fps = cfg[mov]["fps"]
-            movie_filename = cfg[mov]["filename"]
+            movie_filename = cfg[mov]["filename"] if "filename" in cfg[mov] else "no_filename_given"
             sec_param_override = process_overrides_of_section(cfg[mov], copy.deepcopy(param_override), img_file)
             sec_param_override = update_channel_config_with_section_overrides(sec_param_override, cfg[mov])
             include_tracks = cfg[mov]["include_tracks"] if "include_tracks" in cfg[mov] else None
