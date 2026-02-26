@@ -146,15 +146,17 @@ class BaseLayoutComposer:
         # ---------------------------------------------------------------------------------------------------------------
         mov = self._movie_configuration_params
 
+        # preload z-projections tasks in shared structure if needed (TODO: this is a hack)
+        s_lock, s_dict, s_deque = self.shared_tuple
+        for k, fr in enumerate(mov.frames):
+            for ch in mov.channels:
+                key = f"f{fr:05d}_c{ch:02d}"
+                s_deque.appendleft(key)
+
         future_to_mapping = dict()
         with futures.ProcessPoolExecutor(max_workers=n_workers) as executor:
             for k, fr in enumerate(mov.frames):
                 composer = composer_array[k % len(composer_array)]
-                # preload z-projections using shared structure if needed (TODO: this is a hack)
-                for ch in mov.channels:
-                    key = f"f{fr:05d}_c{ch:02d}"
-                    s_lock, s_dict, s_deque = self.shared_tuple
-                    s_deque.appendleft(key)
 
                 future = executor.submit(run_job, composer, fr, self.shared_tuple)
                 future_to_mapping[future] = k  # Store the index k as the value for the future
