@@ -51,7 +51,7 @@ class BaseLayoutComposer:
                 overwrite = True
             if not overwrite:
                 self.log.warning(f'File {self.filename} already exists in folder {self.base_folder}.')
-                raise FileExistsError
+                raise FileExistsError(f'File {self.filename} already exists in folder {self.base_folder}.')
 
     def __add__(self, elem):
         if isinstance(elem, Overlay):
