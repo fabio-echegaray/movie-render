@@ -71,7 +71,7 @@ class PanelHeaderReaderPlugin(HeaderReaderPlugin):
             if "overlays" in cfg[pan]:
                 ovr_txt = cfg[pan]["overlays"]
                 if ovr_txt[0] == "[" and ovr_txt[-1] == "]":
-                    ovr_ids = ovr_txt[1:-1].split(",")
+                    ovr_ids = [s.strip() for s in ovr_txt[1:-1].split(",")]
 
             panel_def.append(ConfigPanel(
                 header=pan,
