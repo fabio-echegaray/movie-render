@@ -12,6 +12,7 @@ version = "0.2.0"
 # - add classes to read header MOVIE from fileops config files; these are implemented as plugins of fileops
 # - add classes to read header PANEL from fileops config files; these are implemented as plugins of fileops
 # - add classes to read header OVERLAY from fileops config files; add the mechanism to render them
+# - user can now adjust gamma contrast when rendering static panels as well as in movies
 
 # This is a one-line description or tagline of what your project does. This
 # corresponds to the "Summary" metadata field:
