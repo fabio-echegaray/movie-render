@@ -137,7 +137,7 @@ class BaseLayoutComposer:
                         if not issubclass(clz, OverlayPlugin):
                             continue
                         o['config']['kwargs'].update({'shared_tuple': self.shared_tuple})
-                        composer_instance.renderer += clz(o['config']['args'], **o['config']['kwargs']).overlay
+                        composer_instance.renderer += clz(*o['config']['args'], **o['config']['kwargs']).overlay
 
             composer_array.append(composer_instance)
 

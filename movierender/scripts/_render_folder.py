@@ -28,6 +28,8 @@ def render_folder_cmd(
         path = Path('.').absolute()
     cfg_path_list = search_config_files(path)
 
+    if len(cfg_path_list)==0:
+        log.warning("No configuration files were found.")
     total_rendered = 0
     for cfg_path in cfg_path_list:
         if cfg_path.parent.name[0:3] == "bad":
@@ -36,7 +38,7 @@ def render_folder_cmd(
         log.info(f"Reading configuration file {cfg_path}")
         try:
             render_configuration_file_cmd(cfg_path,
-                                          overwrite_movie_file=overwrite_files,
+                                          overwrite_file=overwrite_files,
                                           with_root_path=with_root_path,
                                           run_test=run_test)
             total_rendered += 1
