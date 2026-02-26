@@ -131,7 +131,7 @@ class BaseLayoutComposer:
                         clz = po.load()
                         if not issubclass(clz, OverlayPlugin):
                             continue
-                        composer_instance.renderer += clz(o['config']['args'], **o['config']['kwargs']).overlay
+                        composer_instance.renderer += clz(*o['config']['args'], **o['config']['kwargs']).overlay
 
             composer_array.append(composer_instance)
 

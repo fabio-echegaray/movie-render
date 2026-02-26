@@ -50,7 +50,7 @@ class MovieHeaderReaderPlugin(HeaderReaderPlugin):
         for mov in self._headers:
             title = cfg[mov]["title"]
             fps = cfg[mov]["fps"]
-            movie_filename = cfg[mov]["filename"]
+            movie_filename = cfg[mov]["filename"] if "filename" in cfg[mov] else "no_filename_given"
             sec_param_override = process_overrides_of_section(cfg[mov], copy.deepcopy(param_override), img_file)
             sec_param_override = update_channel_config_with_section_overrides(sec_param_override, cfg[mov])
             include_tracks = cfg[mov]["include_tracks"] if "include_tracks" in cfg[mov] else None
@@ -58,7 +58,7 @@ class MovieHeaderReaderPlugin(HeaderReaderPlugin):
             if "overlays" in cfg[mov]:
                 ovr_txt = cfg[mov]["overlays"]
                 if ovr_txt[0] == "[" and ovr_txt[-1] == "]":
-                    ovr_ids = ovr_txt[1:-1].split(",")
+                    ovr_ids = [s.strip() for s in ovr_txt[1:-1].split(",")]
 
             movie_def.append(ConfigMovie(
                 header=mov,
@@ -70,6 +70,7 @@ class MovieHeaderReaderPlugin(HeaderReaderPlugin):
                 scalebar=float(cfg[mov]["scalebar"]) if "scalebar" in cfg[mov] else None,
                 override_dt=sec_param_override.dt,
                 image_file=img_file,
+                zstack=cfg[mov]["zstack"] if "zstack" in cfg[mov] else "all",
                 zstack_fn=cfg[mov]["zstack_fn"] if "zstack_fn" in cfg[mov] else "all-max",
                 um_per_z=float(cfg["DATA"]["um_per_z"]) if "um_per_z" in cfg["DATA"] else img_file.um_per_z,
                 roi=roi,

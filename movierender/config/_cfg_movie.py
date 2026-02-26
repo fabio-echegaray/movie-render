@@ -16,6 +16,7 @@ class ConfigMovie(NamedTuple):
     frames: List[int]
     channels: List[int]
     channel_render_parameters: Dict
+    zstack: List[int]
     zstack_fn: str
     scalebar: float
     override_dt: Union[float, None]
