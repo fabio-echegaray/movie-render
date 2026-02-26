@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import copy
 import logging
 import os
+import shutil
+import threading
 import uuid
 from pathlib import Path
 from typing import List, TYPE_CHECKING
@@ -15,45 +18,55 @@ from fileops.image.exceptions import FrameNotFoundError
 from fileops.pathutils import ensure_dir
 from matplotlib.figure import Figure
 
-from movierender.render.pipelines import SingleImage
+from movierender.config import ConfigMovie
+from movierender.render.pipelines import SingleImage, ImagePipeline, NullImage
 
 if TYPE_CHECKING:
     from movierender.overlays import Overlay
+
+reading_image_lock = threading.Lock()
 
 
 class SequentialMovieRenderer:
     layers: List[Overlay]
     image: ImageFile
 
-    def __init__(self, fig: Figure, image: ImageFile, fps=1, bitrate="4000k", show_axis=False, invert_y=False,
-                 **kwargs):
+    def __init__(self, fig: Figure, config: ConfigMovie, show_axis=False, invert_y=False, temp_folder=None, **kwargs):
         self._kwargs = {
             'fontdict': {'size': 10},
         }
         self._kwargs.update(**kwargs)
+        self.logger = logging.getLogger(__name__)
+        self.logger.debug(f"temp_folder {temp_folder}")
+        if temp_folder is None:
+            temp_folder = str(uuid.uuid4())
 
         self.fig = fig
         self.show_axis = show_axis
         self.ax = fig.gca()
 
         self.layers = []
-        self.logger = logging.getLogger(__name__)
 
         self.time = 0
         self.frame = 0
-        self.fps = fps
+        self.fps = config.fps
         self.duration = None
-        self.bitrate = bitrate
+        self.bitrate = config.bitrate
 
-        self.image_pipeline = []
-        self.image = image
+        imf = config.image_file
+        self._cfg = config
+        self.image_pipeline: List[ImagePipeline] = []
+        self.image = imf
         self.inv_y = invert_y
-        self._last_f = image.frames[-1]
-        self._render = np.zeros((image.width, image.height), dtype=float)
+        self._last_f = imf.frames[-1]
+        self._max_frame = max(self._cfg.frames)
+        self._frame_offset = min(self._cfg.frames)  # used when frames start at a number greater than zero
+        self._render = np.zeros((imf.width, imf.height), dtype=float)
         self._load_image()
 
-        self._tmp = Path(os.curdir) / 'tmp' / 'render' / Path(image.base_path).name / str(uuid.uuid4())
-        ensure_dir(self._tmp)
+        self._tmp = Path(os.curdir) / 'tmp' / 'render' / Path(imf.base_path).name
+        if temp_folder:
+            self._tmp = self._tmp / temp_folder
 
     def __iter__(self):
         return self
@@ -63,15 +76,9 @@ class SequentialMovieRenderer:
             imp = self.image_pipeline
         else:
             imp = SingleImage(self)
-        self.time = (self.time + 1) % self.n_frames
+        self.time = (self.time + 1) % self._max_frame
 
         return imp(invert_y=self.inv_y)
-
-    def __getattr__(self, name):
-        if name in self._kwargs:
-            return self._kwargs[name]
-        else:
-            raise AttributeError("No such attribute: " + name)
 
     def _load_image(self):
         assert len(self.image.frames) > 1, "More than one frame needed to make a movie."
@@ -98,10 +105,21 @@ class SequentialMovieRenderer:
         Render the movie into an mp4 file.
         """
 
+        # We execute special block of code when the user wants to test the rendering pipeline
+        if test:
+            # render first frame of configuration, then rename file to current directory
+            img_path = Path(self.render_frame(self._cfg.frames[0]))
+            if img_path.exists():
+                new_path = self._cfg.movie_filename + ".test.png"
+                img_path.rename(new_path)
+                self.logger.info(f"Successfully rendered test image to {new_path}.")
+            return
+
         def make_frame_mpl(t):
             self.time = t
             # calculate frame given time
-            self.frame = int(round(self.fps * t))
+            _fr_from_t = int(round(self.fps * t)) + self._frame_offset
+            self.frame = min(_fr_from_t, self._max_frame)
 
             if self.frame == self._last_f:
                 return self._render
@@ -120,72 +138,105 @@ class SequentialMovieRenderer:
             # self.logger.debug(f"loaded image of shape {self._render.shape}")
             return self._render
 
-        def render_frame(frame):
-
-            self.logger.info(f"rendering frame {frame}")
-            self.frame = frame
-            # calculate time given frame
-            self.time = frame / self.fps
-
-            img_path = self._tmp.joinpath(f"f{frame:05d}.png")
-            if os.path.exists(img_path):
-                self.logger.warning(f'File {img_path.name} already exists in folder {img_path.parent.name}.')
-                return
-
-            # clear axes of all objects
-            self.ax.cla()
-            for ovrl in self.layers:
-                if ovrl.ax is not None:
-                    ovrl.ax.cla()
-            for imgp in self.image_pipeline:
-                if imgp.ax is not None:
-                    imgp.ax.cla()
-                if not self.show_axis and imgp.ax is not None:
-                    imgp.ax.set_xticklabels([])
-                    imgp.ax.set_yticklabels([])
-                    imgp.ax.set_xticks([])
-                    imgp.ax.set_yticks([])
-
-            for imgp in self.image_pipeline:
-                ppu = self.pix_per_um if self.pix_per_um is not None else 1
-                ext = [0, self.width / ppu, 0, self.height / ppu]
-                ax = imgp.ax if imgp.ax is not None else self.ax
-                img = imgp()
-                img = skimage.util.img_as_float(img)
-                ax.imshow(img, cmap='gray', extent=ext,
-                          origin='upper' if self.inv_y else 'lower',
-                          interpolation='none', aspect='equal',
-                          zorder=0)
-                for ovrl in self.layers:
-                    kwargs = self._kwargs.copy()
-                    kwargs.update(**ovrl._kwargs, show_axis=self.show_axis)
-                    ovrl.plot(ax=self.ax if ovrl.ax is None else None, **kwargs)
-
-                for ovrl in self.layers:
-                    if not ovrl.show_axis and ovrl.ax is not None:
-                        ovrl.ax.set_xticklabels([])
-                        ovrl.ax.set_yticklabels([])
-                        ovrl.ax.set_xticks([])
-                        ovrl.ax.set_yticks([])
-                self.fig.tight_layout()
-                self.fig.savefig(img_path, facecolor='white', transparent=False)
-
         # Start of method
         if filename is None:
             _, filename = os.path.split(self._file)
             filename += ".mp4"
         rendered_frames = list()
-        for fr in self.image.frames:
+        for fr in sorted(self._cfg.frames):
             try:
-                render_frame(fr)
+                self.render_frame(fr)
                 rendered_frames.append(fr)
             except FrameNotFoundError:
                 continue
 
         dur = len(rendered_frames) / self.fps
         animation = mpy.VideoClip(make_frame_mpl, duration=dur)
-        animation.write_videofile(filename, fps=self.fps, bitrate=self.bitrate, codec='libx264')
+        animation.write_videofile(filename,
+                                  fps=self._cfg.fps,
+                                  bitrate=self._cfg.bitrate,
+                                  # codec='libx264',
+                                  # audio_codec='pcm_s32le',
+                                  ffmpeg_params=[
+                                      '-vf', 'pad=ceil(iw/2)*2:ceil(ih/2)*2',
+                                      '-pix_fmt', 'yuv420p'
+                                  ])
         animation.close()
 
+        # delete temporary folder after completing the render
+        shutil.rmtree(self._tmp)
+
     def __repr__(self):
-        return f"<MovieRender object at {hex(id(self))}> with {len(self._kwargs)} arguments."
+        return f"<MovieRender object (sequential) at {hex(id(self))}> with {len(self._kwargs)} arguments."
+
+    def render_frame(self, frame):
+        self.logger.info(f"rendering frame {frame}")
+        self.frame = frame
+        # calculate time given frame
+        self.time = (frame - self._frame_offset) / self.fps
+
+        img_path = self._tmp.joinpath(f"f{frame:05d}.png")
+        if os.path.exists(img_path):
+            self.logger.warning(f'File {img_path.name} already exists in folder {img_path.parent.name}.')
+            return
+
+        # clear axes of all objects
+        self.ax.cla()
+        for ovrl in self.layers:
+            if ovrl.ax is not None:
+                ovrl.ax.cla()
+        for imgp in self.image_pipeline:
+            if imgp.ax is not None:
+                imgp.ax.cla()
+            if not self.show_axis and imgp.ax is not None:
+                imgp.ax.set_xticklabels([])
+                imgp.ax.set_yticklabels([])
+                imgp.ax.set_xticks([])
+                imgp.ax.set_yticks([])
+                imgp.ax.spines['top'].set_visible(False)
+                imgp.ax.spines['right'].set_visible(False)
+                imgp.ax.spines['bottom'].set_visible(False)
+                imgp.ax.spines['left'].set_visible(False)
+
+        for ovrl in self.layers:
+            if not ovrl.show_axis and ovrl.ax is not None:
+                ovrl.ax.set_xticklabels([])
+                ovrl.ax.set_yticklabels([])
+                ovrl.ax.set_xticks([])
+                ovrl.ax.set_yticks([])
+                ovrl.ax.spines['top'].set_visible(False)
+                ovrl.ax.spines['right'].set_visible(False)
+                ovrl.ax.spines['bottom'].set_visible(False)
+                ovrl.ax.spines['left'].set_visible(False)
+
+        for imgp in self.image_pipeline:
+            if type(imgp) == NullImage:
+                continue
+            ppu = self.image.pix_per_um if self.image.pix_per_um is not None else 1
+            ext = (0, self.image.width / ppu, 0, self.image.height / ppu)
+            ax = imgp.ax if imgp.ax is not None else self.ax
+            try:
+                with reading_image_lock:
+                    img = imgp()
+                img = skimage.util.img_as_float(img)
+                ax.imshow(img, cmap='gray', extent=ext,
+                          origin='upper' if self.inv_y else 'lower',
+                          interpolation='none', aspect='equal',
+                          zorder=0)
+            except TypeError as e:
+                self.logger.error(e)
+            except FrameNotFoundError as e:
+                self.logger.error(e)
+                return f"failed to render frame {frame}"
+            for ovrl in self.layers:
+                kwargs = self._kwargs.copy()
+                kwargs.update(show_axis=self.show_axis)
+                kwargs.update(**ovrl._kwargs)
+                _kwa = copy.copy(kwargs)
+                _kwa.pop("timestamps")
+                ovrl.plot(ax=self.ax if ovrl.ax is None else None, **kwargs)
+
+        ensure_dir(self._tmp)
+        self.fig.savefig(img_path, facecolor='white', transparent=False)
+        del img
+        return img_path

@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 
-from .overlay import Overlay
+from movierender.overlays.overlay import Overlay
 
 
 class Treatment(Overlay):
