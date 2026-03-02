@@ -129,7 +129,7 @@ class BaseLayoutComposer:
                 kwargs = o['config'].pop('_kwargs') if '_kwargs' in o else dict()
                 if hasattr(ovl_module, o['name']):
                     ovrl = getattr(ovl_module, o['name'])
-                    composer_instance.renderer += ovrl(**o['config'], **kwargs)
+                    composer_instance._pending_overlays.append(ovrl(**o['config'], **kwargs))
                 elif len(p_ovrls := [plg for plg in movierender.overlay_type_plugins if o['name'] in plg.value]) > 0:
                     for po in p_ovrls:
                         self.log.debug(f"Loading {po.value}")
@@ -137,7 +137,11 @@ class BaseLayoutComposer:
                         if not issubclass(clz, OverlayPlugin):
                             continue
                         o['config']['kwargs'].update({'shared_tuple': self.shared_tuple})
-                        composer_instance.renderer += clz(*o['config']['args'], **o['config']['kwargs']).overlay
+                        try:
+                            composer_instance._pending_overlays.append(
+                                clz(*o['config']['args'], **o['config']['kwargs']).overlay)
+                        except TypeError as e:
+                            self.log.error(e)
 
             composer_array.append(composer_instance)
 
