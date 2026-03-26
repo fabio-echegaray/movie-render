@@ -1,7 +1,7 @@
 import sys
 
 import matplotlib
-from fileops import get_logger
+from fileops.logger import get_logger
 
 matplotlib.use("Agg")
 

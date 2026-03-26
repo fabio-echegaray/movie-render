@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import List, Dict, Union, Iterable, TYPE_CHECKING
+from typing import List, Dict, Union, TYPE_CHECKING
 from typing import NamedTuple
 
 from fileops.image import ImageFile
@@ -13,7 +13,7 @@ class ConfigMovie(NamedTuple):
     header: str
     configfile: Path
     series: int
-    frames: Iterable[int]
+    frames: List[int]
     channels: List[int]
     channel_render_parameters: Dict
     zstack: List[int]

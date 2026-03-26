@@ -156,14 +156,13 @@ class BaseLayoutComposer:
         self.make_layout()
         self.renderer.render(filename=str(self.save_file_path), test=False)
 
-    def render(self, parallel=False):
-        if parallel:
+    def render(self, parallel=False, test=False):
+        if parallel and not test:
             self._render_parallel()
         else:
             self.log.info(f"Rendering movie into file {self.save_file_path}.")
-            if self.renderer is None:
-                raise AttributeError("Need to call method make_layout before trying to render.")
-            self.renderer.render(filename=str(self.save_file_path), test=False)
+            self.make_layout()
+            self.renderer.render(filename=str(self.save_file_path), test=test)
 
 
 def run_job(cmpsr: BaseLayoutComposer, frame):

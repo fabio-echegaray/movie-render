@@ -2,6 +2,7 @@ from collections.abc import Iterable
 from typing import List, Any, Dict
 
 import numpy as np
+
 from movierender.render import MovieRenderer
 
 

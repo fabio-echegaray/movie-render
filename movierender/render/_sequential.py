@@ -3,6 +3,7 @@ from __future__ import annotations
 import copy
 import logging
 import os
+import shutil
 import threading
 import uuid
 from pathlib import Path
@@ -104,6 +105,16 @@ class SequentialMovieRenderer:
         Render the movie into an mp4 file.
         """
 
+        # We execute special block of code when the user wants to test the rendering pipeline
+        if test:
+            # render first frame of configuration, then rename file to current directory
+            img_path = Path(self.render_frame(self._cfg.frames[0]))
+            if img_path.exists():
+                new_path = self._cfg.movie_filename + ".test.png"
+                img_path.rename(new_path)
+                self.logger.info(f"Successfully rendered test image to {new_path}.")
+            return
+
         def make_frame_mpl(t):
             self.time = t
             # calculate frame given time
@@ -151,6 +162,9 @@ class SequentialMovieRenderer:
                                       '-pix_fmt', 'yuv420p'
                                   ])
         animation.close()
+
+        # delete temporary folder after completing the render
+        shutil.rmtree(self._tmp)
 
     def __repr__(self):
         return f"<MovieRender object (sequential) at {hex(id(self))}> with {len(self._kwargs)} arguments."
