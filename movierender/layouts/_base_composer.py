@@ -52,8 +52,8 @@ class BaseLayoutComposer:
         self.save_file_path = Path(self.base_folder) / self.filename
 
         if os.path.exists(self.save_file_path):
-            if os.path.getsize(self.save_file_path) < 300:  # if size is too small, treat it as if the file didn't exist
-                overwrite = True
+            # if os.path.getsize(self.save_file_path) < 300:  # if size is too small, treat it as if the file didn't exist
+            #     overwrite = True
             if not overwrite:
                 self.log.warning(f'File {self.filename} already exists in folder {self.base_folder}.')
                 raise FileExistsError(f'File {self.filename} already exists in folder {self.base_folder}.')
@@ -175,12 +175,13 @@ class BaseLayoutComposer:
         self.renderer.render(filename=str(self.save_file_path), test=False)
 
     def render(self, parallel=False, test=False):
+        self.save_file_path.touch()  # create a file in case another instance is of a renderer is trying to render movies
         if parallel and not test:
             self._render_parallel()
         else:
             self.log.info(f"Rendering movie into file {self.save_file_path}.")
             self.make_layout()
-            self.renderer.render(filename=str(self.save_file_path), test=test)
+            self.renderer.render(filename=self.save_file_path.as_posix(), test=test)
 
 
 def run_job(cmpsr: BaseLayoutComposer, frame, shared_tuple):

@@ -35,7 +35,7 @@ class MovieHeaderReaderPlugin(HeaderReaderPlugin):
             if "filename" in self._cfg[mov]:
                 out_name = Path(self._cfg[mov]["filename"] + ".mp4")
                 base_path = self._root_path if self._root_path is not None else out_name.parent if out_name.is_absolute() else self._cfg_path.parent
-                out_path=base_path/out_name.name
+                out_path = base_path / out_name.name
                 if out_path.exists():
                     out[mov] = True
 
