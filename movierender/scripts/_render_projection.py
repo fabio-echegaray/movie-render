@@ -10,7 +10,7 @@ from typing_extensions import Annotated
 sys.path.append(Path(os.path.realpath(__file__)).parent.parent.parent.as_posix())
 
 from fileops.export.config import read_config, ConfigProjection
-from fileops.logger import get_logger, silence_loggers
+from fileops.logger import get_logger
 
 log = get_logger(name='render-projection')
 
@@ -80,7 +80,6 @@ def render_projection_cmd(
 
     # make movies specified in configuration file
     for prj in cfg.projections:
-        silence_loggers(loggers=[prj.image_file.__class__.__name__], output_log_file=Path(os.getcwd()) / "silenced.log")
         if show_file_info:
             try:
                 log.info(f"file {cfg_path}\r\n{prj.image_file.info.squeeze(axis=0)}")

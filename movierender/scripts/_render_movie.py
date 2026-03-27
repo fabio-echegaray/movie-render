@@ -11,7 +11,7 @@ from movierender.layouts import LayoutChannelColumnComposer, LayoutZStackColumnC
 sys.path.append(Path(os.path.realpath(__file__)).parent.parent.parent.as_posix())
 
 from fileops.export.config import read_config
-from fileops.logger import get_logger, silence_loggers
+from fileops.logger import get_logger
 
 log = get_logger(name='render-movie')
 
@@ -57,7 +57,6 @@ def render_movie_cmd(
 
     # make movies specified in configuration file
     for mov in cfg.movies:
-        silence_loggers(loggers=[mov.image_file.__class__.__name__], output_log_file=Path(os.getcwd()) / "silenced.log")
         if show_file_info:
             try:
                 log.info(f"file {cfg_path}\r\n{mov.image_file.info.squeeze(axis=0)}")
