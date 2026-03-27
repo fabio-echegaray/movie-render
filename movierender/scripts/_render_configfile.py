@@ -2,6 +2,7 @@ import os
 import sys
 from pathlib import Path
 
+import numpy as np
 import typer
 from typing_extensions import Annotated
 
@@ -11,7 +12,7 @@ from movierender.scripts._render_projection import render_projection
 
 sys.path.append(Path(os.path.realpath(__file__)).parent.parent.parent.as_posix())
 
-from fileops.export.config import read_config
+from fileops.export.config import read_config, check_if_output_files_are_created
 from fileops.logger import get_logger, silence_loggers
 
 log = get_logger(name='render-movie')
@@ -35,6 +36,11 @@ def render_configuration_file_cmd(
         return
 
     log.info(f"Reading configuration file {cfg_path}")
+    if not overwrite_file:
+        chk = check_if_output_files_are_created(cfg_path, with_root_path=with_root_path)
+        if np.all([created for i, created in chk.items()]):
+            log.warning(f"All files are already created from configuration file {cfg_path}")
+            return
     cfg = read_config(cfg_path, with_root_path=with_root_path)
 
     # make movies specified in configuration file

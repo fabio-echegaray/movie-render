@@ -1,5 +1,6 @@
 import concurrent
 import importlib
+import multiprocessing
 import os
 import uuid
 from collections import deque
@@ -7,9 +8,9 @@ from concurrent import futures
 from pathlib import Path
 
 import matplotlib
-import matplotlib.pyplot as plt
-import movierender
 from fileops.logger import get_logger
+
+import movierender
 from movierender.config import ConfigMovie
 from movierender.overlays import Overlay
 from movierender.plugins.overlay import OverlayPlugin
@@ -38,6 +39,10 @@ class BaseLayoutComposer:
         self._pending_overlays.extendleft(movie.overlays)
 
         im = movie.image_file
+        s_lock, s_dict, s_deque = multiprocessing.Manager().Lock(), multiprocessing.Manager().dict(), deque()
+        self.shared_tuple = (s_lock, s_dict, s_deque)
+        im.init_shared(s_lock, s_dict, s_deque)
+
         fname = movie.movie_filename if len(movie.movie_filename) > 0 else im.image_path.name
         self.filename = prefix + fname
         if len(suffix) > 0:
@@ -47,8 +52,8 @@ class BaseLayoutComposer:
         self.save_file_path = Path(self.base_folder) / self.filename
 
         if os.path.exists(self.save_file_path):
-            if os.path.getsize(self.save_file_path) < 300:  # if size is too small, treat it as if the file didn't exist
-                overwrite = True
+            # if os.path.getsize(self.save_file_path) < 300:  # if size is too small, treat it as if the file didn't exist
+            #     overwrite = True
             if not overwrite:
                 self.log.warning(f'File {self.filename} already exists in folder {self.base_folder}.')
                 raise FileExistsError(f'File {self.filename} already exists in folder {self.base_folder}.')
@@ -124,14 +129,19 @@ class BaseLayoutComposer:
                 kwargs = o['config'].pop('_kwargs') if '_kwargs' in o else dict()
                 if hasattr(ovl_module, o['name']):
                     ovrl = getattr(ovl_module, o['name'])
-                    composer_instance.renderer += ovrl(**o['config'], **kwargs)
+                    composer_instance._pending_overlays.append(ovrl(**o['config'], **kwargs))
                 elif len(p_ovrls := [plg for plg in movierender.overlay_type_plugins if o['name'] in plg.value]) > 0:
                     for po in p_ovrls:
                         self.log.debug(f"Loading {po.value}")
                         clz = po.load()
                         if not issubclass(clz, OverlayPlugin):
                             continue
-                        composer_instance.renderer += clz(*o['config']['args'], **o['config']['kwargs']).overlay
+                        o['config']['kwargs'].update({'shared_tuple': self.shared_tuple})
+                        try:
+                            composer_instance._pending_overlays.append(
+                                clz(*o['config']['args'], **o['config']['kwargs']).overlay)
+                        except TypeError as e:
+                            self.log.error(e)
 
             composer_array.append(composer_instance)
 
@@ -140,11 +150,19 @@ class BaseLayoutComposer:
         # ---------------------------------------------------------------------------------------------------------------
         mov = self._movie_configuration_params
 
+        # preload z-projections tasks in shared structure if needed (TODO: this is a hack)
+        s_lock, s_dict, s_deque = self.shared_tuple
+        for k, fr in enumerate(mov.frames):
+            for ch in mov.channels:
+                key = f"f{fr:05d}_c{ch:02d}"
+                s_deque.appendleft(key)
+
         future_to_mapping = dict()
         with futures.ProcessPoolExecutor(max_workers=n_workers) as executor:
             for k, fr in enumerate(mov.frames):
                 composer = composer_array[k % len(composer_array)]
-                future = executor.submit(run_job, composer, fr)
+
+                future = executor.submit(run_job, composer, fr, self.shared_tuple)
                 future_to_mapping[future] = k  # Store the index k as the value for the future
 
             for future in concurrent.futures.as_completed(future_to_mapping):
@@ -157,18 +175,23 @@ class BaseLayoutComposer:
         self.renderer.render(filename=str(self.save_file_path), test=False)
 
     def render(self, parallel=False, test=False):
+        self.save_file_path.touch()  # create a file in case another instance is of a renderer is trying to render movies
         if parallel and not test:
             self._render_parallel()
         else:
             self.log.info(f"Rendering movie into file {self.save_file_path}.")
             self.make_layout()
-            self.renderer.render(filename=str(self.save_file_path), test=test)
+            self.renderer.render(filename=self.save_file_path.as_posix(), test=test)
 
 
-def run_job(cmpsr: BaseLayoutComposer, frame):
+def run_job(cmpsr: BaseLayoutComposer, frame, shared_tuple):
+    s_lock, s_dict, s_deque = shared_tuple
+    imf = cmpsr._movie_configuration_params.image_file
+    imf.init_shared(s_lock, s_dict, s_deque)
     cmpsr.make_layout()
     out = cmpsr.renderer.render_frame(frame)
     # close figure of renderer to prevent memory leak
+    import matplotlib.pyplot as plt
     plt.close(cmpsr.renderer.fig)
 
     return out
