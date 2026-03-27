@@ -17,6 +17,7 @@ version = "0.2.0"
 # - breaking change: render commands change parameter overwrite_movie_file to the more general overwrite_file
 # - implemented feature to speed up rendering process by checking if the output files in the header exist first.
 # - remove call to silence_loggers in terminal-command related scripts.
+# - add copyright info in the metadata when rendering movies.
 
 # This is a one-line description or tagline of what your project does. This
 # corresponds to the "Summary" metadata field:
