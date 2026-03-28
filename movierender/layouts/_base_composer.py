@@ -103,6 +103,7 @@ class BaseLayoutComposer:
         # create a bunch of copies of this composer
         composer_array = [self, ]
         cfg = self.configuration
+        cfg["renderer"].update({"overwrite": True})
         lcls = self.__class__
         for i in range(n_workers):
             composer_instance = lcls(self._movie_configuration_params, **cfg["renderer"])
