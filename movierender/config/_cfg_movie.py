@@ -24,6 +24,7 @@ class ConfigMovie(NamedTuple):
     roi: ImagejRoi
     um_per_z: float
     title: str
+    description: str
     fps: int
     bitrate: str  # bitrate in a format that ffmpeg understands
     movie_filename: str

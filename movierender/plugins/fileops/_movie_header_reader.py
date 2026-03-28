@@ -69,6 +69,7 @@ class MovieHeaderReaderPlugin(HeaderReaderPlugin):
         movie_def = list()
         for mov in self._headers:
             title = cfg[mov]["title"]
+            description = cfg[mov]["description"] if "description" in cfg[mov] else ""
             fps = cfg[mov]["fps"]
             movie_filename = cfg[mov]["filename"] if "filename" in cfg[mov] else "no_filename_given"
             sec_param_override = process_overrides_of_section(cfg[mov], copy.deepcopy(param_override), img_file)
@@ -95,6 +96,7 @@ class MovieHeaderReaderPlugin(HeaderReaderPlugin):
                 um_per_z=float(cfg["DATA"]["um_per_z"]) if "um_per_z" in cfg["DATA"] else img_file.um_per_z,
                 roi=roi,
                 title=title,
+                description=description,
                 fps=int(fps) if fps else 1,
                 bitrate=cfg[mov]["bitrate"] if "bitrate" in cfg[mov] else "500k",
                 movie_filename=movie_filename,

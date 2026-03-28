@@ -112,6 +112,8 @@ The supported parameters to render a movie from a configuration file are as foll
 - `include_tracks`: set to yes or true if you want to include Trackmate data (defined in Trackmate section) as an
   overlay to this movie.
 
+Copyright info gets included when the additional section COPYRIGHT is stated in the file.
+
 ## Render panel
 
 Header "PANEL".
