@@ -19,7 +19,7 @@ def render_panel_cmd(
         cfg_path: Annotated[
             Path, typer.Argument(help="Name of the configuration file of the movie to be rendered")],
         show_file_info: Annotated[
-            bool, typer.Argument(help="To show file metadata information before rendering the movie")] = True,
+            bool, typer.Option(help="To show file metadata information before rendering the movie")] = True,
         # overwrite_file: Annotated[
         #     bool, typer.Option(help="Set true if you want to overwrite the file")] = False,
 ):
