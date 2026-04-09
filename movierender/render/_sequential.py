@@ -223,6 +223,7 @@ class SequentialMovieRenderer:
                           origin='upper' if self.inv_y else 'lower',
                           interpolation='none', aspect='equal',
                           zorder=0)
+                del img
             except TypeError as e:
                 self.logger.error(e)
             except FrameNotFoundError as e:
@@ -238,5 +239,4 @@ class SequentialMovieRenderer:
 
         ensure_dir(self._tmp)
         self.fig.savefig(img_path, facecolor='white', transparent=False)
-        del img
         return img_path
