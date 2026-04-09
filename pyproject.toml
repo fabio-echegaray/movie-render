@@ -6,7 +6,18 @@ name = "movierender"
 #
 # For a discussion on single-sourcing the version, see
 # https://packaging.python.org/guides/single-sourcing-package-version/
-version = "0.2"
+version = "0.2.0"
+# bump 0.1.0 (likely to 0.3.0)
+# - now frames are rendered using threads in parallel
+# - add classes to read header MOVIE from fileops config files; these are implemented as plugins of fileops
+# - add classes to read header PANEL from fileops config files; these are implemented as plugins of fileops
+# - add classes to read header OVERLAY from fileops config files; add the mechanism to render them
+# - user can now adjust gamma contrast when rendering static panels as well as in movies
+# - implemented feature to render Z projections into files (to be used when files are corrupted and other software does not work)
+# - breaking change: render commands change parameter overwrite_movie_file to the more general overwrite_file
+# - implemented feature to speed up rendering process by checking if the output files in the header exist first.
+# - remove call to silence_loggers in terminal-command related scripts.
+# - add copyright info in the metadata when rendering movies.
 
 # This is a one-line description or tagline of what your project does. This
 # corresponds to the "Summary" metadata field:
@@ -100,8 +111,7 @@ dependencies = [
     "scikit_image~=0.24",
     "scipy~=1.14",
     "Shapely~=2.0.4",
-    "tifffile~=2024.6.18",
-    "imgfileops>=0.1.0",
+    "imgfileops>=0.3.0", # TODO: bump up after updating sister project
     "typer>=0.9.0",
 ]
 
@@ -124,6 +134,14 @@ dependencies = [
 # "Funding" = "https://donate.pypi.org"
 # "Say Thanks!" = "http://saythanks.io/to/example"
 "Source" = "https://github.com/fabio-echegaray/movierender"
+
+[project.entry-points.'fileops.plugins.config.types']
+movie = 'movierender.config:ConfigMovie'
+panel = 'movierender.config:ConfigPanel'
+
+[project.entry-points.'fileops.plugins.config.header_readers']
+movie_header_reader = 'movierender.plugins.fileops:MovieHeaderReaderPlugin'
+panel_header_reader = 'movierender.plugins.fileops:PanelHeaderReaderPlugin'
 
 [tool.setuptools.packages.find]
 include = ["movierender*"] # Only include the 'movierender' package and its subpackages

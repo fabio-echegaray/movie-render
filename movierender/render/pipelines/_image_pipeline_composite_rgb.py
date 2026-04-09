@@ -1,4 +1,7 @@
+import matplotlib.colors as mcolors
 import numpy as np
+import skimage
+from fileops.image.ops import ZProjection
 from skimage import color, exposure
 
 from movierender.render.pipelines._image_pipeline_base import ImagePipeline
@@ -8,15 +11,22 @@ class CompositeRGBImage(ImagePipeline):
     def _img(self, channel):
         r = self._renderer
 
-        if type(self.zstack) is int:
+        if type(self.zstack) is int and self.zstack >= 0:
             ix = r.image.ix_at(c=channel, z=self.zstack, t=r.frame)
             self.logger.debug(f"Retrieving frame {r.frame} of channel {channel} at z-stack={self.zstack} "
                               f"(index={ix})")
-            return r.image.image(ix).image
-        elif type(self.zstack) is str:
-            if self.zstack == "all-max":  # max projection
+            mdi = r.image.image(ix)
+            return mdi.image if mdi is not None else None
+        elif type(self.zstack) is str or self.zstack < 0:
+            if self.zstack.split("-")[1] in ["max", "min", "sum", "std", "avg", "mean", "median", ]:  # max projection
                 self.logger.debug(f"Retrieving max z projection of frame {r.frame} and channel {channel}")
-                return r.image.z_projection(frame=r.frame, channel=channel).image
+                mdi = r.image.z_projection(frame=r.frame, channel=channel, projection=self.zstack)
+                return mdi.image if mdi is not None else None
+            elif type(self.zstack) is int:
+                self.logger.debug(f"Retrieving max z projection of frame {r.frame} and channel {channel}")
+                mdi = r.image.z_projection(frame=r.frame, channel=channel, projection=ZProjection(self.zstack).name)
+                return mdi.image if mdi is not None else None
+        return None
 
     def __call__(self, *args, **kwargs):
         if 'channeldict' not in self._kwargs:
@@ -30,18 +40,33 @@ class CompositeRGBImage(ImagePipeline):
         for name, settings in channeldict.items():
             channel = settings['id']
             _img = self._img(channel)
+            if _img is None:
+                continue
             if dtype is None:
                 dtype = _img.dtype
 
             # Contrast enhancing by stretching the histogram
+            _img = skimage.util.img_as_float(_img)
             if 'rescale' in settings and settings['rescale']:
                 if type(settings['rescale']) is dict:
                     mini, maxi = settings['rescale']['range']
                     _img = exposure.rescale_intensity(_img, in_range=(mini, maxi))
                 elif type(settings['rescale']) is bool and settings['rescale']:
                     _img = exposure.rescale_intensity(_img, in_range=tuple(np.percentile(_img, (0.1, 99.9))))
+            if 'gamma_value' in settings and 'gamma_gain' in settings:
+                _img = exposure.adjust_gamma(_img, gamma=settings['gamma_value'], gain=settings['gamma_gain'])
+
+            rgb_vector_color = mcolors.to_rgb(settings['color'])
+            assert isinstance(rgb_vector_color, tuple)
 
             _img = color.gray2rgb(_img)
-            background += _img * settings['color'] * settings['intensity']
+            background += _img * rgb_vector_color * settings['intensity']
 
-        return background.astype(dtype)
+        if dtype is not None:
+            if np.issubdtype(dtype, np.integer):
+                background = background / background.max() * np.iinfo(dtype).max  # normalizes data in range 0 - max
+            elif np.issubdtype(dtype, np.floating):
+                background = background / background.max() * np.finfo(dtype).max  # normalizes data in range 0 - max
+            return background.astype(dtype)
+        else:
+            return background
