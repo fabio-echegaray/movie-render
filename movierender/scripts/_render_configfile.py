@@ -22,11 +22,11 @@ def render_configuration_file_cmd(
         cfg_path: Annotated[
             Path, typer.Argument(help="Name of the configuration file of the movie to be rendered")],
         with_root_path: Annotated[
-            Path, typer.Argument(
+            Path, typer.Option(
                 help="Path where the image file should be looked in if the path in the configuration file is relative. "
                      "If no path is given, the current folder will be used.")] = None,
         show_file_info: Annotated[
-            bool, typer.Argument(help="To show file metadata information before rendering the movie")] = True,
+            bool, typer.Option(help="To show file metadata information before rendering the movie")] = True,
         overwrite_file: Annotated[
             bool, typer.Option(help="Set true if you want to overwrite the file")] = False,
         run_test: Annotated[
