@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import configparser
 import copy
 import logging
 import os
 import shutil
 import threading
 import uuid
+from datetime import datetime
 from pathlib import Path
 from typing import List, TYPE_CHECKING
 
@@ -13,6 +15,7 @@ import imageio.v3 as iio
 import moviepy.editor as mpy
 import numpy as np
 import skimage
+from fileops.export.config import read_config_copyright
 from fileops.image import ImageFile
 from fileops.image.exceptions import FrameNotFoundError
 from fileops.pathutils import ensure_dir
@@ -150,6 +153,20 @@ class SequentialMovieRenderer:
             except FrameNotFoundError:
                 continue
 
+        # obtain copyright metadata
+        cfg = configparser.ConfigParser()
+        cfg.read(self._cfg.configfile)
+        copyr = read_config_copyright(self._cfg.configfile, cfg)
+        if copyr is not None:
+            cpr_lst = [
+                '-metadata', f'artist={copyr.author}',
+                '-metadata', f'author={copyr.author}',
+                '-metadata', f'copyright={copyr.license}',
+            ]
+        else:
+            cpr_lst = []
+
+        # render using ffmpeg
         dur = len(rendered_frames) / self.fps
         animation = mpy.VideoClip(make_frame_mpl, duration=dur)
         animation.write_videofile(filename,
@@ -159,7 +176,11 @@ class SequentialMovieRenderer:
                                   # audio_codec='pcm_s32le',
                                   ffmpeg_params=[
                                       '-vf', 'pad=ceil(iw/2)*2:ceil(ih/2)*2',
-                                      '-pix_fmt', 'yuv420p'
+                                      '-pix_fmt', 'yuv420p',
+                                      '-metadata', f'title={self._cfg.title}',
+                                      '-metadata', f'description={self._cfg.description}',
+                                      '-metadata', f'date={datetime.today().strftime("%Y-%m-%d")}',
+                                      *cpr_lst
                                   ])
         animation.close()
 

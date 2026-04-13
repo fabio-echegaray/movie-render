@@ -15,7 +15,7 @@ def render_folder_cmd(
             Path, typer.Argument(help="Path where configuration files are located. "
                                       "If no path is given, the current folder will be used.")] = None,
         with_root_path: Annotated[
-            Path, typer.Argument(
+            Path, typer.Option(
                 help="Path where image files should be looked in if the path in the configuration file is relative. "
                      "If no path is given, the current folder will be used.")] = None,
         overwrite_files: Annotated[

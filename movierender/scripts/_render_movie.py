@@ -11,7 +11,7 @@ from movierender.layouts import LayoutChannelColumnComposer, LayoutZStackColumnC
 sys.path.append(Path(os.path.realpath(__file__)).parent.parent.parent.as_posix())
 
 from fileops.export.config import read_config
-from fileops.logger import get_logger, silence_loggers
+from fileops.logger import get_logger
 
 log = get_logger(name='render-movie')
 
@@ -40,11 +40,11 @@ def render_movie_cmd(
         cfg_path: Annotated[
             Path, typer.Argument(help="Name of the configuration file of the movie to be rendered")],
         with_root_path: Annotated[
-            Path, typer.Argument(
+            Path, typer.Option(
                 help="Path where image files should be looked in if the path in the configuration file is relative. "
                      "If no path is given, the current folder will be used.")] = None,
         show_file_info: Annotated[
-            bool, typer.Argument(help="To show file metadata information before rendering the movie")] = True,
+            bool, typer.Option(help="To show file metadata information before rendering the movie")] = True,
         overwrite_movie_file: Annotated[
             bool, typer.Option(help="Set true if you want to overwrite the file")] = False,
         run_test: Annotated[
@@ -57,7 +57,6 @@ def render_movie_cmd(
 
     # make movies specified in configuration file
     for mov in cfg.movies:
-        silence_loggers(loggers=[mov.image_file.__class__.__name__], output_log_file=Path(os.getcwd()) / "silenced.log")
         if show_file_info:
             try:
                 log.info(f"file {cfg_path}\r\n{mov.image_file.info.squeeze(axis=0)}")
