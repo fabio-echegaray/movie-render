@@ -85,7 +85,8 @@ class PanelHeaderReaderPlugin(HeaderReaderPlugin):
                 zstack_fn=cfg[pan]["overlays"] if "overlays" in cfg[pan] else "all-max",
                 scalebar=int(cfg[pan]["scalebar"]) if "scalebar" in cfg[pan] else None,
                 scalebar_thickness=float(cfg[pan]["scalebar_thickness"]) if "scalebar_thickness" in cfg[pan] else 1,
-                draw_scalebar_text=cfg[pan]["draw_scalebar_text"].lower() in ["true", "yes"],
+                draw_scalebar_text=cfg[pan]["draw_scalebar_text"].lower() in ["true", "yes"]
+                if "draw_scalebar_text" in cfg[pan] else False,
                 override_dt=sec_param_override.dt,
                 image_file=img_file,
                 um_per_z=float(cfg["DATA"]["um_per_z"]) if "um_per_z" in cfg["DATA"] else img_file.um_per_z,
