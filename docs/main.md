@@ -80,7 +80,7 @@ The supported parameters to render a movie from a configuration file are as foll
 - `layout`: specifies the layout of the movie when the data has several channels or when many z-slices are meant to be
   shown in a single frame.
   Current options are:
-    - `two-comp`: render two channels on one composite image.
+    - `twoch-comp`: render two channels on one composite image.
     - `two-ch`: renders two channels side by side.
     - `two-col`: renders all available channels in two columns by N rows.
     - `z-n-col`: renders all available z-stacks of the first channel
