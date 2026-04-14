@@ -1,6 +1,7 @@
 import matplotlib.colors as mcolors
 import numpy as np
 import skimage
+from fileops.image import ImageFile
 from fileops.image.ops import ZProjection
 from skimage import color, exposure
 
@@ -8,23 +9,24 @@ from movierender.render.pipelines._image_pipeline_base import ImagePipeline
 
 
 class CompositeRGBImage(ImagePipeline):
-    def _img(self, channel):
-        r = self._renderer
+    def _img(self, channel, image_file=None, frame=None):
+        imf = self._renderer.image if image_file is None else image_file
+        frame = self._renderer.frame if frame is None else frame
 
         if type(self.zstack) is int and self.zstack >= 0:
-            ix = r.image.ix_at(c=channel, z=self.zstack, t=r.frame)
-            self.logger.debug(f"Retrieving frame {r.frame} of channel {channel} at z-stack={self.zstack} "
+            ix = imf.ix_at(c=channel, z=self.zstack, t=frame)
+            self.logger.debug(f"Retrieving frame {frame} of channel {channel} at z-stack={self.zstack} "
                               f"(index={ix})")
-            mdi = r.image.image(ix)
+            mdi = imf.image(ix)
             return mdi.image if mdi is not None else None
         elif type(self.zstack) is str or self.zstack < 0:
             if self.zstack.split("-")[1] in ["max", "min", "sum", "std", "avg", "mean", "median", ]:  # max projection
-                self.logger.debug(f"Retrieving max z projection of frame {r.frame} and channel {channel}")
-                mdi = r.image.z_projection(frame=r.frame, channel=channel, projection=self.zstack)
+                self.logger.debug(f"Retrieving max z projection of frame {frame} and channel {channel}")
+                mdi = imf.z_projection(frame=frame, channel=channel, projection=self.zstack)
                 return mdi.image if mdi is not None else None
             elif type(self.zstack) is int:
-                self.logger.debug(f"Retrieving max z projection of frame {r.frame} and channel {channel}")
-                mdi = r.image.z_projection(frame=r.frame, channel=channel, projection=ZProjection(self.zstack).name)
+                self.logger.debug(f"Retrieving max z projection of frame {frame} and channel {channel}")
+                mdi = imf.z_projection(frame=frame, channel=channel, projection=ZProjection(self.zstack).name)
                 return mdi.image if mdi is not None else None
         return None
 
@@ -33,13 +35,21 @@ class CompositeRGBImage(ImagePipeline):
             raise Exception("Channel parameters needed to apply this pipeline.")
         channeldict = self._kwargs['channeldict']
 
-        r = self._renderer
+        # check if an ImageFile object is provided as an argument. Use that if provided, otherwise use the renderer.
+        if len(args) > 0 and isinstance(args[0], ImageFile):
+            imf = args[0]
+        elif hasattr(self, "_renderer") and self._renderer is not None:
+            imf = self._renderer.image
+        else:
+            raise ValueError("No image source to render from.")
+        # check if frame is provided as an argument. Use that if provided, otherwise use the renderer.
+        _frame = kwargs.get("frame", self._renderer.frame if self._renderer is not None else 0)
 
         dtype = None
-        background = np.zeros((r.image.height, r.image.width) + (3,), dtype=np.float64)
+        background = np.zeros((imf.height, imf.width) + (3,), dtype=np.float64)
         for name, settings in channeldict.items():
             channel = settings['id']
-            _img = self._img(channel)
+            _img = self._img(channel, image_file=imf if self._renderer is None else None, frame=_frame)
             if _img is None:
                 continue
             if dtype is None:
