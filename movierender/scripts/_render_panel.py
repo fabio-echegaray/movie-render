@@ -33,6 +33,10 @@ def render_panel_cmd(
     log.info(f"Reading configuration file {cfg_path}")
     cfg = read_config(cfg_path, with_root_path=with_root_path)
 
+    if not hasattr(cfg, "panels") or len(cfg.panels) == 0:
+        log.warning(f"No panels found in configuration file.")
+        exit(65)  # return code for data format error
+
     # render panels specified in configuration file
     for pan in cfg.panels:
         if show_file_info:
