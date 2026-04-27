@@ -1,8 +1,9 @@
+from typing import Iterable
+
 import matplotlib.colors as mcolors
 import numpy as np
 import skimage
 from fileops.image import ImageFile
-from fileops.image.ops import ZProjection
 from skimage import color, exposure
 
 from movierender.render.pipelines._image_pipeline_base import ImagePipeline
@@ -19,14 +20,14 @@ class CompositeRGBImage(ImagePipeline):
                               f"(index={ix})")
             mdi = imf.image(ix)
             return mdi.image if mdi is not None else None
+        elif isinstance(self.zstack, (list, set, Iterable)):
+            self.logger.debug(f"Retrieving max z projection of frame {frame} and channel {channel}")
+            mdi = imf.z_projection(frame=frame, channel=channel, z_subset=self.zstack, projection=self.zstack_fn)
+            return mdi.image if mdi is not None else None
         elif type(self.zstack) is str or self.zstack < 0:
             if self.zstack.split("-")[1] in ["max", "min", "sum", "std", "avg", "mean", "median", ]:  # max projection
                 self.logger.debug(f"Retrieving max z projection of frame {frame} and channel {channel}")
                 mdi = imf.z_projection(frame=frame, channel=channel, projection=self.zstack)
-                return mdi.image if mdi is not None else None
-            elif type(self.zstack) is int:
-                self.logger.debug(f"Retrieving max z projection of frame {frame} and channel {channel}")
-                mdi = imf.z_projection(frame=frame, channel=channel, projection=ZProjection(self.zstack).name)
                 return mdi.image if mdi is not None else None
         return None
 
