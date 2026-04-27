@@ -18,6 +18,10 @@ log = get_logger(name='render-panel')
 def render_panel_cmd(
         cfg_path: Annotated[
             Path, typer.Argument(help="Name of the configuration file of the movie to be rendered")],
+        with_root_path: Annotated[
+            Path, typer.Option(
+                help="Path where the image file should be looked in if the path in the configuration file is relative. "
+                     "If no path is given, the current folder will be used.")] = None,
         show_file_info: Annotated[
             bool, typer.Option(help="To show file metadata information before rendering the movie")] = True,
         # overwrite_file: Annotated[
@@ -27,7 +31,7 @@ def render_panel_cmd(
         return
 
     log.info(f"Reading configuration file {cfg_path}")
-    cfg = read_config(cfg_path)
+    cfg = read_config(cfg_path, with_root_path=with_root_path)
 
     # render panels specified in configuration file
     for pan in cfg.panels:
