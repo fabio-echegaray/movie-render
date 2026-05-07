@@ -21,7 +21,7 @@ class ConfigMovie(NamedTuple):
     scalebar: float
     override_dt: Union[float, None]
     image_file: Union[ImageFile, None]
-    roi: ImagejRoi
+    roi: ImagejRoi | List[ImagejRoi] | List[str]
     um_per_z: float
     title: str
     description: str

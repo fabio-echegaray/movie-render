@@ -9,6 +9,7 @@ from fileops.logger import get_logger
 from fileops.plugins import HeaderReaderPlugin
 
 from movierender.config import ConfigMovie
+from movierender.overlays import ImagejROI
 
 
 class MovieHeaderReaderPlugin(HeaderReaderPlugin):
@@ -47,6 +48,24 @@ class MovieHeaderReaderPlugin(HeaderReaderPlugin):
 
         cfg, param_override, img_file, roi = self._cfg, self._param_override, self._img_file, self._roi
 
+        # process ROI sections in configuration file
+        roi_lst = list()
+        for p in fileops.config_type_plugins:
+            if "roi" not in p.name:
+                continue
+            self.log.debug(f"Checking {p.name}")
+            t_name = p.name
+            header_reader_name = f"{t_name}_header_reader"
+            for h in fileops.header_reader_plugins:
+                if h.name == header_reader_name:
+                    self.log.debug(f"Loading {header_reader_name}")
+                    clz = h.load()
+                    if not issubclass(clz, HeaderReaderPlugin):
+                        continue
+                    cinst = clz(self._cfg_path, root_path=self._root_path)
+                    if cinst.has_valid_header():
+                        roi_lst.extend(cinst.process())
+
         # process OVERLAY sections in configuration file
         overlays = list()
         for p in fileops.config_type_plugins:
@@ -75,11 +94,22 @@ class MovieHeaderReaderPlugin(HeaderReaderPlugin):
             sec_param_override = process_overrides_of_section(cfg[mov], copy.deepcopy(param_override), img_file)
             sec_param_override = update_channel_config_with_section_overrides(sec_param_override, cfg[mov])
             include_tracks = cfg[mov]["include_tracks"] if "include_tracks" in cfg[mov] else None
+
             # find overlays
+            overlays_to_add = list()
             if "overlays" in cfg[mov]:
                 ovr_txt = cfg[mov]["overlays"]
                 if ovr_txt[0] == "[" and ovr_txt[-1] == "]":
                     ovr_ids = [s.strip() for s in ovr_txt[1:-1].split(",")]
+                    overlays_to_add.extend([ovr for ovr in overlays if ovr.id in ovr_ids])
+
+            # find ROI IDs and append them to list of ROIs
+            if "roi" in cfg[mov]:
+                roi_txt = cfg[mov]["roi"]
+                if roi_txt[0] == "[" and roi_txt[-1] == "]":
+                    roi_ids = [s.strip() for s in roi_txt[1:-1].split(",") if len(s) > 0]
+                    if len(roi_ids) > 0:
+                        overlays_to_add.extend(ImagejROI(r.geometry) for r in roi_lst if r.header in roi_ids and r.plot)
 
             movie_def.append(ConfigMovie(
                 header=mov,
@@ -106,6 +136,6 @@ class MovieHeaderReaderPlugin(HeaderReaderPlugin):
                     else include_tracks == "yes" if type(include_tracks) is str
                     else False
                 ),
-                overlays=[ovr for ovr in overlays if ovr.id in ovr_ids]
+                overlays=overlays_to_add
             ))
         return movie_def
