@@ -60,7 +60,8 @@ class LayoutChannelColumnComposer(BaseLayoutComposer):
             self.renderer += ovl.Timestamp(xy=t.xy_ratio_to_um(0.02, 0.95), va='center', ax=ax)
             self.renderer += CompositeRGBImage(
                 ax=ax,
-                zstack=movie.zstack_fn,
+                zstack=movie.zstack,
+                zstack_fn=movie.zstack_fn,
                 channeldict={
                     ch_cfg['name']: {
                         'id':          ch_cfg_ix,
