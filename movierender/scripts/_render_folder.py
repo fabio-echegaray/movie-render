@@ -15,7 +15,7 @@ def render_folder_cmd(
             Path, typer.Argument(help="Path where configuration files are located. "
                                       "If no path is given, the current folder will be used.")] = None,
         with_root_path: Annotated[
-            Path, typer.Argument(
+            Path, typer.Option(
                 help="Path where image files should be looked in if the path in the configuration file is relative. "
                      "If no path is given, the current folder will be used.")] = None,
         overwrite_files: Annotated[
@@ -28,6 +28,8 @@ def render_folder_cmd(
         path = Path('.').absolute()
     cfg_path_list = search_config_files(path)
 
+    if len(cfg_path_list)==0:
+        log.warning("No configuration files were found.")
     total_rendered = 0
     for cfg_path in cfg_path_list:
         if cfg_path.parent.name[0:3] == "bad":
@@ -36,9 +38,9 @@ def render_folder_cmd(
         log.info(f"Reading configuration file {cfg_path}")
         try:
             render_configuration_file_cmd(cfg_path,
-                                      overwrite_movie_file=overwrite_files,
-                                      with_root_path=with_root_path,
-                                      run_test=run_test)
+                                          overwrite_file=overwrite_files,
+                                          with_root_path=with_root_path,
+                                          run_test=run_test)
             total_rendered += 1
         except FileNotFoundError as e:
             log.error(e)

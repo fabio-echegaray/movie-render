@@ -1,5 +1,6 @@
 import copy
-from typing import List
+from pathlib import Path
+from typing import List, Dict
 
 import fileops
 from fileops.export.config_channel_section import update_channel_config_with_section_overrides
@@ -31,6 +32,25 @@ class PanelHeaderReaderPlugin(HeaderReaderPlugin):
         else:
             self.log.debug(f"No headers of type PANEL in file {self._cfg_path}.")
             return False
+
+    def header_output_file_exist(self) -> Dict[str, bool]:
+        """ check if output file paths exists without loading the whole structure """
+        headers = [s for s in self._cfg.sections() if s.upper().startswith("PANEL")]
+        if len(headers) == 0:
+            self.log.warning(f"No headers with name PANEL to check in file {self._cfg_path}.")
+            return {"none": False}
+
+        # process sections
+        out = {mvh: False for mvh in headers}
+        for mov in headers:
+            if "filename" in self._cfg[mov]:
+                out_name = Path(self._cfg[mov]["filename"])
+                base_path = self._root_path if self._root_path is not None else out_name.parent if out_name.is_absolute() else self._cfg_path.parent
+                out_path = base_path / out_name.name
+                if out_path.exists():
+                    out[mov] = True
+
+        return out
 
     def process(self) -> List[ConfigPanel]:
         if self._headers is None:
@@ -71,7 +91,7 @@ class PanelHeaderReaderPlugin(HeaderReaderPlugin):
             if "overlays" in cfg[pan]:
                 ovr_txt = cfg[pan]["overlays"]
                 if ovr_txt[0] == "[" and ovr_txt[-1] == "]":
-                    ovr_ids = ovr_txt[1:-1].split(",")
+                    ovr_ids = [s.strip() for s in ovr_txt[1:-1].split(",")]
 
             panel_def.append(ConfigPanel(
                 header=pan,
@@ -85,7 +105,8 @@ class PanelHeaderReaderPlugin(HeaderReaderPlugin):
                 zstack_fn=cfg[pan]["overlays"] if "overlays" in cfg[pan] else "all-max",
                 scalebar=int(cfg[pan]["scalebar"]) if "scalebar" in cfg[pan] else None,
                 scalebar_thickness=float(cfg[pan]["scalebar_thickness"]) if "scalebar_thickness" in cfg[pan] else 1,
-                draw_scalebar_text=cfg[pan]["draw_scalebar_text"].lower() in ["true", "yes"],
+                draw_scalebar_text=cfg[pan]["draw_scalebar_text"].lower() in ["true", "yes"]
+                if "draw_scalebar_text" in cfg[pan] else False,
                 override_dt=sec_param_override.dt,
                 image_file=img_file,
                 um_per_z=float(cfg["DATA"]["um_per_z"]) if "um_per_z" in cfg["DATA"] else img_file.um_per_z,
