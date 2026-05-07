@@ -19,6 +19,9 @@ version = "0.2.0"
 # - remove call to silence_loggers in terminal-command related scripts.
 # - add copyright info in the metadata when rendering movies.
 # - breaking: change of calling signature to some command line arguments (with_root_path and show_file_info are Typer options instead of arguments now).
+# - panels can now render a merged composite image.
+# - implement rescale and intensity parameters in channel header and section overrides of configuration files.
+# - movies render ROIs now.
 
 # This is a one-line description or tagline of what your project does. This
 # corresponds to the "Summary" metadata field:

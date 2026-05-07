@@ -73,10 +73,12 @@ class LayoutZStackColumnComposer(BaseLayoutComposer):
                                 isinstance(ch_cfg['color'], tuple) and
                                 len(ch_cfg['color']) > 3
                         ) else ch_cfg['color'],
-                        'gamma_value': ch_cfg['gamma_value'] if 'gamma_value' in ch_cfg else 1,
-                        'gamma_gain':  ch_cfg['gamma_gain'] if 'gamma_gain' in ch_cfg else 1,
-                        'rescale':     True,
-                        'intensity':   1.0
+                        'gamma_value': float(ch_cfg['gamma_value']) if 'gamma_value' in ch_cfg else 1.0,
+                        'gamma_gain':  float(ch_cfg['gamma_gain']) if 'gamma_gain' in ch_cfg else 1.0,
+                        'rescale':     ch_cfg['rescale'].lower() in ['true', 'yes'] if 'rescale' in ch_cfg else True,
+                        'rescale_min': float(ch_cfg['rescale_min']) if 'rescale_min' in ch_cfg else None,
+                        'rescale_max': float(ch_cfg['rescale_max']) if 'rescale_max' in ch_cfg else None,
+                        'intensity':   float(ch_cfg['intensity']) if 'intensity' in ch_cfg else 1.0
                     },
                 })
             self.renderer += ovl.Text(f'z{z_ix:02d}',
