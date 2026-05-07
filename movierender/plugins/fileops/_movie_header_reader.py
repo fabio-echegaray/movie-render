@@ -27,7 +27,7 @@ class MovieHeaderReaderPlugin(HeaderReaderPlugin):
         """ check if output file paths exists without loading the whole structure """
         headers = [s for s in self._cfg.sections() if s.upper().startswith("MOVIE")]
         if len(headers) == 0:
-            self.log.warning(f"No headers with name MOVIE to check in file {self._cfg_path}.")
+            self.log.debug(f"No headers with name MOVIE to check in file {self._cfg_path}.")
             return {"none": False}
 
         # process sections

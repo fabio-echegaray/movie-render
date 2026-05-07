@@ -37,7 +37,7 @@ class PanelHeaderReaderPlugin(HeaderReaderPlugin):
         """ check if output file paths exists without loading the whole structure """
         headers = [s for s in self._cfg.sections() if s.upper().startswith("PANEL")]
         if len(headers) == 0:
-            self.log.warning(f"No headers with name PANEL to check in file {self._cfg_path}.")
+            self.log.debug(f"No headers with name PANEL to check in file {self._cfg_path}.")
             return {"none": False}
 
         # process sections
