@@ -68,8 +68,10 @@ class CompositeRGBImage(ImagePipeline):
                     _img = exposure.rescale_intensity(_img, in_range=(mini, maxi))
                 elif type(settings['rescale']) is bool and settings['rescale']:
                     p_min, p_max = np.percentile(_img, (0.1, 99.9))
-                    i_min = settings['rescale_min'] / np.iinfo(dtype).max if 'rescale_min' in settings else p_min
-                    i_max = settings['rescale_max'] / np.iinfo(dtype).max if 'rescale_max' in settings else p_max
+                    i_min = settings['rescale_min'] / np.iinfo(dtype).max \
+                        if 'rescale_min' in settings and settings['rescale_min'] is not None else p_min
+                    i_max = settings['rescale_max'] / np.iinfo(dtype).max \
+                        if 'rescale_max' in settings and settings['rescale_max'] is not None else p_max
                     _img = exposure.rescale_intensity(_img, in_range=(i_min, i_max))
             if 'gamma_value' in settings and 'gamma_gain' in settings:
                 _img = exposure.adjust_gamma(_img, gamma=settings['gamma_value'], gain=settings['gamma_gain'])
