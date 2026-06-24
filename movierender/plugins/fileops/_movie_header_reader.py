@@ -66,23 +66,18 @@ class MovieHeaderReaderPlugin(HeaderReaderPlugin):
                     if cinst.has_valid_header():
                         roi_lst.extend(cinst.process())
 
-        # process OVERLAY sections in configuration file
+        # find OVERLAY parsers from plugins
         overlays = list()
-        for p in fileops.config_type_plugins:
-            if "overlay" not in p.name:
+        for h in fileops.header_reader_plugins:
+            if "overlay" not in h.name:
                 continue
-            self.log.debug(f"Checking {p.name}")
-            t_name = p.name
-            header_reader_name = f"{t_name}_header_reader"
-            for h in fileops.header_reader_plugins:
-                if h.name == header_reader_name:
-                    self.log.debug(f"Loading {header_reader_name}")
-                    clz = h.load()
-                    if not issubclass(clz, HeaderReaderPlugin):
-                        continue
-                    cinst = clz(self._cfg_path, root_path=self._root_path)
-                    if cinst.has_valid_header():
-                        overlays.extend(cinst.process())
+            self.log.debug(f"Loading {h.name}")
+            clz = h.load()
+            if not issubclass(clz, HeaderReaderPlugin):
+                continue
+            cinst = clz(self._cfg_path, root_path=self._root_path)
+            if cinst.has_valid_header():
+                overlays.extend(cinst.process())
 
         # process MOVIE sections
         movie_def = list()
@@ -95,7 +90,7 @@ class MovieHeaderReaderPlugin(HeaderReaderPlugin):
             sec_param_override = update_channel_config_with_section_overrides(sec_param_override, cfg[mov])
             include_tracks = cfg[mov]["include_tracks"] if "include_tracks" in cfg[mov] else None
 
-            # find overlays
+            # process OVERLAY sections in configuration file
             overlays_to_add = list()
             if "overlays" in cfg[mov]:
                 ovr_txt = cfg[mov]["overlays"]
