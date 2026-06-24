@@ -23,6 +23,7 @@ version = "0.2.0"
 # - implement rescale and intensity parameters in channel header and section overrides of configuration files.
 # - movies render ROIs now.
 # - add overlay for particle position and trajectory.
+# - add overlay to render arrows.
 
 # This is a one-line description or tagline of what your project does. This
 # corresponds to the "Summary" metadata field:
@@ -147,6 +148,7 @@ panel = 'movierender.config:ConfigPanel'
 [project.entry-points.'fileops.plugins.config.header_readers']
 movie_header_reader = 'movierender.plugins.fileops:MovieHeaderReaderPlugin'
 panel_header_reader = 'movierender.plugins.fileops:PanelHeaderReaderPlugin'
+arrow_overlay_header_reader = 'movierender.plugins.fileops:ArrowOverlayHeaderReaderPlugin'
 
 [tool.setuptools.packages.find]
 include = ["movierender*"] # Only include the 'movierender' package and its subpackages
