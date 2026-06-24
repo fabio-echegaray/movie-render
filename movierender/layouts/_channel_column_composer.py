@@ -72,8 +72,10 @@ class LayoutChannelColumnComposer(BaseLayoutComposer):
                         'gamma_value': float(ch_cfg['gamma_value']) if 'gamma_value' in ch_cfg else 1.0,
                         'gamma_gain':  float(ch_cfg['gamma_gain']) if 'gamma_gain' in ch_cfg else 1.0,
                         'rescale':     ch_cfg['rescale'].lower() in ['true', 'yes'] if 'rescale' in ch_cfg else True,
-                        'rescale_min': float(ch_cfg['rescale_min']) if 'rescale_min' in ch_cfg else None,
-                        'rescale_max': float(ch_cfg['rescale_max']) if 'rescale_max' in ch_cfg else None,
+                        'rescale_min': float(ch_cfg['rescale_min'])
+                                       if 'rescale_min' in ch_cfg and ch_cfg['rescale_min'] is not None else None,
+                        'rescale_max': float(ch_cfg['rescale_max'])
+                                       if 'rescale_max' in ch_cfg and ch_cfg['rescale_min'] is not None else None,
                         'intensity':   float(ch_cfg['intensity']) if 'intensity' in ch_cfg else 1.0
                     },
                 })
