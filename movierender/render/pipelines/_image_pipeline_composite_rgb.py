@@ -62,6 +62,8 @@ class CompositeRGBImage(ImagePipeline):
 
             # Contrast enhancing by stretching the histogram
             _img = skimage.util.img_as_float(_img)
+            if 'rescale' in settings and ('gamma_value' in settings or 'gamma_gain' in settings):
+                raise ValueError("Gamma values and rescale cannot be used at the same time")
             if 'rescale' in settings and settings['rescale']:
                 if type(settings['rescale']) is dict:
                     mini, maxi = settings['rescale']['range']
