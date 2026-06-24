@@ -4,7 +4,8 @@
 * [Configuration options](#configuration-options)
     * [Render movie](#render-movie)
     * [Render panel](#render-panel)
-    * [Trackmate data](#trackmate-data-section)
+    * [Overlays](#overlays)
+      * [Trackmate data](#trackmate-data-section)
 
 
 # Quick start
@@ -153,7 +154,18 @@ The supported parameters to render a panel are:
   The overlays have to be defined using an OVERLAY section, and be posteriorly included in this definition by specifying
   their IDs.
 
+# Overlays
+
+## Indicative Arrow
+The relevant parameters for this section are:
+- `xy`: tuple with X and Y coordinates (col,row) in microns.
+- `length`: length of the arrow in microns.
+- `angle`: angle of incidence of the arrow, in degrees.
+- `color`: color of the arrow.
+- `frame`: indicate only if the arrow is needed to be plotted on specific frame(s).
+
 ## Trackmate data section
 Trackmate data can be made available to the rendering of a movie.
 The relevant parameters for this section are:
 - `path`: path of where the Trackmate file is located.
+

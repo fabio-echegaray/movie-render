@@ -31,6 +31,13 @@ class TestRender(TestCase):
         result = self.runner.invoke(app, args)
         self.assertEqual(result.exit_code, 0)
 
+    def test_render_overlays(self):
+        command_name = "file"
+
+        args = [command_name, "example_data/test_movie_panel_overlay.cfg"]
+        result = self.runner.invoke(app, args)
+        self.assertEqual(result.exit_code, 0)
+
     def test_render_folder(self):
         command_name = "folder"
 

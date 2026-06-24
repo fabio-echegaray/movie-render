@@ -12,6 +12,7 @@ version = "0.2.0"
 # - add classes to read header MOVIE from fileops config files; these are implemented as plugins of fileops
 # - add classes to read header PANEL from fileops config files; these are implemented as plugins of fileops
 # - add classes to read header OVERLAY from fileops config files; add the mechanism to render them
+# - add overlay to render arrows.
 
 # This is a one-line description or tagline of what your project does. This
 # corresponds to the "Summary" metadata field:
@@ -137,6 +138,7 @@ panel = 'movierender.config:ConfigPanel'
 [project.entry-points.'fileops.plugins.config.header_readers']
 movie_header_reader = 'movierender.plugins.fileops:MovieHeaderReaderPlugin'
 panel_header_reader = 'movierender.plugins.fileops:PanelHeaderReaderPlugin'
+arrow_overlay_header_reader = 'movierender.plugins.fileops:ArrowOverlayHeaderReaderPlugin'
 
 [tool.setuptools.packages.find]
 include = ["movierender*"] # Only include the 'movierender' package and its subpackages
