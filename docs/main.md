@@ -54,7 +54,7 @@ The movie will max-project all the images in the z-stack as established in the `
 Finally run in the terminal
 
 ```commandline
-$ fileops-render example.cfg
+$ movierender example.cfg
 ```
 
 # Configuration options
