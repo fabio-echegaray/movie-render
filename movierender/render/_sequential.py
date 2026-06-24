@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-import copy
+import configparser
 import logging
 import os
 import shutil
 import threading
 import uuid
+from datetime import datetime
 from pathlib import Path
 from typing import List, TYPE_CHECKING
 
@@ -13,6 +14,7 @@ import imageio.v3 as iio
 import moviepy.editor as mpy
 import numpy as np
 import skimage
+from fileops.export.config import read_config_copyright
 from fileops.image import ImageFile
 from fileops.image.exceptions import FrameNotFoundError
 from fileops.pathutils import ensure_dir
@@ -150,6 +152,20 @@ class SequentialMovieRenderer:
             except FrameNotFoundError:
                 continue
 
+        # obtain copyright metadata
+        cfg = configparser.ConfigParser()
+        cfg.read(self._cfg.configfile)
+        copyr = read_config_copyright(self._cfg.configfile, cfg)
+        if copyr is not None:
+            cpr_lst = [
+                '-metadata', f'artist={copyr.author}',
+                '-metadata', f'author={copyr.author}',
+                '-metadata', f'copyright={copyr.license}',
+            ]
+        else:
+            cpr_lst = []
+
+        # render using ffmpeg
         dur = len(rendered_frames) / self.fps
         animation = mpy.VideoClip(make_frame_mpl, duration=dur)
         animation.write_videofile(filename,
@@ -159,7 +175,11 @@ class SequentialMovieRenderer:
                                   # audio_codec='pcm_s32le',
                                   ffmpeg_params=[
                                       '-vf', 'pad=ceil(iw/2)*2:ceil(ih/2)*2',
-                                      '-pix_fmt', 'yuv420p'
+                                      '-pix_fmt', 'yuv420p',
+                                      '-metadata', f'title={self._cfg.title}',
+                                      '-metadata', f'description={self._cfg.description}',
+                                      '-metadata', f'date={datetime.today().strftime("%Y-%m-%d")}',
+                                      *cpr_lst
                                   ])
         animation.close()
 
@@ -223,6 +243,7 @@ class SequentialMovieRenderer:
                           origin='upper' if self.inv_y else 'lower',
                           interpolation='none', aspect='equal',
                           zorder=0)
+                del img
             except TypeError as e:
                 self.logger.error(e)
             except FrameNotFoundError as e:
@@ -232,11 +253,9 @@ class SequentialMovieRenderer:
                 kwargs = self._kwargs.copy()
                 kwargs.update(show_axis=self.show_axis)
                 kwargs.update(**ovrl._kwargs)
-                _kwa = copy.copy(kwargs)
-                _kwa.pop("timestamps")
+                kwargs.pop("timestamps")
                 ovrl.plot(ax=self.ax if ovrl.ax is None else None, **kwargs)
 
         ensure_dir(self._tmp)
         self.fig.savefig(img_path, facecolor='white', transparent=False)
-        del img
         return img_path

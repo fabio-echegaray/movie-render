@@ -11,6 +11,7 @@ from movierender.overlays.pixel_tools import PixelTools
 from movierender.plugins.overlay import OverlayPlugin
 from movierender.render.pipelines import NullImage, CompositeRGBImage
 from ._base_composer import BaseLayoutComposer
+from ._ch_config import channel_configuration
 
 
 class LayoutZStackColumnComposer(BaseLayoutComposer):
@@ -56,26 +57,18 @@ class LayoutZStackColumnComposer(BaseLayoutComposer):
                                       **self._renderer_params)
 
         ch_indexes = sorted(movie.channel_render_parameters.keys())
-        ch_cfg = movie.channel_render_parameters[ch_indexes[0]]  # we take the first channel regardless of their number
+        ch_cfg = channel_configuration(movie.channel_render_parameters)
         for ax, z_ix in zip(self.ax_lst, imf.zstacks):
             self.renderer += ovl.ScaleBar(um=movie.scalebar, lw=3,
                                           xy=t.xy_ratio_to_um(0.80, 0.05),
                                           fontdict={'size': 9},
                                           ax=ax)
             self.renderer += ovl.Timestamp(xy=t.xy_ratio_to_um(0.02, 0.95), va='center', ax=ax)
-            self.renderer += CompositeRGBImage(ax=ax,
-                                               zstack=z_ix,
-                                               channeldict={
-                                                   ch_cfg['name']: {
-                                                       'id':        ch_indexes[0],
-                                                       'color':     ch_cfg['color'][1:] if (
-                                                               isinstance(ch_cfg['color'], tuple) and
-                                                               len(ch_cfg['color']) > 3
-                                                       ) else ch_cfg['color'],
-                                                       'rescale':   True,
-                                                       'intensity': 1.0
-                                                   },
-                                               })
+            self.renderer += CompositeRGBImage(
+                ax=ax,
+                zstack=z_ix,
+                channeldict=ch_cfg[ch_indexes[0]]  # we take the first channel regardless of their number
+            )
             self.renderer += ovl.Text(f'z{z_ix:02d}',
                                       xy=t.xy_ratio_to_um(0.70, 0.95),
                                       fontdict={'size': 7, 'color': 'white'}, ax=ax)

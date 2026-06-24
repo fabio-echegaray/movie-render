@@ -55,7 +55,7 @@ The movie will max-project all the images in the z-stack as established in the `
 Finally run in the terminal
 
 ```commandline
-$ fileops-render example.cfg
+$ movierender example.cfg
 ```
 
 # Configuration options
@@ -81,7 +81,7 @@ The supported parameters to render a movie from a configuration file are as foll
 - `layout`: specifies the layout of the movie when the data has several channels or when many z-slices are meant to be
   shown in a single frame.
   Current options are:
-    - `two-comp`: render two channels on one composite image.
+    - `twoch-comp`: render two channels on one composite image.
     - `two-ch`: renders two channels side by side.
     - `two-col`: renders all available channels in two columns by N rows.
     - `z-n-col`: renders all available z-stacks of the first channel
@@ -113,6 +113,8 @@ The supported parameters to render a movie from a configuration file are as foll
 - `include_tracks`: set to yes or true if you want to include Trackmate data (defined in Trackmate section) as an
   overlay to this movie.
 
+Copyright info gets included when the additional section COPYRIGHT is stated in the file.
+
 ## Render panel
 
 Header "PANEL".
@@ -128,7 +130,7 @@ The supported parameters to render a panel are:
 - `columns`: specifies the variable that goes on the columns of the layout.
 - `max_columns`: specifies the maximum number of columns in the layout.
 - `max_plots_per_page`: specifies how many plots are allowed per page in the layout.
-- `width`: specifies the width (in inches) of every plot n the layout. 
+- `width`: specifies the width (in inches) of every plot n the layout.
   Whichever parameter is set, the layout will preserve aspect ratio.
 - `height`: specifies the length (in inches) of every plot in the array.
   Whichever parameter is set, the layout will preserve aspect ratio.
@@ -143,7 +145,7 @@ The supported parameters to render a panel are:
   Possible options are to select one image from the z-stack or to project a subset of them into a single image when used
   im combination with `zstack_fn`.
   To select a single z-stack, just specify the number of the slice (starting from zero).
-- `multipage`: if true, the definition of rows in the plot (e.g., the different channels of the render) will 
+- `multipage`: if true, the definition of rows in the plot (e.g., the different channels of the render) will
   become different pages of the pdf instead.
   When multipage is on, the constraint on maximum column number has no effect.
 - `fontsize`: dictates the size of the font (in pt) in which all text of overlays is written.

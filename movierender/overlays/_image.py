@@ -26,7 +26,7 @@ class ScaleBar(Overlay):
         xy, um, scalebar_length, thickness, lw, alpha, zorder, show_text, fontdict = def_values
 
         if um is None and scalebar_length is None:
-            self.log.warning("no scalebar length when trying to plot their overlay.")
+            self.log.warning("no scalebar length when trying to plot overlay.")
             return
 
         lw = max(lw, thickness)
@@ -90,8 +90,8 @@ class Timestamp(Overlay):
             return
 
         x0, y0 = xy
-        _secs0 = timestamps[frame - 1] if len(timestamps) >= frame else timestamps[-1]
-        _secs1 = (frame - 1) * time_interval
+        _secs0 = timestamps[frame] if len(timestamps) >= frame else timestamps[-1]
+        _secs1 = frame * time_interval
 
         secs = int(max(_secs0, _secs1))
         txt = secs_to_string(secs, string_format)

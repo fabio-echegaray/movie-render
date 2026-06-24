@@ -58,7 +58,7 @@ class PanelHeaderReaderPlugin(HeaderReaderPlugin):
 
         cfg, param_override, img_file, roi = self._cfg, self._param_override, self._img_file, self._roi
 
-        # process OVERLAY sections in configuration file
+        # find OVERLAY parsers from plugins
         overlays = list()
         for h in fileops.header_reader_plugins:
             if "overlay" not in h.name:
@@ -82,7 +82,7 @@ class PanelHeaderReaderPlugin(HeaderReaderPlugin):
             if len(sec_param_override.frames) == 0:
                 raise ValueError(f"No frames to render in panel section {pan}.")
 
-            # find overlays
+            # process OVERLAY sections in configuration file
             if "overlays" in cfg[pan]:
                 ovr_txt = cfg[pan]["overlays"]
                 if ovr_txt[0] == "[" and ovr_txt[-1] == "]":

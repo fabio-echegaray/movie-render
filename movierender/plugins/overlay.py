@@ -11,6 +11,7 @@ class OverlayPlugin(BaseFileOpsPlugin):
 
         self._args = args
         self._kwargs = kwargs
+        self.id = kwargs.get("id")
 
     @property
     def overlay(self):

@@ -10,6 +10,7 @@ from movierender.config import ConfigMovie
 from movierender.overlays.pixel_tools import PixelTools
 from movierender.plugins.overlay import OverlayPlugin
 from ._base_composer import BaseLayoutComposer
+from ._ch_config import channel_configuration
 
 
 class LayoutChannelColumnComposer(BaseLayoutComposer):
@@ -51,6 +52,7 @@ class LayoutChannelColumnComposer(BaseLayoutComposer):
                                       fontdict={'size': 12},
                                       **self._renderer_params)
 
+        agg_ch_config = channel_configuration(movie.channel_render_parameters)
         for ax, ch_cfg_ix in zip(self.ax_lst, movie.channel_render_parameters):
             ch_cfg = movie.channel_render_parameters[ch_cfg_ix]
             self.renderer += ovl.ScaleBar(um=movie.scalebar, lw=3,
@@ -58,19 +60,12 @@ class LayoutChannelColumnComposer(BaseLayoutComposer):
                                           fontdict={'size': 9},
                                           ax=ax)
             self.renderer += ovl.Timestamp(xy=t.xy_ratio_to_um(0.02, 0.95), va='center', ax=ax)
-            self.renderer += CompositeRGBImage(ax=ax,
-                                               zstack=movie.zstack_fn,
-                                               channeldict={
-                                                   ch_cfg['name']: {
-                                                       'id':        ch_cfg_ix,
-                                                       'color':     ch_cfg['color'][1:] if (
-                                                               isinstance(ch_cfg['color'], tuple) and
-                                                               len(ch_cfg['color']) > 3
-                                                       ) else ch_cfg['color'],
-                                                       'rescale':   True,
-                                                       'intensity': 1.0
-                                                   },
-                                               })
+            self.renderer += CompositeRGBImage(
+                ax=ax,
+                zstack=movie.zstack,
+                zstack_fn=movie.zstack_fn,
+                channeldict={ch_cfg["name"]: agg_ch_config[ch_cfg["name"]]}
+            )
             self.renderer += ovl.Text(f'{ch_cfg["name"]}',
                                       xy=t.xy_ratio_to_um(0.70, 0.95),
                                       fontdict={'size': 7, 'color': 'white'}, ax=ax)

@@ -1,13 +1,22 @@
 import logging
+from typing import Union, List, Set, Iterable
+
+from fileops.image.ops import ZProjection
 
 from movierender.render.pipelines import PipelineException
 
 
 class ImagePipeline:
-    def __init__(self, *args, ax=None, zstack=0, **kwargs):
+    def __init__(self, *args, ax=None,
+                 zstack: Union[int, List, Set, Iterable, str] = "all",
+                 zstack_fn: str | None = None,
+                 **kwargs):
         self._kwargs = kwargs
         self.ax = ax
-        self.zstack = zstack
+        self.zstack = zstack if isinstance(zstack, int) and zstack > 0 else zstack if isinstance(zstack, (set,list,Iterable)) else "all"
+        self.zstack_fn = zstack_fn if zstack_fn is not None \
+            else ZProjection(zstack).name if isinstance(zstack, int) and zstack < 0 \
+            else "max"
         self.logger = logging.getLogger(__name__)
 
         # if len(args) > 0 and isinstance(args[0], MovieRenderer):
