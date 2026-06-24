@@ -1,7 +1,15 @@
 import matplotlib.colors as mcolors
 import numpy as np
 
+from movierender.plugins.overlay import OverlayPlugin
 from .overlay import Overlay, get_kwargs
+
+
+class ArrowOverlayPlugin(OverlayPlugin):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._clz = Arrow
 
 
 class Arrow(Overlay):
@@ -29,17 +37,15 @@ class Arrow(Overlay):
                                 ))
         fr, _ = def_values
 
-        print(f"{fr} {frame}")
         if fr is not None and (self._renderer is not None or frame is not None):
             if self._renderer is not None and fr != self._renderer.frame:
                 return
             elif frame is not None and fr != frame:
                 return
 
-        ppm = self._renderer.image.pix_per_um if self._renderer is not None else 1
-        length = self._length * ppm
+        length = self._length
         # the base of the arrow is what we need to calculate
-        x, y = [w * ppm for w in self._xy]
+        x, y = self._xy
         xb, yb = x + length * np.cos(self._angle_rad), y + length * np.sin(self._angle_rad)
         ax.annotate("", xytext=(xb, yb), xy=(x, y),
                     arrowprops=dict(arrowstyle="-|>", fc=self._c, ec=self._c, shrinkA=0), )

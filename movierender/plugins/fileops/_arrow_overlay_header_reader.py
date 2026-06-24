@@ -5,7 +5,7 @@ from fileops.logger import get_logger
 from fileops.plugins import HeaderReaderPlugin
 
 from movierender.overlays import Overlay
-from movierender.overlays._arrow import Arrow
+from movierender.overlays._arrow import ArrowOverlayPlugin
 
 
 class ArrowOverlayHeaderReaderPlugin(HeaderReaderPlugin):
@@ -37,12 +37,14 @@ class ArrowOverlayHeaderReaderPlugin(HeaderReaderPlugin):
         arrow_def = list()
         for arrow in self._headers:
             xy = ast.literal_eval(cfg[arrow]["xy"])
-            frame = int(cfg[arrow]["frame"])
+            frame = int(cfg[arrow]["frame"]) if "frame" in cfg[arrow] else None
             length = float(cfg[arrow]["length"])
             angle = int(cfg[arrow]["angle"])
             color = cfg[arrow]["color"]
 
             length = length * img_file.pix_per_um
 
-            arrow_def.append(Arrow(*xy, id=cfg[arrow]["id"], length=length, angle=angle,frame=frame, c=color))
+            arrow_def.append(
+                ArrowOverlayPlugin(*xy, id=cfg[arrow]["id"], length=length, angle=angle, frame=frame, c=color)
+            )
         return arrow_def
