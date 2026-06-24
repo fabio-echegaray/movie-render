@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import List, Dict, Union, Iterable, TYPE_CHECKING
+from typing import List, Dict, Union, TYPE_CHECKING
 from typing import NamedTuple
 
 from fileops.image import ImageFile
@@ -16,13 +16,15 @@ class ConfigMovie(NamedTuple):
     frames: List[int]
     channels: List[int]
     channel_render_parameters: Dict
+    zstack: List[int]
     zstack_fn: str
     scalebar: float
     override_dt: Union[float, None]
     image_file: Union[ImageFile, None]
-    roi: ImagejRoi
+    roi: ImagejRoi | List[ImagejRoi] | List[str]
     um_per_z: float
     title: str
+    description: str
     fps: int
     bitrate: str  # bitrate in a format that ffmpeg understands
     movie_filename: str

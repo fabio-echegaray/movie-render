@@ -12,6 +12,17 @@ version = "0.2.0"
 # - add classes to read header MOVIE from fileops config files; these are implemented as plugins of fileops
 # - add classes to read header PANEL from fileops config files; these are implemented as plugins of fileops
 # - add classes to read header OVERLAY from fileops config files; add the mechanism to render them
+# - user can now adjust gamma contrast when rendering static panels as well as in movies
+# - implemented feature to render Z projections into files (to be used when files are corrupted and other software does not work)
+# - breaking change: render commands change parameter overwrite_movie_file to the more general overwrite_file
+# - implemented feature to speed up rendering process by checking if the output files in the header exist first.
+# - remove call to silence_loggers in terminal-command related scripts.
+# - add copyright info in the metadata when rendering movies.
+# - breaking: change of calling signature to some command line arguments (with_root_path and show_file_info are Typer options instead of arguments now).
+# - panels can now render a merged composite image.
+# - implement rescale and intensity parameters in channel header and section overrides of configuration files.
+# - movies render ROIs now.
+# - add overlay for particle position and trajectory.
 
 # This is a one-line description or tagline of what your project does. This
 # corresponds to the "Summary" metadata field:
@@ -105,7 +116,6 @@ dependencies = [
     "scikit_image~=0.24",
     "scipy~=1.14",
     "Shapely~=2.0.4",
-    "tifffile~=2024.6.18",
     "imgfileops>=0.3.0", # TODO: bump up after updating sister project
     "typer>=0.9.0",
 ]
