@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import configparser
-import copy
 import logging
 import os
 import shutil
@@ -254,8 +253,7 @@ class SequentialMovieRenderer:
                 kwargs = self._kwargs.copy()
                 kwargs.update(show_axis=self.show_axis)
                 kwargs.update(**ovrl._kwargs)
-                _kwa = copy.copy(kwargs)
-                _kwa.pop("timestamps")
+                kwargs.pop("timestamps")
                 ovrl.plot(ax=self.ax if ovrl.ax is None else None, **kwargs)
 
         ensure_dir(self._tmp)

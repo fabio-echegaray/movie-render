@@ -90,8 +90,8 @@ class Timestamp(Overlay):
             return
 
         x0, y0 = xy
-        _secs0 = timestamps[frame - 1] if len(timestamps) >= frame else timestamps[-1]
-        _secs1 = (frame - 1) * time_interval
+        _secs0 = timestamps[frame] if len(timestamps) >= frame else timestamps[-1]
+        _secs1 = frame * time_interval
 
         secs = int(max(_secs0, _secs1))
         txt = secs_to_string(secs, string_format)

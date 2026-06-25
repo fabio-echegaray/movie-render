@@ -20,11 +20,15 @@ class CompositeRGBImage(ImagePipeline):
                               f"(index={ix})")
             mdi = imf.image(ix)
             return mdi.image if mdi is not None else None
+        elif type(self.zstack) is int and self.zstack < 0:
+            self.logger.debug(f"Retrieving max z projection of frame {frame} and channel {channel}")
+            mdi = imf.z_projection(frame=frame, channel=channel, projection=self.zstack)
+            return mdi.image if mdi is not None else None
         elif isinstance(self.zstack, (list, set, Iterable)):
             self.logger.debug(f"Retrieving max z projection of frame {frame} and channel {channel}")
             mdi = imf.z_projection(frame=frame, channel=channel, z_subset=self.zstack, projection=self.zstack_fn)
             return mdi.image if mdi is not None else None
-        elif type(self.zstack) is str or self.zstack < 0:
+        elif type(self.zstack) is str:
             if self.zstack.split("-")[1] in ["max", "min", "sum", "std", "avg", "mean", "median", ]:  # max projection
                 self.logger.debug(f"Retrieving max z projection of frame {frame} and channel {channel}")
                 mdi = imf.z_projection(frame=frame, channel=channel, projection=self.zstack)
@@ -58,12 +62,19 @@ class CompositeRGBImage(ImagePipeline):
 
             # Contrast enhancing by stretching the histogram
             _img = skimage.util.img_as_float(_img)
+            if 'rescale' in settings and ('gamma_value' in settings or 'gamma_gain' in settings):
+                raise ValueError("Gamma values and rescale cannot be used at the same time")
             if 'rescale' in settings and settings['rescale']:
                 if type(settings['rescale']) is dict:
                     mini, maxi = settings['rescale']['range']
                     _img = exposure.rescale_intensity(_img, in_range=(mini, maxi))
                 elif type(settings['rescale']) is bool and settings['rescale']:
-                    _img = exposure.rescale_intensity(_img, in_range=tuple(np.percentile(_img, (0.1, 99.9))))
+                    p_min, p_max = np.percentile(_img, (0.1, 99.9))
+                    i_min = settings['rescale_min'] / np.iinfo(dtype).max \
+                        if 'rescale_min' in settings and settings['rescale_min'] is not None else p_min
+                    i_max = settings['rescale_max'] / np.iinfo(dtype).max \
+                        if 'rescale_max' in settings and settings['rescale_max'] is not None else p_max
+                    _img = exposure.rescale_intensity(_img, in_range=(i_min, i_max))
             if 'gamma_value' in settings and 'gamma_gain' in settings:
                 _img = exposure.adjust_gamma(_img, gamma=settings['gamma_value'], gain=settings['gamma_gain'])
 

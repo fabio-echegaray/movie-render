@@ -18,6 +18,7 @@ import movierender.overlays as ovl
 from movierender import CompositeRGBImage
 from movierender.config import ConfigPanel
 from movierender.overlays import PixelTools
+from ._ch_config import channel_configuration
 
 logger = logging.getLogger(__name__)
 
@@ -67,18 +68,8 @@ def plotimg(data, panel: ConfigPanel = None, **kwargs):
                     ax=None,
                     zstack=panel.zstacks,
                     zstack_fn=zstack_projection,
-                    channeldict={
-                        ch_cfg['name']: {
-                            'id':          cix,
-                            'color':       ch_cfg['color'][1:] if (
-                                    isinstance(ch_cfg['color'], tuple) and
-                                    len(ch_cfg['color']) > 3
-                            ) else ch_cfg['color'],
-                            'gamma_value': ch_cfg['gamma_value'] if 'gamma_value' in ch_cfg else 1,
-                            'gamma_gain':  ch_cfg['gamma_gain'] if 'gamma_gain' in ch_cfg else 1,
-                            'rescale':     True,
-                            'intensity':   1.0
-                        } for cix, ch_cfg in panel.channel_render_parameters.items()})
+                    channeldict=channel_configuration(panel.channel_render_parameters)
+                )
                 img = crgb(panel.image_file, frame=_fr)
         except FrameNotFoundError as e:
             ax.set_facecolor('blue')

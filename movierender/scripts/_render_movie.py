@@ -2,6 +2,7 @@ import os
 import sys
 from pathlib import Path
 
+import pandas as pd
 import typer
 from typing_extensions import Annotated
 
@@ -59,7 +60,9 @@ def render_movie_cmd(
     for mov in cfg.movies:
         if show_file_info:
             try:
-                log.info(f"file {cfg_path}\r\n{mov.image_file.info.squeeze(axis=0)}")
+                with pd.option_context("display.max_columns", None, "display.max_colwidth", None,
+                                       "display.width", 1000):
+                    log.info(f"file {cfg_path}\r\n{mov.image_file.info.squeeze(axis=0)}")
             except Exception as e:
                 log.error(e)
         render_movie(mov, overwrite=overwrite_movie_file, test=run_test)

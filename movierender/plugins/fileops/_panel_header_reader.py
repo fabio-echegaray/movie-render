@@ -37,7 +37,7 @@ class PanelHeaderReaderPlugin(HeaderReaderPlugin):
         """ check if output file paths exists without loading the whole structure """
         headers = [s for s in self._cfg.sections() if s.upper().startswith("PANEL")]
         if len(headers) == 0:
-            self.log.warning(f"No headers with name PANEL to check in file {self._cfg_path}.")
+            self.log.debug(f"No headers with name PANEL to check in file {self._cfg_path}.")
             return {"none": False}
 
         # process sections
@@ -58,23 +58,18 @@ class PanelHeaderReaderPlugin(HeaderReaderPlugin):
 
         cfg, param_override, img_file, roi = self._cfg, self._param_override, self._img_file, self._roi
 
-        # process OVERLAY sections in configuration file
+        # find OVERLAY parsers from plugins
         overlays = list()
-        for p in fileops.config_type_plugins:
-            if "overlay" not in p.name:
+        for h in fileops.header_reader_plugins:
+            if "overlay" not in h.name:
                 continue
-            self.log.debug(f"Checking {p.name}")
-            t_name = p.name
-            header_reader_name = f"{t_name}_header_reader"
-            for h in fileops.header_reader_plugins:
-                if h.name == header_reader_name:
-                    self.log.debug(f"Loading {header_reader_name}")
-                    clz = h.load()
-                    if not issubclass(clz, HeaderReaderPlugin):
-                        continue
-                    cinst = clz(self._cfg_path)
-                    if cinst.has_valid_header():
-                        overlays.extend(cinst.process())
+            self.log.debug(f"Loading {h.name}")
+            clz = h.load()
+            if not issubclass(clz, HeaderReaderPlugin):
+                continue
+            cinst = clz(self._cfg_path, root_path=self._root_path)
+            if cinst.has_valid_header():
+                overlays.extend(cinst.process())
 
         # process PANEL sections
         panel_def = list()
@@ -87,11 +82,11 @@ class PanelHeaderReaderPlugin(HeaderReaderPlugin):
             if len(sec_param_override.frames) == 0:
                 raise ValueError(f"No frames to render in panel section {pan}.")
 
-            # find overlays
+            # process OVERLAY sections in configuration file
             if "overlays" in cfg[pan]:
                 ovr_txt = cfg[pan]["overlays"]
                 if ovr_txt[0] == "[" and ovr_txt[-1] == "]":
-                    ovr_ids = [s.strip() for s in ovr_txt[1:-1].split(",")]
+                    ovr_ids = [s.strip() for s in ovr_txt[1:-1].split(",") if len(s) > 0]
 
             panel_def.append(ConfigPanel(
                 header=pan,
