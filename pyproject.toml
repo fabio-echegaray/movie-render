@@ -24,6 +24,7 @@ version = "0.2.0"
 # - movies render ROIs now.
 # - add overlay for particle position and trajectory.
 # - add overlay to render arrows.
+# - add panel layout to render z-stacks.
 
 # This is a one-line description or tagline of what your project does. This
 # corresponds to the "Summary" metadata field:

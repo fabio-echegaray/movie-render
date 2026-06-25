@@ -134,7 +134,7 @@ The supported parameters to render a panel are:
   Whichever parameter is set, the layout will preserve aspect ratio.
 - `height`: specifies the length (in inches) of every plot in the array.
   Whichever parameter is set, the layout will preserve aspect ratio.
-- `layout`: specifies the layout of the movie when the data has several channels or when many z-slices are meant to be
+- `layout`: specifies the layout of the panel when the data has several channels or when many z-slices are meant to be
   shown in a single frame.
   Current options are:
     - `z-array`: every image in the array corresponds to a z-stack.
