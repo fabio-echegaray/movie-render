@@ -83,6 +83,7 @@ class PanelHeaderReaderPlugin(HeaderReaderPlugin):
                 raise ValueError(f"No frames to render in panel section {pan}.")
 
             # process OVERLAY sections in configuration file
+            ovr_ids = []
             if "overlays" in cfg[pan]:
                 ovr_txt = cfg[pan]["overlays"]
                 if ovr_txt[0] == "[" and ovr_txt[-1] == "]":
