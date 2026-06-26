@@ -80,10 +80,8 @@ def render_static_montage(panel: ConfigPanel, copyright_info: ConfigCopyright = 
                                       col_order=col_g,
                                       aspect=1,
                                       height=panel.height)
-                    g = (g.map_dataframe(plotimg, panel=panel)
-                         # .set_titles("{col_name}")
-                         .add_legend()
-                         )
+                    g.map_dataframe(plotimg, panel=panel)
+                    g.set_titles(col_template="{col_name}", row_template="{row_name}")
 
                     # Remove unused axes
                     for ax in g.axes.flatten():
@@ -98,11 +96,11 @@ def render_static_montage(panel: ConfigPanel, copyright_info: ConfigCopyright = 
                           row=rows,
                           col=cols,
                           aspect=1,
-                          height=panel.height)
-        g = (g.map_dataframe(plotimg, panel=panel)
-             # .set_titles("{col_name}")
-             .add_legend()
-             )
+                          height=panel.height,
+                          margin_titles=True)
+        g.map_dataframe(plotimg, panel=panel)
+        g.set_titles(col_template="{col_name}", row_template="{row_name}")
+
 
         # Remove unused axes
         for ax in g.axes.flat:
