@@ -6,13 +6,13 @@ import skimage
 from fileops.image.exceptions import FrameNotFoundError
 from fileops.image.ops import z_projection
 from matplotlib import colors
-from skimage.exposure import exposure
 
 import movierender.overlays as ovl
-from layouts._ch_config import channel_configuration
 from movierender import CompositeRGBImage
 from movierender.config import ConfigPanel
+from movierender.layouts._ch_config import channel_configuration
 from movierender.overlays import PixelTools
+from movierender.render.pipelines._image_rescale import rescale
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +22,6 @@ def plotimg(data, panel: ConfigPanel = None, **kwargs):
     t = PixelTools(imf)
 
     ax = plt.gca()
-    ax.cla()
 
     w_um, h_um = imf.width * imf.um_per_pix, imf.height * imf.um_per_pix
     sbar = ovl.ScaleBar(ax=ax, um=panel.scalebar, lw=panel.scalebar_thickness,
@@ -40,15 +39,18 @@ def plotimg(data, panel: ConfigPanel = None, **kwargs):
         _fr = data["frame"].iloc[0]
         _ch = data["channel"].iloc[0]
 
-        # if row['z'] >= 0:
-        #     mdi = self.imf.image(self.imf.ix_at(self._channel, row['z'], row['frame']))
-        # else:
-        #     mdi = self.imf.z_projection(row['frame'], self._channel, projection=ZProjection(row['z']).name)
-
         try:
             zstack_projection = 'max'
             if np.isreal(_ch):
                 img = z_projection(imf, _fr, _ch, z_subset=panel.zstacks, projection=zstack_projection).image
+                ch_par = panel.channel_render_parameters[_ch]
+                if "overlays" in ch_par and "histogram" in ch_par["overlays"]:
+                    # Overlay the histogram on the image plot
+                    hst.plot(img)
+                # rescale intensities
+                img = rescale(img, panel.channel_render_parameters[_ch], as_original_dtype=True)
+                img = skimage.util.img_as_float(img)
+                img = np.stack((img,) * 3, axis=-1) * colors.to_rgb(ch_par["color"])
             elif _ch == "merge":
                 crgb = CompositeRGBImage(
                     ax=None,
@@ -57,24 +59,12 @@ def plotimg(data, panel: ConfigPanel = None, **kwargs):
                     channeldict=channel_configuration(panel.channel_render_parameters)
                 )
                 img = crgb(panel.image_file, frame=_fr)
+                img = skimage.util.img_as_float(img)
         except FrameNotFoundError as e:
             ax.set_facecolor('blue')
             return
 
-        imgf = skimage.util.img_as_float(img)
-        if _ch in panel.channel_render_parameters:
-            ch_par = panel.channel_render_parameters[_ch]
-            if "overlays" in ch_par and "histogram" in ch_par["overlays"]:
-                # Overlay the histogram on the image plot
-                hst.plot(img)
-            if "color" in ch_par:
-                imgf = exposure.rescale_intensity(imgf, in_range=tuple(np.percentile(imgf, (0.1, 99.9))))
-                imgf = exposure.adjust_gamma(imgf,
-                                             gamma=ch_par['gamma_value'] if 'gamma_value' in ch_par else 1,
-                                             gain=ch_par['gamma_gain'] if 'gamma_gain' in ch_par else 1)
-                imgf = np.stack((imgf,) * 3, axis=-1) * colors.to_rgb(ch_par["color"])
-
-        ax.imshow(imgf, cmap='gray', extent=(.0, w_um, h_um, .0),
+        ax.imshow(img, cmap='gray', extent=(.0, w_um, h_um, .0),
                   # origin='upper' if self.inv_y else 'lower',
                   origin='upper',
                   interpolation='none', aspect='equal',  # resample=False,
