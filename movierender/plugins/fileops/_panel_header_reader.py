@@ -98,7 +98,7 @@ class PanelHeaderReaderPlugin(HeaderReaderPlugin):
                 channels=sec_param_override.channels,
                 channel_render_parameters=sec_param_override.channel_info,
                 zstacks=sec_param_override.zstacks,
-                zstack_fn=cfg[pan]["overlays"] if "overlays" in cfg[pan] else "all-max",
+                zstack_fn=cfg[pan]["zstack_fn"] if "zstack_fn" in cfg[pan] else None,
                 scalebar=int(cfg[pan]["scalebar"]) if "scalebar" in cfg[pan] else None,
                 scalebar_thickness=float(cfg[pan]["scalebar_thickness"]) if "scalebar_thickness" in cfg[pan] else 1,
                 draw_scalebar_text=cfg[pan]["draw_scalebar_text"].lower() in ["true", "yes"]
