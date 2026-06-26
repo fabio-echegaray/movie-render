@@ -24,10 +24,31 @@ class TestRender(TestCase):
         result = self.runner.invoke(app, args)
         self.assertEqual(result.exit_code, 0)
 
+    def test_render_movie_rescale_intensity(self):
+        command_name = "movie"
+
+        args = [command_name, "example_data/test_ch_intensity_movie.cfg"]
+        result = self.runner.invoke(app, args)
+        self.assertEqual(result.exit_code, 0)
+
+    def test_render_projection(self):
+        command_name = "projection"
+
+        args = [command_name, "example_data/test_frames_projection.cfg"]
+        result = self.runner.invoke(app, args)
+        self.assertEqual(result.exit_code, 0)
+
     def test_render_panel(self):
         command_name = "panel"
 
         args = [command_name, "example_data/test_panels.cfg"]
+        result = self.runner.invoke(app, args)
+        self.assertEqual(result.exit_code, 0)
+
+    def test_render_overlays(self):
+        command_name = "file"
+
+        args = [command_name, "example_data/test_movie_panel_overlay.cfg"]
         result = self.runner.invoke(app, args)
         self.assertEqual(result.exit_code, 0)
 

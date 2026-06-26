@@ -1,14 +1,16 @@
 import itertools
 import math
+from collections import deque
 
-from fileops.export.config import ConfigMovie
 from fileops.logger import get_logger
-from matplotlib import pyplot as plt, gridspec
 
 import movierender.overlays as ovl
-from movierender import MovieRenderer, CompositeRGBImage
+from movierender import MovieRenderer, CompositeRGBImage, plt, gridspec
+from movierender.config import ConfigMovie
 from movierender.overlays.pixel_tools import PixelTools
+from movierender.plugins.overlay import OverlayPlugin
 from ._base_composer import BaseLayoutComposer
+from ._ch_config import channel_configuration
 
 
 class LayoutChannelColumnComposer(BaseLayoutComposer):
@@ -16,20 +18,21 @@ class LayoutChannelColumnComposer(BaseLayoutComposer):
 
     def __init__(self,
                  movie: ConfigMovie,
-                 columns: int = 2,
+                 n_columns: int = 2,
                  **kwargs):
         super().__init__(movie, **kwargs)
 
-        self.n_columns = columns
+        self.n_columns = n_columns
 
     def make_layout(self):
+        if self._layout_done:
+            return
+
         movie = self._movie_configuration_params
         t = PixelTools(movie.image_file)
 
-        fig = plt.figure(figsize=(4.5 * self.n_columns, 5.5), dpi=self.dpi)
-        fig.suptitle(self.fig_title)
-
         if len(movie.channels) > 1:
+            fig = plt.figure(figsize=(16, 9), dpi=self.dpi)
             n_channels = len(movie.channels)
             rows = math.ceil(n_channels / self.n_columns)
             gs = gridspec.GridSpec(nrows=rows, ncols=self.n_columns)
@@ -37,14 +40,19 @@ class LayoutChannelColumnComposer(BaseLayoutComposer):
 
             for i, k in itertools.product(range(rows), range(self.n_columns), ):
                 self.ax_lst.append(fig.add_subplot(gs[i, k]))
-            fig.subplots_adjust(left=0.125, right=0.9, bottom=0.01, top=0.95, wspace=0.01, hspace=0.01)
+            fig.subplots_adjust(left=0.01, right=0.99, bottom=.0, top=0.90, wspace=0.01, hspace=0.01)
         else:
+            fig = plt.figure(figsize=(5.5, 5.5), dpi=self.dpi)
             self.ax_lst.append(fig.gca())
+
+        fig.suptitle(self.fig_title)
 
         self.renderer = MovieRenderer(fig=fig,
                                       config=movie,
-                                      fontdict={'size': 12})
+                                      fontdict={'size': 12},
+                                      **self._renderer_params)
 
+        agg_ch_config = channel_configuration(movie.channel_render_parameters)
         for ax, ch_cfg_ix in zip(self.ax_lst, movie.channel_render_parameters):
             ch_cfg = movie.channel_render_parameters[ch_cfg_ix]
             self.renderer += ovl.ScaleBar(um=movie.scalebar, lw=3,
@@ -52,19 +60,27 @@ class LayoutChannelColumnComposer(BaseLayoutComposer):
                                           fontdict={'size': 9},
                                           ax=ax)
             self.renderer += ovl.Timestamp(xy=t.xy_ratio_to_um(0.02, 0.95), va='center', ax=ax)
-            self.renderer += CompositeRGBImage(ax=ax,
-                                               zstack=movie.zstack_fn,
-                                               channeldict={
-                                                   ch_cfg['name']: {
-                                                       'id':        ch_cfg_ix,
-                                                       'color':     ch_cfg['color'][1:] if (
-                                                               isinstance(ch_cfg['color'], tuple) and
-                                                               len(ch_cfg['color']) > 3
-                                                       ) else ch_cfg['color'],
-                                                       'rescale':   True,
-                                                       'intensity': 1.0
-                                                   },
-                                               })
+            self.renderer += CompositeRGBImage(
+                ax=ax,
+                zstack=movie.zstack,
+                zstack_fn=movie.zstack_fn,
+                channeldict={ch_cfg["name"]: agg_ch_config[ch_cfg["name"]]}
+            )
             self.renderer += ovl.Text(f'{ch_cfg["name"]}',
                                       xy=t.xy_ratio_to_um(0.70, 0.95),
                                       fontdict={'size': 7, 'color': 'white'}, ax=ax)
+
+            # consume overlays previously added
+            for ovrl in self._pending_overlays:
+                if isinstance(ovrl, OverlayPlugin):
+                    ovrl = ovrl.overlay
+                    ovrl.ax = ax
+                if hasattr(ovrl, "channel"):
+                    if getattr(ovrl, "channel") == ch_cfg_ix:
+                        self.renderer += ovrl
+                else:
+                    self.renderer += ovrl
+
+        self._pending_overlays = deque()
+        self._layout_done = True
+        super().make_layout()
