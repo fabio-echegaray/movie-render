@@ -25,7 +25,7 @@ class Arrow(Overlay):
 
         super().__init__(**kwargs)
 
-    def plot(self, ax=None, legend=False, lw=2, tail_length=10, frame=None, **kwargs):
+    def plot(self, ax=None, legend=False, lw=2, tail_length=10, frame=None, z=None, **kwargs):
         if ax is None:
             ax = self.ax
         assert ax is not None, "No axes found to plot overlay."
@@ -33,15 +33,17 @@ class Arrow(Overlay):
         def_values = get_kwargs([kwargs, self._kwargs],
                                 keys_and_default_values=dict(
                                     frame=None,
-                                    o=None,
+                                    z=None,
                                 ))
-        fr, _ = def_values
+        fr, _z = def_values
 
         if fr is not None and (self._renderer is not None or frame is not None):
             if self._renderer is not None and fr != self._renderer.frame:
                 return
             elif frame is not None and fr != frame:
                 return
+        if z is not None and _z != z:
+            return
 
         length = self._length
         # the base of the arrow is what we need to calculate
