@@ -38,6 +38,7 @@ class ArrowOverlayHeaderReaderPlugin(HeaderReaderPlugin):
         for arrow in self._headers:
             xy = ast.literal_eval(cfg[arrow]["xy"])
             frame = int(cfg[arrow]["frame"]) if "frame" in cfg[arrow] else None
+            z = int(cfg[arrow]["z"]) if "z" in cfg[arrow] else None
             length = float(cfg[arrow]["length"])
             angle = int(cfg[arrow]["angle"])
             color = cfg[arrow]["color"]
@@ -45,6 +46,6 @@ class ArrowOverlayHeaderReaderPlugin(HeaderReaderPlugin):
             length = length * img_file.pix_per_um
 
             arrow_def.append(
-                ArrowOverlayPlugin(*xy, id=cfg[arrow]["id"], length=length, angle=angle, frame=frame, c=color)
+                ArrowOverlayPlugin(*xy, id=cfg[arrow]["id"], length=length, angle=angle, frame=frame, z=z, c=color)
             )
         return arrow_def
