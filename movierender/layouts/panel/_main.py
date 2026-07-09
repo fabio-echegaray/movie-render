@@ -40,11 +40,11 @@ def render_static_montage(panel: ConfigPanel, copyright_info: ConfigCopyright = 
     # process layout
     # ------------------------------------------------------------------------------------------------------------------
     if panel.layout == "z-array":
-        from layouts.panel._z_array import plotimg
+        from movierender.layouts.panel._z_array import plotimg
         rows = "z"
         cols = "channel"
     elif panel.layout == "time-array":
-        from layouts.panel._time_array import plotimg
+        from movierender.layouts.panel._time_array import plotimg
         rows = "channel"
         cols = "frame"
     else:
@@ -107,7 +107,7 @@ def render_static_montage(panel: ConfigPanel, copyright_info: ConfigCopyright = 
             if not ax.has_data():  # Check if the axis has data
                 ax.set_visible(False)  # Hide the axis
 
-        g.figure.suptitle(f"{panel.title}")
+        g.figure.suptitle(f"{panel.title}", y=1.05)
         plt.subplots_adjust(**gs_kwargs)  # Manually adjust subplot positions
 
         g.savefig(filepath, metadata=metadata, transparent=True)
