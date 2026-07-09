@@ -65,7 +65,7 @@ def get_kwargs(kwargs: List[dict], keys_and_default_values: Dict) -> List[Any]:
         added = False
         for kwa in kwargs:
             if not added and k in kwa:
-                out.append(kwa.pop(k))
+                out.append(kwa[k])
                 added = True
         if not added:
             out.append(keys_and_default_values[k])  # add default value in case key was not found

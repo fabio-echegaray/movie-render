@@ -9,6 +9,7 @@ from fileops.logger import get_logger
 from fileops.plugins import HeaderReaderPlugin
 
 from movierender.config import ConfigMovie
+from movierender.overlays import ImagejROI
 
 
 class MovieHeaderReaderPlugin(HeaderReaderPlugin):
@@ -26,7 +27,7 @@ class MovieHeaderReaderPlugin(HeaderReaderPlugin):
         """ check if output file paths exists without loading the whole structure """
         headers = [s for s in self._cfg.sections() if s.upper().startswith("MOVIE")]
         if len(headers) == 0:
-            self.log.warning(f"No headers with name MOVIE to check in file {self._cfg_path}.")
+            self.log.debug(f"No headers with name MOVIE to check in file {self._cfg_path}.")
             return {"none": False}
 
         # process sections
@@ -47,10 +48,10 @@ class MovieHeaderReaderPlugin(HeaderReaderPlugin):
 
         cfg, param_override, img_file, roi = self._cfg, self._param_override, self._img_file, self._roi
 
-        # process OVERLAY sections in configuration file
-        overlays = list()
+        # process ROI sections in configuration file
+        roi_lst = list()
         for p in fileops.config_type_plugins:
-            if "overlay" not in p.name:
+            if "roi" not in p.name:
                 continue
             self.log.debug(f"Checking {p.name}")
             t_name = p.name
@@ -63,7 +64,20 @@ class MovieHeaderReaderPlugin(HeaderReaderPlugin):
                         continue
                     cinst = clz(self._cfg_path, root_path=self._root_path)
                     if cinst.has_valid_header():
-                        overlays.extend(cinst.process())
+                        roi_lst.extend(cinst.process())
+
+        # find OVERLAY parsers from plugins
+        overlays = list()
+        for h in fileops.header_reader_plugins:
+            if "overlay" not in h.name:
+                continue
+            self.log.debug(f"Loading {h.name}")
+            clz = h.load()
+            if not issubclass(clz, HeaderReaderPlugin):
+                continue
+            cinst = clz(self._cfg_path, root_path=self._root_path)
+            if cinst.has_valid_header():
+                overlays.extend(cinst.process())
 
         # process MOVIE sections
         movie_def = list()
@@ -75,11 +89,22 @@ class MovieHeaderReaderPlugin(HeaderReaderPlugin):
             sec_param_override = process_overrides_of_section(cfg[mov], copy.deepcopy(param_override), img_file)
             sec_param_override = update_channel_config_with_section_overrides(sec_param_override, cfg[mov])
             include_tracks = cfg[mov]["include_tracks"] if "include_tracks" in cfg[mov] else None
-            # find overlays
+
+            # process OVERLAY sections in configuration file
+            overlays_to_add = list()
             if "overlays" in cfg[mov]:
                 ovr_txt = cfg[mov]["overlays"]
                 if ovr_txt[0] == "[" and ovr_txt[-1] == "]":
                     ovr_ids = [s.strip() for s in ovr_txt[1:-1].split(",")]
+                    overlays_to_add.extend([ovr for ovr in overlays if ovr.id in ovr_ids])
+
+            # find ROI IDs and append them to list of ROIs
+            if "roi" in cfg[mov]:
+                roi_txt = cfg[mov]["roi"]
+                if roi_txt[0] == "[" and roi_txt[-1] == "]":
+                    roi_ids = [s.strip() for s in roi_txt[1:-1].split(",") if len(s) > 0]
+                    if len(roi_ids) > 0:
+                        overlays_to_add.extend(ImagejROI(r.geometry) for r in roi_lst if r.header in roi_ids and r.plot)
 
             movie_def.append(ConfigMovie(
                 header=mov,
@@ -91,7 +116,7 @@ class MovieHeaderReaderPlugin(HeaderReaderPlugin):
                 scalebar=float(cfg[mov]["scalebar"]) if "scalebar" in cfg[mov] else None,
                 override_dt=sec_param_override.dt,
                 image_file=img_file,
-                zstack=cfg[mov]["zstack"] if "zstack" in cfg[mov] else "all",
+                zstack=sec_param_override.zstacks,
                 zstack_fn=cfg[mov]["zstack_fn"] if "zstack_fn" in cfg[mov] else "all-max",
                 um_per_z=float(cfg["DATA"]["um_per_z"]) if "um_per_z" in cfg["DATA"] else img_file.um_per_z,
                 roi=roi,
@@ -106,6 +131,6 @@ class MovieHeaderReaderPlugin(HeaderReaderPlugin):
                     else include_tracks == "yes" if type(include_tracks) is str
                     else False
                 ),
-                overlays=[ovr for ovr in overlays if ovr.id in ovr_ids]
+                overlays=overlays_to_add
             ))
         return movie_def

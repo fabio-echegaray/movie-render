@@ -24,13 +24,10 @@ class ConfigPanel(NamedTuple):
     override_dt: Union[float, None]
     image_file: Union[ImageFile, None]
     roi: ImagejRoi
-    columns: str
     max_columns: int
     max_plots_per_page: int
     width: float
     height: float
-    rows: str
-    type: str
     multipage: bool
     um_per_z: float
     title: str

@@ -2,11 +2,11 @@ from typing import Iterable
 
 import matplotlib.colors as mcolors
 import numpy as np
-import skimage
 from fileops.image import ImageFile
-from skimage import color, exposure
+from skimage import color
 
 from movierender.render.pipelines._image_pipeline_base import ImagePipeline
+from movierender.render.pipelines._image_rescale import rescale
 
 
 class CompositeRGBImage(ImagePipeline):
@@ -20,11 +20,15 @@ class CompositeRGBImage(ImagePipeline):
                               f"(index={ix})")
             mdi = imf.image(ix)
             return mdi.image if mdi is not None else None
+        elif type(self.zstack) is int and self.zstack < 0:
+            self.logger.debug(f"Retrieving max z projection of frame {frame} and channel {channel}")
+            mdi = imf.z_projection(frame=frame, channel=channel, projection=self.zstack)
+            return mdi.image if mdi is not None else None
         elif isinstance(self.zstack, (list, set, Iterable)):
             self.logger.debug(f"Retrieving max z projection of frame {frame} and channel {channel}")
             mdi = imf.z_projection(frame=frame, channel=channel, z_subset=self.zstack, projection=self.zstack_fn)
             return mdi.image if mdi is not None else None
-        elif type(self.zstack) is str or self.zstack < 0:
+        elif type(self.zstack) is str:
             if self.zstack.split("-")[1] in ["max", "min", "sum", "std", "avg", "mean", "median", ]:  # max projection
                 self.logger.debug(f"Retrieving max z projection of frame {frame} and channel {channel}")
                 mdi = imf.z_projection(frame=frame, channel=channel, projection=self.zstack)
@@ -57,18 +61,7 @@ class CompositeRGBImage(ImagePipeline):
                 dtype = _img.dtype
 
             # Contrast enhancing by stretching the histogram
-            _img = skimage.util.img_as_float(_img)
-            if 'rescale' in settings and settings['rescale']:
-                if type(settings['rescale']) is dict:
-                    mini, maxi = settings['rescale']['range']
-                    _img = exposure.rescale_intensity(_img, in_range=(mini, maxi))
-                elif type(settings['rescale']) is bool and settings['rescale']:
-                    p_min, p_max = np.percentile(_img, (0.1, 99.9))
-                    i_min = settings['rescale_min'] / np.iinfo(dtype).max if 'rescale_min' in settings else p_min
-                    i_max = settings['rescale_max'] / np.iinfo(dtype).max if 'rescale_max' in settings else p_max
-                    _img = exposure.rescale_intensity(_img, in_range=(i_min, i_max))
-            if 'gamma_value' in settings and 'gamma_gain' in settings:
-                _img = exposure.adjust_gamma(_img, gamma=settings['gamma_value'], gain=settings['gamma_gain'])
+            _img = rescale(_img, settings)
 
             rgb_vector_color = mcolors.to_rgb(settings['color'])
             assert isinstance(rgb_vector_color, tuple)
