@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import skimage
 from fileops.image.exceptions import FrameNotFoundError
-from fileops.image.ops import z_projection
+from fileops.image.ops import z_projection, rescale
 from matplotlib import colors
 
 import movierender.overlays as ovl
@@ -12,7 +12,6 @@ from movierender import CompositeRGBImage
 from movierender.config import ConfigPanel
 from movierender.layouts._ch_config import channel_configuration
 from movierender.overlays import PixelTools
-from movierender.render.pipelines._image_rescale import rescale
 
 logger = logging.getLogger(__name__)
 
