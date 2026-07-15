@@ -134,13 +134,16 @@ class SequentialMovieRenderer:
                 # if ch == 3:
                 #     self._render = self._render[:, :, 0:3]
                 self._render = self._render[:, :, 0:3]
-            except FileNotFoundError:
+            except FileNotFoundError as e:
+                self.logger.error(e)
                 self.logger.warning(f"frame {self.frame} not rendered, so using last rendered one")
 
             # self.logger.debug(f"loaded image of shape {self._render.shape}")
             return self._render
 
+        # --------------------------------------------------------------------------------------------------------------
         # Start of method
+        # --------------------------------------------------------------------------------------------------------------
         if filename is None:
             _, filename = os.path.split(self._file)
             filename += ".mp4"
@@ -166,15 +169,20 @@ class SequentialMovieRenderer:
             cpr_lst = []
 
         # render using ffmpeg
+        self.logger.info("Now rendering using ffmpeg.")
         dur = len(rendered_frames) / self.fps
         animation = mpy.VideoClip(make_frame_mpl, duration=dur)
         animation.write_videofile(filename,
                                   fps=self._cfg.fps,
                                   bitrate=self._cfg.bitrate,
-                                  # codec='libx264',
+                                  codec='libx265',
                                   # audio_codec='pcm_s32le',
                                   ffmpeg_params=[
                                       '-vf', 'pad=ceil(iw/2)*2:ceil(ih/2)*2',
+                                      '-crf', '18',
+                                      '-tag:v', 'hvc1',
+                                      '-preset', 'medium',
+                                      '-tune', 'grain',
                                       '-pix_fmt', 'yuv420p',
                                       '-metadata', f'title={self._cfg.title}',
                                       '-metadata', f'description={self._cfg.description}',

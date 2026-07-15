@@ -2,11 +2,13 @@ import concurrent
 import importlib
 import multiprocessing
 import os
+import signal
 import uuid
 from collections import deque
 from concurrent import futures
 from pathlib import Path
 
+import fileops
 import matplotlib
 from fileops.logger import get_logger
 
@@ -15,6 +17,15 @@ from movierender.config import ConfigMovie
 from movierender.overlays import Overlay
 from movierender.plugins.overlay import OverlayPlugin
 from movierender.render import MovieRenderer
+
+manager = multiprocessing.Manager()
+s_lock, s_dict, s_list, s_sem = manager.Lock(), manager.dict(), manager.list(), manager.Semaphore(os.cpu_count())
+
+
+def exit_signal_handler(signum, frame):
+    if hasattr(fileops, "__IS_EXITING"):
+        is_exiting = getattr(fileops, "__IS_EXITING")
+        is_exiting.set()
 
 
 class BaseLayoutComposer:
@@ -39,9 +50,8 @@ class BaseLayoutComposer:
         self._pending_overlays.extendleft(movie.overlays)
 
         im = movie.image_file
-        s_lock, s_dict, s_deque = multiprocessing.Manager().Lock(), multiprocessing.Manager().dict(), deque()
-        self.shared_tuple = (s_lock, s_dict, s_deque)
-        im.init_shared(s_lock, s_dict, s_deque)
+
+        self.shared_tuple = (s_lock, s_dict, s_list, s_sem)
 
         fname = movie.movie_filename if len(movie.movie_filename) > 0 else im.image_path.name
         self.filename = prefix + fname
@@ -151,13 +161,6 @@ class BaseLayoutComposer:
         # ---------------------------------------------------------------------------------------------------------------
         mov = self._movie_configuration_params
 
-        # preload z-projections tasks in shared structure if needed (TODO: this is a hack)
-        s_lock, s_dict, s_deque = self.shared_tuple
-        for k, fr in enumerate(mov.frames):
-            for ch in mov.channels:
-                key = f"f{fr:05d}_c{ch:02d}"
-                s_deque.appendleft(key)
-
         future_to_mapping = dict()
         with futures.ProcessPoolExecutor(max_workers=n_workers) as executor:
             for k, fr in enumerate(mov.frames):
@@ -165,30 +168,47 @@ class BaseLayoutComposer:
 
                 future = executor.submit(run_job, composer, fr, self.shared_tuple)
                 future_to_mapping[future] = k  # Store the index k as the value for the future
-
-            for future in concurrent.futures.as_completed(future_to_mapping):
-                k = future_to_mapping[future]
-                if (e := future.exception()) is not None:
-                    self.log.error(f"exception {e.__class__.__name__}({e}) found at ix {k}")
-                self.log.debug(f"finished ix {k}; file {future.result()}.")
+            try:
+                for future in concurrent.futures.as_completed(future_to_mapping):
+                    k = future_to_mapping[future]
+                    if (e := future.exception()) is not None:
+                        self.log.error(f"exception {e.__class__.__name__}({e}) found at ix {k}")
+                    self.log.debug(f"finished ix {k}; file {future.result()}.")
+            except KeyboardInterrupt:
+                self.log.warning('Caught KeyboardInterrupt.')
+                fileops.__IS_EXITING.set()
 
         self.make_layout()
         self.renderer.render(filename=str(self.save_file_path), test=False)
 
     def render(self, parallel=False, test=False):
+        signal.signal(signal.SIGTERM, exit_signal_handler)
         self.save_file_path.touch()  # create a file in case another instance is of a renderer is trying to render movies
         if parallel and not test:
             self._render_parallel()
         else:
-            self.log.info(f"Rendering movie into file {self.save_file_path}.")
-            self.make_layout()
-            self.renderer.render(filename=self.save_file_path.as_posix(), test=test)
+            try:
+                self.log.info(f"Rendering movie into file {self.save_file_path}.")
+                imf = self._movie_configuration_params.image_file
+                s_lock, s_dict, s_list = self.shared_tuple
+                imf.init_shared(s_lock, s_dict, s_list)
+                self.make_layout()
+                self.renderer.render(filename=self.save_file_path.as_posix(), test=test)
+            except KeyboardInterrupt:
+                self.log.warning('Caught KeyboardInterrupt.')
+                if hasattr(fileops, "__IS_EXITING"):
+                    is_exiting = getattr(fileops, "__IS_EXITING")
+                    is_exiting.set()
 
 
 def run_job(cmpsr: BaseLayoutComposer, frame, shared_tuple):
-    s_lock, s_dict, s_deque = shared_tuple
+    if fileops.__IS_EXITING.is_set():
+        return None
+
+    s_lock, s_dict, s_list, s_sem = shared_tuple
+
     imf = cmpsr._movie_configuration_params.image_file
-    imf.init_shared(s_lock, s_dict, s_deque)
+    imf.init_shared(s_lock, s_dict, s_list, s_sem)
     cmpsr.make_layout()
     out = cmpsr.renderer.render_frame(frame)
     # close figure of renderer to prevent memory leak

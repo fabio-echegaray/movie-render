@@ -30,6 +30,8 @@ class ImagePipeline:
         else:
             self._renderer = None
 
+        super().__init__()
+
     def __radd__(self, ovrl):
         # if isinstance(ovrl, MovieRenderer):
         if ovrl.__class__.__name__[-13:] == 'MovieRenderer':
