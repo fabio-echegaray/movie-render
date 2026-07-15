@@ -134,13 +134,16 @@ class SequentialMovieRenderer:
                 # if ch == 3:
                 #     self._render = self._render[:, :, 0:3]
                 self._render = self._render[:, :, 0:3]
-            except FileNotFoundError:
+            except FileNotFoundError as e:
+                self.logger.error(e)
                 self.logger.warning(f"frame {self.frame} not rendered, so using last rendered one")
 
             # self.logger.debug(f"loaded image of shape {self._render.shape}")
             return self._render
 
+        # --------------------------------------------------------------------------------------------------------------
         # Start of method
+        # --------------------------------------------------------------------------------------------------------------
         if filename is None:
             _, filename = os.path.split(self._file)
             filename += ".mp4"
