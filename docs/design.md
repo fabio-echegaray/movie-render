@@ -15,7 +15,6 @@
 - [FileOps Integration](#fileops-integration)
 - [Class Diagrams](#class-diagrams)
 - [Communication Diagrams](#communication-diagrams)
-- [CLI Usage](#cli-usage)
 - [Dependencies](#dependencies)
 
 ---
@@ -261,58 +260,6 @@ End-to-end sequence: CLI invocation -> config parsing -> `render_static_montage(
 ![FileOps Plugin Communication Diagram](figs/communication_diagram_fileops_plugin.svg)
 
 Shows the plugin lifecycle: registration at import time, config file parsing via plugin registry, and overlay resolution during rendering.
-
----
-
-## CLI Usage
-
-```bash
-# Install
-pip install movierender
-
-# Render a movie from a config file
-movierender movie example.cfg
-
-# Render a static panel
-movierender panel example.cfg
-
-# Render everything in a config file (movies + panels + projections)
-movierender file example.cfg
-
-# Render all config files in a folder
-movierender folder ./data/
-
-# Render z-projections to TIFF
-movierender projection example.cfg
-
-# Options
-movierender movie example.cfg --with-root-path /data --overwrite-file --run-test
-```
-
-### Configuration File Format
-
-```ini
-[DATA]
-image = experiment.ome.tif
-frame = all
-channel = [0, 1]
-
-[MOVIE]
-title = My Experiment
-fps = 10
-layout = twoch-comp
-zstack = all-max
-scalebar = 50
-filename = output.mp4
-
-[OVERLAY]
-type = arrow
-id = arrow1
-xy = (100, 200)
-length = 10
-angle = 45
-color = yellow
-```
 
 ---
 
