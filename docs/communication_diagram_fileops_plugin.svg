@@ -1,0 +1,161 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 850" font-family="monospace" font-size="12">
+  <defs>
+    <marker id="arrow5" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#333"/>
+    </marker>
+    <marker id="arrow5r" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto">
+      <polygon points="10 0, 0 3.5, 10 7" fill="#333"/>
+    </marker>
+  </defs>
+
+  <!-- Title -->
+  <text x="700" y="30" text-anchor="middle" font-size="18" font-weight="bold">Communication Diagram: FileOps Plugin System</text>
+  <text x="700" y="50" text-anchor="middle" font-size="11" fill="#666">How MovieRender registers as a FileOps plugin and how FileOps invokes MovieRender plugins</text>
+
+  <!-- ============ LIFELINES ============ -->
+
+  <!-- 1. User / CLI -->
+  <rect x="30" y="70" width="100" height="30" rx="5" fill="#fde8e8" stroke="#e74c3c" stroke-width="1.5"/>
+  <text x="80" y="90" text-anchor="middle" font-size="10" font-weight="bold">User / CLI</text>
+  <line x1="80" y1="100" x2="80" y2="810" stroke="#e74c3c" stroke-width="1" stroke-dasharray="4"/>
+
+  <!-- 2. fileops.export.config -->
+  <rect x="170" y="70" width="160" height="30" rx="5" fill="#f0f4ff" stroke="#2c3e50" stroke-width="1.5"/>
+  <text x="250" y="90" text-anchor="middle" font-size="10" font-weight="bold">fileops.export.config</text>
+  <line x1="250" y1="100" x2="250" y2="810" stroke="#2c3e50" stroke-width="1" stroke-dasharray="4"/>
+
+  <!-- 3. fileops plugin registry -->
+  <rect x="370" y="70" width="160" height="30" rx="5" fill="#f0f4ff" stroke="#2c3e50" stroke-width="1.5"/>
+  <text x="450" y="90" text-anchor="middle" font-size="10" font-weight="bold">fileops plugin registry</text>
+  <line x1="450" y1="100" x2="450" y2="810" stroke="#2c3e50" stroke-width="1" stroke-dasharray="4"/>
+
+  <!-- 4. MovieHeaderReaderPlugin -->
+  <rect x="570" y="70" width="170" height="30" rx="5" fill="#e8e8f8" stroke="#3498db" stroke-width="1.5"/>
+  <text x="655" y="90" text-anchor="middle" font-size="10" font-weight="bold">MovieHeaderReaderPlugin</text>
+  <line x1="655" y1="100" x2="655" y2="810" stroke="#3498db" stroke-width="1" stroke-dasharray="4"/>
+
+  <!-- 5. ConfigMovie -->
+  <rect x="790" y="70" width="130" height="30" rx="5" fill="#e8f4f8" stroke="#2980b9" stroke-width="1.5"/>
+  <text x="855" y="90" text-anchor="middle" font-size="10" font-weight="bold">ConfigMovie</text>
+  <line x1="855" y1="100" x2="855" y2="810" stroke="#2980b9" stroke-width="1" stroke-dasharray="4"/>
+
+  <!-- 6. LayoutComposer -->
+  <rect x="970" y="70" width="160" height="30" rx="5" fill="#f3e8f8" stroke="#8e44ad" stroke-width="1.5"/>
+  <text x="1050" y="90" text-anchor="middle" font-size="10" font-weight="bold">LayoutComposer</text>
+  <line x1="1050" y1="100" x2="1050" y2="810" stroke="#8e44ad" stroke-width="1" stroke-dasharray="4"/>
+
+  <!-- 7. OverlayPlugin -->
+  <rect x="1180" y="70" width="150" height="30" rx="5" fill="#fef9e7" stroke="#f39c12" stroke-width="1.5"/>
+  <text x="1255" y="90" text-anchor="middle" font-size="10" font-weight="bold">OverlayPlugin</text>
+  <line x1="1255" y1="100" x2="1255" y2="810" stroke="#f39c12" stroke-width="1" stroke-dasharray="4"/>
+
+  <!-- ============ PHASE 1: Startup / Plugin Registration ============ -->
+  <rect x="20" y="110" width="1360" height="140" rx="5" fill="#f0f4ff" fill-opacity="0.3" stroke="#2c3e50" stroke-width="1" stroke-dasharray="5"/>
+  <text x="700" y="130" text-anchor="middle" font-size="12" font-weight="bold" fill="#2c3e50">Phase 1: Plugin Registration (at import time)</text>
+
+  <!-- Step 1: import movierender triggers plugin loading -->
+  <text x="15" y="155" font-weight="bold" fill="#e74c3c">1</text>
+  <line x1="80" y1="150" x2="440" y2="150" stroke="#333" stroke-width="1.5" marker-end="url(#arrow5)"/>
+  <text x="260" y="143" text-anchor="middle" font-size="9">import movierender -- loads plugins via entry_points()</text>
+
+  <!-- Step 2: FileOps discovers MovieRender plugins -->
+  <text x="15" y="195" font-weight="bold" fill="#e74c3c">2</text>
+  <line x1="250" y1="190" x2="440" y2="190" stroke="#333" stroke-width="1.5" marker-end="url(#arrow5)"/>
+  <text x="345" y="183" text-anchor="middle" font-size="9">entry_points(group='fileops.plugins.*')</text>
+
+  <!-- Step 3: Plugins registered in registry -->
+  <text x="15" y="235" font-weight="bold" fill="#e74c3c">3</text>
+  <rect x="370" y="220" width="160" height="20" rx="3" fill="#f0f4ff" stroke="#2c3e50"/>
+  <text x="450" y="233" text-anchor="middle" font-size="9">Store: header_readers[], config_types[]</text>
+
+  <!-- ============ PHASE 2: Config File Parsing ============ -->
+  <rect x="20" y="265" width="1360" height="200" rx="5" fill="#f0fff0" fill-opacity="0.3" stroke="#27ae60" stroke-width="1" stroke-dasharray="5"/>
+  <text x="700" y="285" text-anchor="middle" font-size="12" font-weight="bold" fill="#27ae60">Phase 2: Configuration File Parsing</text>
+
+  <!-- Step 4: User invokes CLI -->
+  <text x="15" y="310" font-weight="bold" fill="#e74c3c">4</text>
+  <rect x="30" y="295" width="100" height="20" rx="3" fill="#fff3e0" stroke="#e67e22"/>
+  <text x="80" y="308" text-anchor="middle" font-size="9">$ movierender movie cfg</text>
+
+  <!-- Step 5: CLI calls read_config -->
+  <text x="15" y="350" font-weight="bold" fill="#e74c3c">5</text>
+  <line x1="80" y1="345" x2="240" y2="345" stroke="#333" stroke-width="1.5" marker-end="url(#arrow5)"/>
+  <text x="160" y="338" text-anchor="middle" font-size="9">read_config(path)</text>
+
+  <!-- Step 6: read_config iterates plugin registry -->
+  <text x="15" y="390" font-weight="bold" fill="#e74c3c">6</text>
+  <line x1="250" y1="385" x2="440" y2="385" stroke="#333" stroke-width="1.5" marker-end="url(#arrow5)"/>
+  <text x="345" y="378" text-anchor="middle" font-size="9">for plugin in header_reader_plugins:</text>
+
+  <!-- Step 7: Instantiate MovieHeaderReaderPlugin -->
+  <text x="15" y="430" font-weight="bold" fill="#e74c3c">7</text>
+  <line x1="440" y1="425" x2="645" y2="425" stroke="#3498db" stroke-width="1.5" marker-end="url(#arrow5)"/>
+  <text x="542" y="418" text-anchor="middle" font-size="9">MovieHeaderReaderPlugin(cfg_path)</text>
+
+  <!-- Step 8: has_valid_header() -->
+  <text x="15" y="450" font-weight="bold" fill="#e74c3c">8</text>
+  <line x1="250" y1="445" x2="645" y2="445" stroke="#3498db" stroke-width="1.5" marker-end="url(#arrow5)"/>
+  <text x="447" y="438" text-anchor="middle" font-size="9">has_valid_header() -- checks for [MOVIE] sections</text>
+
+  <!-- ============ PHASE 3: Config Processing ============ -->
+  <rect x="20" y="475" width="1360" height="170" rx="5" fill="#e8f4f8" fill-opacity="0.3" stroke="#2980b9" stroke-width="1" stroke-dasharray="5"/>
+  <text x="700" y="495" text-anchor="middle" font-size="12" font-weight="bold" fill="#2980b9">Phase 3: Config Section Processing</text>
+
+  <!-- Step 9: process() -->
+  <text x="15" y="520" font-weight="bold" fill="#e74c3c">9</text>
+  <line x1="250" y1="515" x2="645" y2="515" stroke="#3498db" stroke-width="1.5" marker-end="url(#arrow5)"/>
+  <text x="447" y="508" text-anchor="middle" font-size="9">process() -- parses [MOVIE] sections</text>
+
+  <!-- Step 10: Plugin reads overlay plugins -->
+  <text x="15" y="560" font-weight="bold" fill="#e74c3c">10</text>
+  <line x1="645" y1="555" x2="440" y2="555" stroke="#3498db" stroke-width="1.5" marker-end="url(#arrow5r)"/>
+  <text x="542" y="548" text-anchor="middle" font-size="9">query overlay plugins from registry</text>
+
+  <!-- Step 11: Plugin returns ConfigMovie list -->
+  <text x="15" y="600" font-weight="bold" fill="#e74c3c">11</text>
+  <line x1="645" y1="595" x2="260" y2="595" stroke="#2980b9" stroke-width="1.5" marker-end="url(#arrow5r)"/>
+  <text x="452" y="588" text-anchor="middle" font-size="9" fill="#2980b9">List[ConfigMovie] -- with overlays, image_file, etc.</text>
+
+  <!-- Step 12: Returns to CLI -->
+  <text x="15" y="630" font-weight="bold" fill="#e74c3c">12</text>
+  <line x1="240" y1="625" x2="90" y2="625" stroke="#2980b9" stroke-width="1.5" marker-end="url(#arrow5r)"/>
+  <text x="165" y="618" text-anchor="middle" font-size="9" fill="#2980b9">config.movies</text>
+
+  <!-- ============ PHASE 4: Rendering ============ -->
+  <rect x="20" y="660" width="1360" height="140" rx="5" fill="#e8f8e8" fill-opacity="0.3" stroke="#27ae60" stroke-width="1" stroke-dasharray="5"/>
+  <text x="700" y="680" text-anchor="middle" font-size="12" font-weight="bold" fill="#27ae60">Phase 4: Rendering with Overlays</text>
+
+  <!-- Step 13: CLI calls render_movie -->
+  <text x="15" y="705" font-weight="bold" fill="#e74c3c">13</text>
+  <line x1="80" y1="700" x2="1040" y2="700" stroke="#8e44ad" stroke-width="1.5" marker-end="url(#arrow5)"/>
+  <text x="560" y="693" text-anchor="middle" font-size="9">render_movie(configMovie) -- creates LayoutComposer</text>
+
+  <!-- Step 14: LayoutComposer resolves OverlayPlugin -->
+  <text x="15" y="745" font-weight="bold" fill="#e74c3c">14</text>
+  <line x1="1040" y1="740" x2="1245" y2="740" stroke="#f39c12" stroke-width="1.5" marker-end="url(#arrow5)"/>
+  <text x="1142" y="733" text-anchor="middle" font-size="9">ovrl_plugin.overlay -- creates Arrow overlay</text>
+
+  <!-- Step 15: OverlayPlugin creates Overlay instance -->
+  <text x="15" y="785" font-weight="bold" fill="#e74c3c">15</text>
+  <line x1="1245" y1="780" x2="1060" y2="780" stroke="#f39c12" stroke-width="1.5" marker-end="url(#arrow5r)"/>
+  <text x="1152" y="773" text-anchor="middle" font-size="9" fill="#f39c12">Arrow overlay instance</text>
+
+  <!-- Step 16: renderer renders with overlay -->
+  <text x="15" y="810" font-weight="bold" fill="#e74c3c">16</text>
+  <rect x="970" y="795" width="160" height="15" rx="3" fill="#e8f8e8" stroke="#27ae60"/>
+  <text x="1050" y="805" text-anchor="middle" font-size="8">renderer += overlay, then render()</text>
+
+  <!-- ============ LEGEND ============ -->
+  <rect x="30" y="130" width="300" height="120" rx="5" fill="#f9f9f9" stroke="#ccc" stroke-width="1"/>
+  <text x="40" y="148" font-weight="bold" font-size="11">Legend</text>
+  <rect x="40" y="158" width="120" height="15" rx="3" fill="#f0f4ff" fill-opacity="0.5" stroke="#2c3e50" stroke-dasharray="5"/>
+  <text x="170" y="170" font-size="9">FileOps domain</text>
+  <rect x="40" y="178" width="120" height="15" rx="3" fill="#e8f8e8" fill-opacity="0.5" stroke="#27ae60" stroke-dasharray="5"/>
+  <text x="170" y="190" font-size="9">MovieRender domain</text>
+  <line x1="40" y1="205" x2="100" y2="205" stroke="#333" stroke-width="1.5" marker-end="url(#arrow5)"/>
+  <text x="110" y="209" font-size="9">Call</text>
+  <line x1="180" y1="205" x2="240" y2="205" stroke="#2980b9" stroke-width="1.5" marker-end="url(#arrow5r)"/>
+  <text x="250" y="209" font-size="9">Return</text>
+  <rect x="40" y="220" width="15" height="10" rx="2" fill="#fff3e0" stroke="#e67e22"/>
+  <text x="65" y="229" font-size="9">User action</text>
+</svg>

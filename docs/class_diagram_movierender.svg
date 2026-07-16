@@ -1,0 +1,249 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 1000" font-family="monospace" font-size="12">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#333"/>
+    </marker>
+    <marker id="diamond" markerWidth="12" markerHeight="8" refX="0" refY="4" orient="auto">
+      <polygon points="6 0, 12 4, 6 8, 0 4" fill="#333"/>
+    </marker>
+    <marker id="triangle" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="white" stroke="#333" stroke-width="1"/>
+    </marker>
+  </defs>
+
+  <!-- Title -->
+  <text x="700" y="30" text-anchor="middle" font-size="18" font-weight="bold">MovieRender - Class Diagram</text>
+
+  <!-- ============ CONFIG MODULE ============ -->
+  <rect x="30" y="50" width="250" height="130" rx="8" fill="#e8f4f8" stroke="#2980b9" stroke-width="2"/>
+  <text x="155" y="72" text-anchor="middle" font-weight="bold" font-size="13" fill="#2c3e50">ConfigModule</text>
+  <line x1="30" y1="78" x2="280" y2="78" stroke="#2980b9" stroke-width="1"/>
+
+  <text x="40" y="98" font-weight="bold">ConfigMovie</text>
+  <text x="40" y="114" font-size="10" fill="#555">+header: str</text>
+  <text x="40" y="126" font-size="10" fill="#555">+configfile: Path</text>
+  <text x="40" y="138" font-size="10" fill="#555">+image_file: ImageFile</text>
+  <text x="40" y="150" font-size="10" fill="#555">+layout: str</text>
+  <text x="40" y="162" font-size="10" fill="#555">+overlays: List[Overlay]</text>
+  <text x="40" y="174" font-size="10" fill="#777">(NamedTuple, 21 fields)</text>
+
+  <!-- ============ OVERLAYS MODULE ============ -->
+  <rect x="310" y="50" width="340" height="420" rx="8" fill="#fef9e7" stroke="#f39c12" stroke-width="2"/>
+  <text x="480" y="72" text-anchor="middle" font-weight="bold" font-size="13" fill="#2c3e50">Overlays Module</text>
+  <line x1="310" y1="78" x2="650" y2="78" stroke="#f39c12" stroke-width="1"/>
+
+  <!-- Overlay base class -->
+  <rect x="400" y="90" width="160" height="65" rx="5" fill="#fff" stroke="#333" stroke-width="1.5"/>
+  <text x="480" y="110" text-anchor="middle" font-weight="bold">Overlay</text>
+  <line x1="400" y1="115" x2="560" y2="115" stroke="#333" stroke-width="1"/>
+  <text x="410" y="130" font-size="10">+ax: Axes</text>
+  <text x="410" y="142" font-size="10">+plot(ax, **kwargs)</text>
+
+  <!-- Overlay subclasses -->
+  <rect x="320" y="180" width="110" height="40" rx="4" fill="#fff" stroke="#333" stroke-width="1"/>
+  <text x="375" y="205" text-anchor="middle" font-size="10">ScaleBar</text>
+  <line x1="375" y1="220" x2="375" y2="155" stroke="#333" stroke-width="1" marker-end="url(#triangle)"/>
+  <line x1="375" y1="155" x2="480" y2="155" stroke="#333" stroke-width="1"/>
+  <line x1="480" y1="155" x2="480" y2="155" stroke="#333" stroke-width="1"/>
+
+  <rect x="445" y="180" width="110" height="40" rx="4" fill="#fff" stroke="#333" stroke-width="1"/>
+  <text x="500" y="205" text-anchor="middle" font-size="10">Timestamp</text>
+
+  <rect x="570" y="180" width="80" height="40" rx="4" fill="#fff" stroke="#333" stroke-width="1"/>
+  <text x="610" y="205" text-anchor="middle" font-size="10">Text</text>
+
+  <rect x="320" y="250" width="110" height="40" rx="4" fill="#fff" stroke="#333" stroke-width="1"/>
+  <text x="375" y="275" text-anchor="middle" font-size="10">ImagejROI</text>
+
+  <rect x="445" y="250" width="110" height="40" rx="4" fill="#fff" stroke="#333" stroke-width="1"/>
+  <text x="500" y="275" text-anchor="middle" font-size="10">Arrow</text>
+
+  <rect x="570" y="250" width="80" height="40" rx="4" fill="#fff" stroke="#333" stroke-width="1"/>
+  <text x="610" y="275" text-anchor="middle" font-size="10">Position</text>
+
+  <rect x="320" y="320" width="130" height="40" rx="4" fill="#fff" stroke="#333" stroke-width="1"/>
+  <text x="385" y="345" text-anchor="middle" font-size="10">DataTimeseries</text>
+
+  <rect x="465" y="320" width="110" height="40" rx="4" fill="#fff" stroke="#333" stroke-width="1"/>
+  <text x="520" y="345" text-anchor="middle" font-size="10">ImageHistogram</text>
+
+  <rect x="590" y="320" width="80" height="40" rx="4" fill="#fff" stroke="#333" stroke-width="1"/>
+  <text x="630" y="345" text-anchor="middle" font-size="10">Treatment</text>
+
+  <!-- PixelTools -->
+  <rect x="400" y="390" width="160" height="45" rx="4" fill="#f5f5f5" stroke="#666" stroke-width="1" stroke-dasharray="4"/>
+  <text x="480" y="410" text-anchor="middle" font-size="10" font-style="italic">PixelTools</text>
+  <text x="410" y="425" font-size="9" fill="#555">+xy_ratio_to_um(x, y)</text>
+
+  <!-- ============ RENDER MODULE ============ -->
+  <rect x="690" y="50" width="320" height="260" rx="8" fill="#e8f8e8" stroke="#27ae60" stroke-width="2"/>
+  <text x="850" y="72" text-anchor="middle" font-weight="bold" font-size="13" fill="#2c3e50">Render Module</text>
+  <line x1="690" y1="78" x2="1010" y2="78" stroke="#27ae60" stroke-width="1"/>
+
+  <!-- MovieRenderer -->
+  <rect x="720" y="90" width="260" height="85" rx="5" fill="#fff" stroke="#333" stroke-width="1.5"/>
+  <text x="850" y="110" text-anchor="middle" font-weight="bold">SequentialMovieRenderer</text>
+  <line x1="720" y1="115" x2="980" y2="115" stroke="#333" stroke-width="1"/>
+  <text x="730" y="130" font-size="10">+fig: Figure</text>
+  <text x="730" y="142" font-size="10">+image: ImageFile</text>
+  <text x="730" y="154" font-size="10">+layers: List[Overlay]</text>
+  <text x="730" y="166" font-size="10">+image_pipeline: List[ImagePipeline]</text>
+
+  <!-- ImagePipeline base -->
+  <rect x="730" y="200" width="130" height="55" rx="5" fill="#fff" stroke="#333" stroke-width="1.5"/>
+  <text x="795" y="218" text-anchor="middle" font-weight="bold" font-size="10">ImagePipeline</text>
+  <line x1="730" y1="223" x2="860" y2="223" stroke="#333" stroke-width="1"/>
+  <text x="740" y="237" font-size="9">+ax: Axes</text>
+  <text x="740" y="249" font-size="9">+zstack, zstack_fn</text>
+
+  <!-- Pipeline subclasses -->
+  <rect x="700" y="280" width="100" height="30" rx="3" fill="#fff" stroke="#333" stroke-width="1"/>
+  <text x="750" y="300" text-anchor="middle" font-size="9">SingleImage</text>
+  <line x1="750" y1="310" x2="750" y2="255" stroke="#333" stroke-width="1" marker-end="url(#triangle)"/>
+  <line x1="750" y1="255" x2="795" y2="255" stroke="#333" stroke-width="1"/>
+  <line x1="795" y1="255" x2="795" y2="255" stroke="#333" stroke-width="1"/>
+
+  <rect x="810" y="280" width="130" height="30" rx="3" fill="#fff" stroke="#333" stroke-width="1"/>
+  <text x="875" y="300" text-anchor="middle" font-size="9">CompositeRGBImage</text>
+
+  <rect x="950" y="280" width="70" height="30" rx="3" fill="#fff" stroke="#333" stroke-width="1"/>
+  <text x="985" y="300" text-anchor="middle" font-size="9">NullImage</text>
+
+  <!-- PipelineException -->
+  <rect x="880" y="200" width="120" height="35" rx="4" fill="#fde8e8" stroke="#c0392b" stroke-width="1"/>
+  <text x="940" y="222" text-anchor="middle" font-size="10" fill="#c0392b">PipelineException</text>
+
+  <!-- ============ LAYOUTS MODULE ============ -->
+  <rect x="690" y="370" width="320" height="210" rx="8" fill="#f3e8f8" stroke="#8e44ad" stroke-width="2"/>
+  <text x="850" y="392" text-anchor="middle" font-weight="bold" font-size="13" fill="#2c3e50">Layouts Module</text>
+  <line x1="690" y1="398" x2="1010" y2="398" stroke="#8e44ad" stroke-width="1"/>
+
+  <!-- BaseLayoutComposer -->
+  <rect x="730" y="415" width="240" height="70" rx="5" fill="#fff" stroke="#333" stroke-width="1.5"/>
+  <text x="850" y="435" text-anchor="middle" font-weight="bold" font-size="10">BaseLayoutComposer</text>
+  <line x1="730" y1="440" x2="970" y2="440" stroke="#333" stroke-width="1"/>
+  <text x="740" y="455" font-size="9">+renderer: MovieRenderer</text>
+  <text x="740" y="467" font-size="9">+make_layout()</text>
+  <text x="740" y="479" font-size="9">+render(parallel, test)</text>
+
+  <!-- Layout subclasses -->
+  <rect x="700" y="510" width="120" height="30" rx="3" fill="#fff" stroke="#333" stroke-width="1"/>
+  <text x="760" y="530" text-anchor="middle" font-size="9">CompositeComposer</text>
+  <line x1="760" y1="540" x2="760" y2="485" stroke="#333" stroke-width="1" marker-end="url(#triangle)"/>
+  <line x1="760" y1="485" x2="850" y2="485" stroke="#333" stroke-width="1"/>
+  <line x1="850" y1="485" x2="850" y2="485" stroke="#333" stroke-width="1"/>
+
+  <rect x="830" y="510" width="120" height="30" rx="3" fill="#fff" stroke="#333" stroke-width="1"/>
+  <text x="890" y="530" text-anchor="middle" font-size="9">ChannelColumnComposer</text>
+
+  <rect x="960" y="510" width="110" height="30" rx="3" fill="#fff" stroke="#333" stroke-width="1"/>
+  <text x="1015" y="530" text-anchor="middle" font-size="9">ZStackColumnComposer</text>
+
+  <!-- render_static_montage function -->
+  <rect x="750" y="555" width="200" height="25" rx="3" fill="#f0f0f0" stroke="#666" stroke-width="1" stroke-dasharray="3"/>
+  <text x="850" y="572" text-anchor="middle" font-size="9" font-style="italic">render_static_montage()</text>
+
+  <!-- ============ SCRIPTS MODULE ============ -->
+  <rect x="1060" y="50" width="280" height="200" rx="8" fill="#fde8e8" stroke="#e74c3c" stroke-width="2"/>
+  <text x="1200" y="72" text-anchor="middle" font-weight="bold" font-size="13" fill="#2c3e50">Scripts (CLI)</text>
+  <line x1="1060" y1="78" x2="1340" y2="78" stroke="#e74c3c" stroke-width="1"/>
+
+  <text x="1070" y="100" font-size="11" font-weight="bold">Typer App</text>
+  <rect x="1070" y="110" width="120" height="22" rx="3" fill="#fff" stroke="#333" stroke-width="1"/>
+  <text x="1130" y="126" text-anchor="middle" font-size="9">movie</text>
+  <rect x="1200" y="110" width="120" height="22" rx="3" fill="#fff" stroke="#333" stroke-width="1"/>
+  <text x="1260" y="126" text-anchor="middle" font-size="9">panel</text>
+  <rect x="1070" y="140" width="120" height="22" rx="3" fill="#fff" stroke="#333" stroke-width="1"/>
+  <text x="1130" y="156" text-anchor="middle" font-size="9">file</text>
+  <rect x="1200" y="140" width="120" height="22" rx="3" fill="#fff" stroke="#333" stroke-width="1"/>
+  <text x="1260" y="156" text-anchor="middle" font-size="9">folder</text>
+  <rect x="1070" y="170" width="120" height="22" rx="3" fill="#fff" stroke="#333" stroke-width="1"/>
+  <text x="1130" y="186" text-anchor="middle" font-size="9">projection</text>
+
+  <text x="1070" y="215" font-size="9" fill="#555">Entry point: movierender CLI</text>
+  <text x="1070" y="230" font-size="9" fill="#555">Uses fileops.export.config.read_config()</text>
+
+  <!-- ============ PLUGINS MODULE ============ -->
+  <rect x="1060" y="280" width="280" height="180" rx="8" fill="#e8e8f8" stroke="#3498db" stroke-width="2"/>
+  <text x="1200" y="302" text-anchor="middle" font-weight="bold" font-size="13" fill="#2c3e50">Plugins (FileOps Bridge)</text>
+  <line x1="1060" y1="308" x2="1340" y2="308" stroke="#3498db" stroke-width="1"/>
+
+  <!-- OverlayPlugin -->
+  <rect x="1080" y="320" width="120" height="40" rx="4" fill="#fff" stroke="#333" stroke-width="1"/>
+  <text x="1140" y="338" text-anchor="middle" font-size="9" font-weight="bold">OverlayPlugin</text>
+  <text x="1090" y="352" font-size="8" fill="#555">extends BaseFileOpsPlugin</text>
+
+  <!-- HeaderReaderPlugin subclasses -->
+  <rect x="1210" y="320" width="120" height="40" rx="4" fill="#fff" stroke="#333" stroke-width="1"/>
+  <text x="1270" y="338" text-anchor="middle" font-size="9" font-weight="bold">MovieHeaderReader</text>
+  <text x="1220" y="352" font-size="8" fill="#555">extends HeaderReaderPlugin</text>
+
+  <rect x="1080" y="380" width="120" height="40" rx="4" fill="#fff" stroke="#333" stroke-width="1"/>
+  <text x="1140" y="398" text-anchor="middle" font-size="9" font-weight="bold">PanelHeaderReader</text>
+  <text x="1090" y="412" font-size="8" fill="#555">extends HeaderReaderPlugin</text>
+
+  <rect x="1210" y="380" width="120" height="40" rx="4" fill="#fff" stroke="#333" stroke-width="1"/>
+  <text x="1270" y="398" text-anchor="middle" font-size="9" font-weight="bold">ArrowOverlayReader</text>
+  <text x="1220" y="412" font-size="8" fill="#555">extends HeaderReaderPlugin</text>
+
+  <text x="1070" y="445" font-size="9" fill="#555">Entry points registered in pyproject.toml</text>
+  <text x="1070" y="460" font-size="9" fill="#555">fileops.plugins.config.header_readers</text>
+
+  <!-- ============ RELATIONSHIPS ============ -->
+
+  <!-- BaseLayoutComposer creates MovieRenderer -->
+  <path d="M 970 440 L 980 440 L 980 132 L 980 132" stroke="#8e44ad" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+  <text x="988" y="280" font-size="8" fill="#8e44ad" transform="rotate(-90, 988, 280)">creates</text>
+
+  <!-- MovieRenderer uses ImagePipeline -->
+  <path d="M 850 175 L 850 200" stroke="#27ae60" stroke-width="1.5" fill="none" marker-end="url(#diamond)"/>
+  <text x="860" y="192" font-size="8" fill="#27ae60">has *</text>
+
+  <!-- MovieRenderer uses Overlay -->
+  <path d="M 720 132 L 560 132" stroke="#f39c12" stroke-width="1.5" fill="none" marker-end="url(#diamond)"/>
+  <text x="620" y="125" font-size="8" fill="#f39c12">has *</text>
+
+  <!-- Layouts use Overlay -->
+  <path d="M 730 450 L 650 132" stroke="#f39c12" stroke-width="1" fill="none" stroke-dasharray="4" marker-end="url(#arrow)"/>
+  <text x="670" y="300" font-size="8" fill="#f39c12" transform="rotate(-50, 670, 300)">adds overlays</text>
+
+  <!-- Scripts use Layouts -->
+  <path d="M 1060 130 L 1010 420" stroke="#e74c3c" stroke-width="1" fill="none" stroke-dasharray="4" marker-end="url(#arrow)"/>
+  <text x="1030" y="280" font-size="8" fill="#e74c3c" transform="rotate(-75, 1030, 280)">invokes</text>
+
+  <!-- Scripts use Plugins -->
+  <path d="M 1200 250 L 1200 280" stroke="#3498db" stroke-width="1" fill="none" stroke-dasharray="4" marker-end="url(#arrow)"/>
+  <text x="1210" y="268" font-size="8" fill="#3498db">reads config</text>
+
+  <!-- Plugins produce Config -->
+  <path d="M 1080 340 L 280 132" stroke="#2980b9" stroke-width="1" fill="none" stroke-dasharray="4" marker-end="url(#arrow)"/>
+  <text x="600" y="220" font-size="8" fill="#2980b9">produces ConfigMovie/Panel</text>
+
+  <!-- Config used by Layouts -->
+  <path d="M 280 170 L 730 450" stroke="#8e44ad" stroke-width="1" fill="none" stroke-dasharray="4" marker-end="url(#arrow)"/>
+  <text x="450" y="330" font-size="8" fill="#8e44ad" transform="rotate(30, 450, 330)">ConfigMovie input</text>
+
+  <!-- PipelineException used by ImagePipeline -->
+  <path d="M 880 217 L 860 217" stroke="#c0392b" stroke-width="1" fill="none" stroke-dasharray="3" marker-end="url(#arrow)"/>
+  <text x="868" y="210" font-size="7" fill="#c0392b">throws</text>
+
+  <!-- ============ LEGEND ============ -->
+  <rect x="30" y="500" width="350" height="80" rx="5" fill="#f9f9f9" stroke="#ccc" stroke-width="1"/>
+  <text x="40" y="518" font-weight="bold" font-size="11">Legend</text>
+  <line x1="40" y1="530" x2="80" y2="530" stroke="#333" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="90" y="534" font-size="9">Dependency / Uses</text>
+  <line x1="40" y1="548" x2="80" y2="548" stroke="#333" stroke-width="1.5" marker-end="url(#diamond)"/>
+  <text x="90" y="552" font-size="9">Aggregation (has-many)</text>
+  <line x1="200" y1="530" x2="240" y2="530" stroke="#333" stroke-width="1.5" marker-end="url(#triangle)"/>
+  <text x="250" y="534" font-size="9">Inheritance (extends)</text>
+  <line x1="200" y1="548" x2="240" y2="548" stroke="#333" stroke-width="1" stroke-dasharray="4"/>
+  <text x="250" y="552" font-size="9">Indirect / Plugin relationship</text>
+  <rect x="40" y="560" width="20" height="12" rx="2" fill="#e8f4f8" stroke="#2980b9"/>
+  <text x="70" y="570" font-size="9">Configuration</text>
+  <rect x="160" y="560" width="20" height="12" rx="2" fill="#fef9e7" stroke="#f39c12"/>
+  <text x="190" y="570" font-size="9">Overlays</text>
+  <rect x="270" y="560" width="20" height="12" rx="2" fill="#e8f8e8" stroke="#27ae60"/>
+  <text x="300" y="570" font-size="9">Render</text>
+  <rect x="340" y="560" width="20" height="12" rx="2" fill="#f3e8f8" stroke="#8e44ad"/>
+  <text x="368" y="570" font-size="9">Layouts</text>
+</svg>

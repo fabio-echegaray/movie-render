@@ -1,0 +1,147 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 800" font-family="monospace" font-size="12">
+  <defs>
+    <marker id="arrow4" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#333"/>
+    </marker>
+    <marker id="arrow4r" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto">
+      <polygon points="10 0, 0 3.5, 10 7" fill="#333"/>
+    </marker>
+  </defs>
+
+  <!-- Title -->
+  <text x="700" y="30" text-anchor="middle" font-size="18" font-weight="bold">Communication Diagram: Panel Rendering Flow</text>
+  <text x="700" y="50" text-anchor="middle" font-size="11" fill="#666">Sequence of interactions when rendering a static panel (PDF) from a .cfg file</text>
+
+  <!-- ============ LIFELINES ============ -->
+
+  <!-- 1. CLI -->
+  <rect x="50" y="70" width="100" height="30" rx="5" fill="#fde8e8" stroke="#e74c3c" stroke-width="1.5"/>
+  <text x="100" y="90" text-anchor="middle" font-size="10" font-weight="bold">CLI (Typer)</text>
+  <line x1="100" y1="100" x2="100" y2="760" stroke="#e74c3c" stroke-width="1" stroke-dasharray="4"/>
+
+  <!-- 2. fileops.read_config -->
+  <rect x="190" y="70" width="140" height="30" rx="5" fill="#f0f4ff" stroke="#2c3e50" stroke-width="1.5"/>
+  <text x="260" y="90" text-anchor="middle" font-size="10" font-weight="bold">fileops.read_config</text>
+  <line x1="260" y1="100" x2="260" y2="760" stroke="#2c3e50" stroke-width="1" stroke-dasharray="4"/>
+
+  <!-- 3. PanelHeaderReaderPlugin -->
+  <rect x="370" y="70" width="180" height="30" rx="5" fill="#e8e8f8" stroke="#3498db" stroke-width="1.5"/>
+  <text x="460" y="90" text-anchor="middle" font-size="10" font-weight="bold">PanelHeaderReaderPlugin</text>
+  <line x1="460" y1="100" x2="460" y2="760" stroke="#3498db" stroke-width="1" stroke-dasharray="4"/>
+
+  <!-- 4. ConfigPanel -->
+  <rect x="590" y="70" width="120" height="30" rx="5" fill="#e8f4f8" stroke="#2980b9" stroke-width="1.5"/>
+  <text x="650" y="90" text-anchor="middle" font-size="10" font-weight="bold">ConfigPanel</text>
+  <line x1="650" y1="100" x2="650" y2="760" stroke="#2980b9" stroke-width="1" stroke-dasharray="4"/>
+
+  <!-- 5. render_static_montage -->
+  <rect x="750" y="70" width="180" height="30" rx="5" fill="#f3e8f8" stroke="#8e44ad" stroke-width="1.5"/>
+  <text x="840" y="90" text-anchor="middle" font-size="10" font-weight="bold">render_static_montage</text>
+  <line x1="840" y1="100" x2="840" y2="760" stroke="#8e44ad" stroke-width="1" stroke-dasharray="4"/>
+
+  <!-- 6. Seaborn FacetGrid -->
+  <rect x="970" y="70" width="160" height="30" rx="5" fill="#fff8e1" stroke="#f39c12" stroke-width="1.5"/>
+  <text x="1050" y="90" text-anchor="middle" font-size="10" font-weight="bold">sns.FacetGrid</text>
+  <line x1="1050" y1="100" x2="1050" y2="760" stroke="#f39c12" stroke-width="1" stroke-dasharray="4"/>
+
+  <!-- 7. plotimg function -->
+  <rect x="1170" y="70" width="160" height="30" rx="5" fill="#e8f8e8" stroke="#27ae60" stroke-width="1.5"/>
+  <text x="1250" y="90" text-anchor="middle" font-size="10" font-weight="bold">plotimg()</text>
+  <line x1="1250" y1="100" x2="1250" y2="760" stroke="#27ae60" stroke-width="1" stroke-dasharray="4"/>
+
+  <!-- ============ MESSAGES ============ -->
+
+  <!-- Step 1: CLI invocation -->
+  <text x="15" y="135" font-weight="bold" fill="#e74c3c">1</text>
+  <rect x="40" y="120" width="120" height="25" rx="3" fill="#fff3e0" stroke="#e67e22"/>
+  <text x="100" y="137" text-anchor="middle" font-size="9">$ movierender panel cfg</text>
+
+  <!-- Step 2: read_config -->
+  <text x="15" y="180" font-weight="bold" fill="#e74c3c">2</text>
+  <line x1="100" y1="175" x2="250" y2="175" stroke="#333" stroke-width="1.5" marker-end="url(#arrow4)"/>
+  <text x="175" y="168" text-anchor="middle" font-size="9">read_config(cfg_path)</text>
+
+  <!-- Step 3: Plugin processes PANEL sections -->
+  <text x="15" y="225" font-weight="bold" fill="#e74c3c">3</text>
+  <line x1="260" y1="220" x2="450" y2="220" stroke="#333" stroke-width="1.5" marker-end="url(#arrow4)"/>
+  <text x="355" y="213" text-anchor="middle" font-size="9">has_valid_header()</text>
+
+  <!-- Step 4: process() -->
+  <text x="15" y="265" font-weight="bold" fill="#e74c3c">4</text>
+  <line x1="260" y1="260" x2="450" y2="260" stroke="#333" stroke-width="1.5" marker-end="url(#arrow4)"/>
+  <text x="355" y="253" text-anchor="middle" font-size="9">process() -- parse PANEL sections</text>
+
+  <!-- Step 5: returns ConfigPanel -->
+  <text x="15" y="305" font-weight="bold" fill="#e74c3c">5</text>
+  <line x1="450" y1="300" x2="270" y2="300" stroke="#2980b9" stroke-width="1.5" marker-end="url(#arrow4r)"/>
+  <text x="360" y="293" text-anchor="middle" font-size="9" fill="#2980b9">List[ConfigPanel]</text>
+
+  <!-- Step 6: returns to CLI -->
+  <text x="15" y="345" font-weight="bold" fill="#e74c3c">6</text>
+  <line x1="250" y1="340" x2="110" y2="340" stroke="#2980b9" stroke-width="1.5" marker-end="url(#arrow4r)"/>
+  <text x="180" y="333" text-anchor="middle" font-size="9" fill="#2980b9">config.panels</text>
+
+  <!-- Step 7: CLI calls render_static_montage -->
+  <text x="15" y="390" font-weight="bold" fill="#e74c3c">7</text>
+  <line x1="100" y1="385" x2="830" y2="385" stroke="#8e44ad" stroke-width="1.5" marker-end="url(#arrow4)"/>
+  <text x="465" y="378" text-anchor="middle" font-size="9">render_static_montage(panel, copyright)</text>
+
+  <!-- Step 8: Creates DataFrame of images -->
+  <text x="15" y="435" font-weight="bold" fill="#e74c3c">8</text>
+  <rect x="750" y="420" width="180" height="20" rx="3" fill="#f3e8f8" stroke="#8e44ad"/>
+  <text x="840" y="433" text-anchor="middle" font-size="9">Create image DataFrame (ch, z, frame)</text>
+
+  <!-- Step 9: Select layout type -->
+  <text x="15" y="475" font-weight="bold" fill="#e74c3c">9</text>
+  <rect x="750" y="460" width="180" height="20" rx="3" fill="#f3e8f8" stroke="#8e44ad"/>
+  <text x="840" y="473" text-anchor="middle" font-size="9">if layout == "time-array" or "z-array"</text>
+
+  <!-- Step 10: Create FacetGrid -->
+  <text x="15" y="520" font-weight="bold" fill="#e74c3c">10</text>
+  <line x1="840" y1="515" x2="1040" y2="515" stroke="#f39c12" stroke-width="1.5" marker-end="url(#arrow4)"/>
+  <text x="940" y="508" text-anchor="middle" font-size="9">sns.FacetGrid(im_df, row, col)</text>
+
+  <!-- Step 11: map_dataframe calls plotimg -->
+  <text x="15" y="565" font-weight="bold" fill="#e74c3c">11</text>
+  <line x1="1040" y1="560" x2="1240" y2="560" stroke="#27ae60" stroke-width="1.5" marker-end="url(#arrow4)"/>
+  <text x="1140" y="553" text-anchor="middle" font-size="9">g.map_dataframe(plotimg, panel)</text>
+
+  <!-- Step 12: plotimg loads image via ImageFile -->
+  <text x="15" y="610" font-weight="bold" fill="#e74c3c">12</text>
+  <rect x="1170" y="595" width="160" height="20" rx="3" fill="#e8f8e8" stroke="#27ae60"/>
+  <text x="1250" y="608" text-anchor="middle" font-size="9">imf.image(ix) via FileOps</text>
+
+  <!-- Step 13: plotimg creates overlays -->
+  <text x="15" y="650" font-weight="bold" fill="#e74c3c">13</text>
+  <rect x="1170" y="635" width="160" height="20" rx="3" fill="#e8f8e8" stroke="#27ae60"/>
+  <text x="1250" y="648" text-anchor="middle" font-size="9">ScaleBar.plot(), Timestamp.plot()</text>
+
+  <!-- Step 14: plotimg renders to axes -->
+  <text x="15" y="690" font-weight="bold" fill="#e74c3c">14</text>
+  <rect x="1170" y="675" width="160" height="20" rx="3" fill="#e8f8e8" stroke="#27ae60"/>
+  <text x="1250" y="688" text-anchor="middle" font-size="9">ax.imshow(img) + overlay.plot()</text>
+
+  <!-- Step 15: FacetGrid saves PDF -->
+  <text x="15" y="735" font-weight="bold" fill="#e74c3c">15</text>
+  <line x1="1040" y1="730" x2="850" y2="730" stroke="#8e44ad" stroke-width="1.5" marker-end="url(#arrow4r)"/>
+  <text x="945" y="723" text-anchor="middle" font-size="9">g.savefig(filepath) or pdf.savefig()</text>
+
+  <!-- Step 16: Returns file path -->
+  <text x="15" y="760" font-weight="bold" fill="#e74c3c">16</text>
+  <line x1="830" y1="755" x2="110" y2="755" stroke="#2980b9" stroke-width="1.5" marker-end="url(#arrow4r)"/>
+  <text x="470" y="748" text-anchor="middle" font-size="9" fill="#2980b9">return filepath</text>
+
+  <!-- ============ LEGEND ============ -->
+  <rect x="30" y="600" width="280" height="100" rx="5" fill="#f9f9f9" stroke="#ccc" stroke-width="1"/>
+  <text x="40" y="618" font-weight="bold" font-size="11">Legend</text>
+  <line x1="40" y1="635" x2="100" y2="635" stroke="#333" stroke-width="1.5" marker-end="url(#arrow4)"/>
+  <text x="110" y="639" font-size="9">Call</text>
+  <line x1="40" y1="655" x2="100" y2="655" stroke="#2980b9" stroke-width="1.5" marker-end="url(#arrow4r)"/>
+  <text x="110" y="659" font-size="9">Return</text>
+  <line x1="40" y1="675" x2="100" y2="675" stroke="#333" stroke-width="1" stroke-dasharray="4"/>
+  <text x="110" y="679" font-size="9">Lifeline</text>
+  <rect x="180" y="630" width="15" height="10" rx="2" fill="#fff3e0" stroke="#e67e22"/>
+  <text x="205" y="639" font-size="9">User action</text>
+  <rect x="180" y="650" width="15" height="10" rx="2" fill="#f3e8f8" stroke="#8e44ad"/>
+  <text x="205" y="659" font-size="9">Internal</text>
+</svg>
