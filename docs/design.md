@@ -229,12 +229,17 @@ arrow_overlay_header_reader = 'movierender.plugins.fileops:ArrowOverlayHeaderRea
 
 ### MovieRender Class Diagram
 
+FIXME: move ConfigModule closer to plugins to avoid arrows going over boxes.
+FIXME: when possible, avoid arrows to go over boxes. Improve paths of arrows to clearly indicate they go out of a box by adding a bit of line perpendicular to the side of the box where the arrow comes out.
+FIXME: ImagePipeline throws PipelineException; shouldn't the arrow be the other way around? Give your reasoning if you still think it's correct.
 ![MovieRender Class Diagram](figs/class_diagram_movierender.svg)
 
 Shows the internal class hierarchy: configuration types, overlay classes, render engine, layout composers, pipeline classes, and plugin bridge classes.
 
 ### FileOps Integration Diagram
 
+FIXME: some boxes are overlapping! Please correct this! Give them enough space to be entirely legible.
+FIXME: when possible, avoid arrows to go over boxes. Improve paths of arrows to clearly indicate they go out of a box by adding a bit of line perpendicular to the side of the box where the arrow comes out.
 ![FileOps Integration Diagram](figs/class_diagram_fileops_integration.svg)
 
 Shows how MovieRender integrates with FileOps: plugin registration via entry points, image loading, config parsing, and the bridge classes that connect the two packages.
@@ -245,18 +250,21 @@ Shows how MovieRender integrates with FileOps: plugin registration via entry poi
 
 ### Movie Rendering Flow
 
+FIXME: here, ConfigMovie is not being used. Also, since this is a data structure and not a proper class, it makes little sense to add it in the diagram. Remove this and any other data structures that you find in vertical lanes.
 ![Movie Rendering Communication Diagram](figs/communication_diagram_movie_rendering.svg)
 
 End-to-end sequence: CLI invocation -> config parsing via FileOps plugins -> layout composer selection -> MovieRenderer creation -> frame-by-frame rendering (image pipeline + overlays) -> video assembly.
 
 ### Panel Rendering Flow
 
+FIXME: here, ConfigPanel is not being used. Also, since this is a data structure and not a proper class, it makes little sense to add it in the diagram. Remove this and any other data structures that you find in vertical lanes.
 ![Panel Rendering Communication Diagram](figs/communication_diagram_panel_rendering.svg)
 
 End-to-end sequence: CLI invocation -> config parsing -> `render_static_montage()` -> seaborn FacetGrid creation -> `plotimg()` for each cell (image loading, overlays, display) -> PDF export.
 
 ### FileOps Plugin System
 
+FIXME: here, ConfigMovie is not being used. Also, since this is a data structure and not a proper class, it makes little sense to add it in the diagram. Remove this and any other data structures that you find in vertical lanes.
 ![FileOps Plugin Communication Diagram](figs/communication_diagram_fileops_plugin.svg)
 
 Shows the plugin lifecycle: registration at import time, config file parsing via plugin registry, and overlay resolution during rendering.
