@@ -79,7 +79,7 @@ The core rendering engine.
 | Class                                                  | Purpose                                                                                                                                                                                               |
 | ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `SequentialMovieRenderer` (aliased as `MovieRenderer`) | Main renderer. Manages a matplotlib figure, iterates through frames, renders each frame by executing image pipelines and overlay plots, then assembles frames into an MP4 video using moviepy/ffmpeg. |
-| `ImagePipeline` (base)                                 | Abstract base for image processing pipelines. Uses `__radd__` to compose with `MovieRenderer` via the `+=` operator. FIXME: this functionality is slightly more intricate that what you're describing here. The addition on the right allows to add overlays, image pipelines and renderers in an 'algebraic' way; much akin to ggplot. Can you update these references to__radd__ where it corresponds, and create a sub-section inside this one specifically describing this functionality? |
+| `ImagePipeline` (base)                                 | Abstract base for image processing pipelines. Uses `__radd__` to compose with `MovieRenderer` via the `+=` operator. See [Algebraic Composition](#algebraic-composition) below. |
 | `SingleImage`                                          | Pipeline that retrieves and displays a single channel from the image file.                                                                                                                            |
 | `CompositeRGBImage`                                    | Pipeline that composites multiple channels into an RGB image with configurable colors and intensity scaling.                                                                                          |
 | `NullImage`                                            | Placeholder pipeline that renders a blank (1x1 black) image. Used for empty grid cells.                                                                                                               |
@@ -88,8 +88,24 @@ The core rendering engine.
 **Key relationships:**
 
 - `MovieRenderer` holds a list of `ImagePipeline` instances and `Overlay` instances
-- `ImagePipeline.__radd__` enables the syntax `renderer += SingleImage(...)`
 - Each frame is rendered by calling `ImagePipeline.__call__()`, then `Overlay.plot()` for each overlay
+
+#### Algebraic Composition
+
+The rendering pipeline uses Python's `__radd__` (right-side addition) to enable a compositional syntax similar to ggplot's `+` operator. This allows building renderers by chaining additions:
+
+```python
+renderer = MovieRenderer(fig, config)
+renderer += CompositeRGBImage(ax=ax, zstack="all-max", channeldict=ch_cfg)
+renderer += ScaleBar(um=50, xy=(10, 10), ax=ax)
+renderer += Timestamp(xy=(10, 200), ax=ax)
+```
+
+The mechanism works as follows:
+
+- **`Overlay.__radd__`**: When `renderer += overlay` is evaluated, Python calls `overlay.__radd__(renderer)`. If the left operand is a `MovieRenderer`, the overlay's layers are appended to `renderer.layers` and the renderer is returned. This also works for chaining overlays: `overlay_a + overlay_b` merges their layer lists.
+- **`ImagePipeline.__radd__`**: When `renderer += pipeline` is evaluated, Python calls `pipeline.__radd__(renderer)`. If the left operand is a `MovieRenderer`, the pipeline is appended to `renderer.image_pipeline` and the renderer is returned. Only one pipeline without an explicit `ax` is allowed per renderer; additional pipelines must specify their own axes.
+- **Validation**: `ImagePipeline.__radd__` enforces that at most one "root" pipeline (without `ax`) exists. If a second root pipeline is added, a `PipelineException` is raised. This prevents ambiguous image source assignments.
 
 ---
 
@@ -101,7 +117,7 @@ Visual annotations rendered on top of images.
 
 | Class            | Purpose                                                                                                                                                         |
 | ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Overlay` (base) | Base class for all overlays. Supports `__radd__` for composition with `MovieRenderer`. Provides `plot()` method and `configuration` property for serialization. |
+| `Overlay` (base) | Base class for all overlays. Supports `__radd__` for composition with `MovieRenderer` (see [Algebraic Composition](#algebraic-composition)). Provides `plot()` method and `configuration` property for serialization. |
 | `ScaleBar`       | Renders a scale bar with optional label (e.g., "50 um").                                                                                                        |
 | `Timestamp`      | Renders a time stamp in `hh:mm:ss` format with optional frame number.                                                                                           |
 | `Text`           | Renders arbitrary text at a specified position.                                                                                                                 |
@@ -229,17 +245,12 @@ arrow_overlay_header_reader = 'movierender.plugins.fileops:ArrowOverlayHeaderRea
 
 ### MovieRender Class Diagram
 
-FIXME: move ConfigModule closer to plugins to avoid arrows going over boxes.
-FIXME: when possible, avoid arrows to go over boxes. Improve paths of arrows to clearly indicate they go out of a box by adding a bit of line perpendicular to the side of the box where the arrow comes out.
-FIXME: ImagePipeline throws PipelineException; shouldn't the arrow be the other way around? Give your reasoning if you still think it's correct.
 ![MovieRender Class Diagram](figs/class_diagram_movierender.svg)
 
 Shows the internal class hierarchy: configuration types, overlay classes, render engine, layout composers, pipeline classes, and plugin bridge classes.
 
 ### FileOps Integration Diagram
 
-FIXME: some boxes are overlapping! Please correct this! Give them enough space to be entirely legible.
-FIXME: when possible, avoid arrows to go over boxes. Improve paths of arrows to clearly indicate they go out of a box by adding a bit of line perpendicular to the side of the box where the arrow comes out.
 ![FileOps Integration Diagram](figs/class_diagram_fileops_integration.svg)
 
 Shows how MovieRender integrates with FileOps: plugin registration via entry points, image loading, config parsing, and the bridge classes that connect the two packages.
@@ -250,21 +261,18 @@ Shows how MovieRender integrates with FileOps: plugin registration via entry poi
 
 ### Movie Rendering Flow
 
-FIXME: here, ConfigMovie is not being used. Also, since this is a data structure and not a proper class, it makes little sense to add it in the diagram. Remove this and any other data structures that you find in vertical lanes.
 ![Movie Rendering Communication Diagram](figs/communication_diagram_movie_rendering.svg)
 
 End-to-end sequence: CLI invocation -> config parsing via FileOps plugins -> layout composer selection -> MovieRenderer creation -> frame-by-frame rendering (image pipeline + overlays) -> video assembly.
 
 ### Panel Rendering Flow
 
-FIXME: here, ConfigPanel is not being used. Also, since this is a data structure and not a proper class, it makes little sense to add it in the diagram. Remove this and any other data structures that you find in vertical lanes.
 ![Panel Rendering Communication Diagram](figs/communication_diagram_panel_rendering.svg)
 
 End-to-end sequence: CLI invocation -> config parsing -> `render_static_montage()` -> seaborn FacetGrid creation -> `plotimg()` for each cell (image loading, overlays, display) -> PDF export.
 
 ### FileOps Plugin System
 
-FIXME: here, ConfigMovie is not being used. Also, since this is a data structure and not a proper class, it makes little sense to add it in the diagram. Remove this and any other data structures that you find in vertical lanes.
 ![FileOps Plugin Communication Diagram](figs/communication_diagram_fileops_plugin.svg)
 
 Shows the plugin lifecycle: registration at import time, config file parsing via plugin registry, and overlay resolution during rendering.
