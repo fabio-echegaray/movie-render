@@ -145,7 +145,7 @@ class SequentialMovieRenderer:
         # Start of method
         # --------------------------------------------------------------------------------------------------------------
         if filename is None:
-            _, filename = os.path.split(self._file)
+            _, filename = os.path.split(self.image.image_path)
             filename += ".mp4"
         rendered_frames = list()
         for fr in sorted(self._cfg.frames):
