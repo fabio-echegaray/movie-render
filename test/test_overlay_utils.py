@@ -39,15 +39,11 @@ class TestIterableElemsEq:
         d2 = {"a": 2}
         assert iterable_elems_eq([d1], [d2]) is False
 
-    def test_nested_list_calls_dict_elems_eq(self):
-        # iterable_elems_eq delegates list-in-list to dict_elems_eq,
-        # which expects dicts — this documents the actual behavior (crash)
-        with pytest.raises(AttributeError):
-            iterable_elems_eq([[1, 2], [3, 4]], [[1, 2], [3, 4]])
+    def test_nested_list(self):
+        assert iterable_elems_eq([[1, 2], [3, 4]], [[1, 2], [3, 4]]) is True
 
-    def test_nested_list_different_calls_dict_elems_eq(self):
-        with pytest.raises(AttributeError):
-            iterable_elems_eq([[1, 2]], [[1, 3]])
+    def test_nested_list_different(self):
+        assert iterable_elems_eq([[1, 2]], [[1, 3]]) is False
 
 
 class TestDictElemsEq:
