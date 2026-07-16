@@ -62,7 +62,7 @@ def render_configuration_file_cmd(
         for pan in cfg.panels:
             if show_file_info:
                 try:
-                    log.info(f"file {cfg_path}\r\n{mov.image_file.info.squeeze(axis=0)}")
+                    log.info(f"file {cfg_path}\r\n{pan.image_file.info.squeeze(axis=0)}")
                 except Exception as e:
                     log.error(e)
             render_static_montage(pan, copyright_info=cfg.copyright)
@@ -72,7 +72,7 @@ def render_configuration_file_cmd(
         for prj in cfg.projections:
             if show_file_info:
                 try:
-                    log.info(f"file {cfg_path}\r\n{mov.image_file.info.squeeze(axis=0)}")
+                    log.info(f"file {cfg_path}\r\n{prj.image_file.info.squeeze(axis=0)}")
                 except Exception as e:
                     log.error(e)
             render_projection(prj, overwrite=overwrite_file)

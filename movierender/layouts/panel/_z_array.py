@@ -22,7 +22,7 @@ def plotimg(data, panel: ConfigPanel = None, **kwargs):
 
     if data["frame"].unique().size != 1:
         raise ValueError("Z-array layout demands only one frame.")
-    if data["channel"].unique().size != 1 or data["channel"].unique().size != 1:
+    if data["channel"].unique().size != 1 or data["z"].unique().size != 1:
         raise RuntimeError("More than one z or channel value to render.")
     if panel.zstack_fn is not None:
         logger.warning(
