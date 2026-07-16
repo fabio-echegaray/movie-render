@@ -1,4 +1,4 @@
-# MovieRender - Package Report
+# MovieRender - Design Notes
 
 ## Table of Contents
 
@@ -17,32 +17,18 @@
 - [Communication Diagrams](#communication-diagrams)
 - [CLI Usage](#cli-usage)
 - [Dependencies](#dependencies)
-- [License](#license)
 
 ---
 
 ## Overview
 
-**MovieRender** is a Python package for rendering microscopy data into movies (MP4) and static panels (PDF) using declarative configuration files. It reads microscopy image files via the sister project [FileOps](https://github.com/fabio-echegaray/fileops), applies various layouts and overlays (scale bars, timestamps, ROIs, arrows, etc.), and produces publication-ready video and image outputs.
-
-**Key capabilities:**
-
-- Render movies from `.ome.tif` and other microscopy formats
-- Render static multi-page PDF panels with z-stack or time arrays
-- Apply overlays: scale bars, timestamps, text, ROIs, arrows, particle positions, time series, histograms
-- Composite multiple channels into RGB images with configurable colors and intensities
-- Parallel frame rendering for faster output
-- Plugin-based architecture extensible via Python entry points
-
-**Version:** 0.2.0 (Alpha)  
-**Author:** Fabio Rodrigo Echegaray Iturra  
-**License:** AGPL-3.0-only
+**MovieRender** is a Python package for rendering microscopy data into movies (MP4), static panels (PDF) and volumetric files (OpenVDB, VTK) using declarative configuration files. It reads microscopy image files via the sister project [FileOps](https://github.com/fabio-echegaray/fileops), applies various layouts and overlays (scale bars, timestamps, ROIs, arrows, etc.), and produces publication-ready video and image outputs.
 
 ---
 
 ## Architecture
 
-The package follows a layered architecture with clear separation of concerns:
+The package follows a layered architecture with clear separation of functionality:
 
 ```
 User CLI (Typer)
@@ -76,10 +62,10 @@ The system uses a **plugin architecture** to bridge with FileOps: MovieRender re
 
 Contains two `NamedTuple` classes that hold all parameters needed for rendering:
 
-| Class | Purpose | Key Fields |
-|-------|---------|------------|
+| Class         | Purpose                    | Key Fields                                                                                        |
+| ------------- | -------------------------- | ------------------------------------------------------------------------------------------------- |
 | `ConfigMovie` | Movie rendering parameters | `image_file`, `fps`, `bitrate`, `layout`, `zstack`, `zstack_fn`, `overlays`, `channels`, `frames` |
-| `ConfigPanel` | Panel rendering parameters | `image_file`, `layout`, `max_columns`, `width`, `height`, `multipage`, `fontsize`, `overlays` |
+| `ConfigPanel` | Panel rendering parameters | `image_file`, `layout`, `max_columns`, `width`, `height`, `multipage`, `fontsize`, `overlays`     |
 
 These are produced by the FileOps plugin system when parsing `.cfg` files.
 
@@ -91,16 +77,17 @@ These are produced by the FileOps plugin system when parsing `.cfg` files.
 
 The core rendering engine.
 
-| Class | Purpose |
-|-------|---------|
+| Class                                                  | Purpose                                                                                                                                                                                               |
+| ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `SequentialMovieRenderer` (aliased as `MovieRenderer`) | Main renderer. Manages a matplotlib figure, iterates through frames, renders each frame by executing image pipelines and overlay plots, then assembles frames into an MP4 video using moviepy/ffmpeg. |
-| `ImagePipeline` (base) | Abstract base for image processing pipelines. Uses `__radd__` to compose with `MovieRenderer` via the `+=` operator. |
-| `SingleImage` | Pipeline that retrieves and displays a single channel from the image file. |
-| `CompositeRGBImage` | Pipeline that composites multiple channels into an RGB image with configurable colors and intensity scaling. |
-| `NullImage` | Placeholder pipeline that renders a blank (1x1 black) image. Used for empty grid cells. |
-| `PipelineException` | Custom exception for pipeline errors. |
+| `ImagePipeline` (base)                                 | Abstract base for image processing pipelines. Uses `__radd__` to compose with `MovieRenderer` via the `+=` operator.                                                                                  |
+| `SingleImage`                                          | Pipeline that retrieves and displays a single channel from the image file.                                                                                                                            |
+| `CompositeRGBImage`                                    | Pipeline that composites multiple channels into an RGB image with configurable colors and intensity scaling.                                                                                          |
+| `NullImage`                                            | Placeholder pipeline that renders a blank (1x1 black) image. Used for empty grid cells.                                                                                                               |
+| `PipelineException`                                    | Custom exception for pipeline errors.                                                                                                                                                                 |
 
 **Key relationships:**
+
 - `MovieRenderer` holds a list of `ImagePipeline` instances and `Overlay` instances
 - `ImagePipeline.__radd__` enables the syntax `renderer += SingleImage(...)`
 - Each frame is rendered by calling `ImagePipeline.__call__()`, then `Overlay.plot()` for each overlay
@@ -113,19 +100,19 @@ The core rendering engine.
 
 Visual annotations rendered on top of images.
 
-| Class | Purpose |
-|-------|---------|
+| Class            | Purpose                                                                                                                                                         |
+| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `Overlay` (base) | Base class for all overlays. Supports `__radd__` for composition with `MovieRenderer`. Provides `plot()` method and `configuration` property for serialization. |
-| `ScaleBar` | Renders a scale bar with optional label (e.g., "50 um"). |
-| `Timestamp` | Renders a time stamp in `hh:mm:ss` format with optional frame number. |
-| `Text` | Renders arbitrary text at a specified position. |
-| `ImagejROI` | Renders ImageJ ROI rectangles from `.roi` files. |
-| `Arrow` | Renders an arrow annotation with configurable position, angle, length, and color. |
-| `Position` | Renders particle positions and trajectories with fading trail effect. |
-| `DataTimeseries` | Renders time series data plots (e.g., fluorescence over time). |
-| `ImageHistogram` | Renders an inset histogram of image intensities. |
-| `Treatment` | Renders experimental treatment labels with colored dot indicators. |
-| `PixelTools` | Utility class for coordinate conversions (ratio to pixels, ratio to micrometers). |
+| `ScaleBar`       | Renders a scale bar with optional label (e.g., "50 um").                                                                                                        |
+| `Timestamp`      | Renders a time stamp in `hh:mm:ss` format with optional frame number.                                                                                           |
+| `Text`           | Renders arbitrary text at a specified position.                                                                                                                 |
+| `ImagejROI`      | Renders ImageJ ROI rectangles from `.roi` files.                                                                                                                |
+| `Arrow`          | Renders an arrow annotation with configurable position, angle, length, and color.                                                                               |
+| `Position`       | Renders particle positions and trajectories with fading trail effect.                                                                                           |
+| `DataTimeseries` | Renders time series data plots (e.g., fluorescence over time).                                                                                                  |
+| `ImageHistogram` | Renders an inset histogram of image intensities.                                                                                                                |
+| `Treatment`      | Renders experimental treatment labels with colored dot indicators.                                                                                              |
+| `PixelTools`     | Utility class for coordinate conversions (ratio to pixels, ratio to micrometers).                                                                               |
 
 ---
 
@@ -135,12 +122,12 @@ Visual annotations rendered on top of images.
 
 Manages figure creation, axes layout, and overlay placement for movies.
 
-| Class | Purpose |
-|-------|---------|
-| `BaseLayoutComposer` | Abstract base. Creates the matplotlib figure, manages pending overlays, handles parallel rendering via `ProcessPoolExecutor`. |
-| `LayoutCompositeComposer` | Renders all channels as a single composite RGB image. Used for `layout = "twoch-comp"`. |
-| `LayoutChannelColumnComposer` | Renders each channel in a separate subplot arranged in columns. Used for `layout = "two-ch"` or `"two-col"`. |
-| `LayoutZStackColumnComposer` | Renders each z-slice in a separate subplot. Used for `layout = "z-N-col"`. |
+| Class                         | Purpose                                                                                                                       |
+| ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `BaseLayoutComposer`          | Abstract base. Creates the matplotlib figure, manages pending overlays, handles parallel rendering via `ProcessPoolExecutor`. |
+| `LayoutCompositeComposer`     | Renders all channels as a single composite RGB image. Used for `layout = "twoch-comp"`.                                       |
+| `LayoutChannelColumnComposer` | Renders each channel in a separate subplot arranged in columns. Used for `layout = "two-ch"` or `"two-col"`.                  |
+| `LayoutZStackColumnComposer`  | Renders each z-slice in a separate subplot. Used for `layout = "z-N-col"`.                                                    |
 
 **Helper:** `channel_configuration()` transforms channel render parameters into a dictionary with color, intensity, and rescale settings.
 
@@ -152,11 +139,11 @@ Manages figure creation, axes layout, and overlay placement for movies.
 
 Renders static PDF panels (montages of images).
 
-| Function/Module | Purpose |
-|-----------------|---------|
+| Function/Module           | Purpose                                                                                                                                |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
 | `render_static_montage()` | Main entry point. Creates a DataFrame of (channel, z, frame) combinations, selects layout, and renders via seaborn `FacetGrid` to PDF. |
-| `_time_array.plotimg()` | Renders a single cell in a time-array layout: loads image, applies channel coloring, overlays scale bar, timestamp, and histogram. |
-| `_z_array.plotimg()` | Renders a single cell in a z-array layout: shows individual z-slices with overlays. |
+| `_time_array.plotimg()`   | Renders a single cell in a time-array layout: loads image, applies channel coloring, overlays scale bar, timestamp, and histogram.     |
+| `_z_array.plotimg()`      | Renders a single cell in a z-array layout: shows individual z-slices with overlays.                                                    |
 
 ---
 
@@ -166,13 +153,13 @@ Renders static PDF panels (montages of images).
 
 CLI commands built with [Typer](https://typer.tiangolo.com/).
 
-| Command | Function | Description |
-|---------|----------|-------------|
-| `movierender movie` | `render_movie_cmd` | Render a movie from a config file |
-| `movierender panel` | `render_panel_cmd` | Render a static panel from a config file |
-| `movierender file` | `render_configuration_file_cmd` | Render all (movies, panels, projections) from a config file |
-| `movierender folder` | `render_folder_cmd` | Render all config files in a directory |
-| `movierender projection` | `render_projection_cmd` | Render z-projections to TIFF files |
+| Command                  | Function                        | Description                                                 |
+| ------------------------ | ------------------------------- | ----------------------------------------------------------- |
+| `movierender movie`      | `render_movie_cmd`              | Render a movie from a config file                           |
+| `movierender panel`      | `render_panel_cmd`              | Render a static panel from a config file                    |
+| `movierender file`       | `render_configuration_file_cmd` | Render all (movies, panels, projections) from a config file |
+| `movierender folder`     | `render_folder_cmd`             | Render all config files in a directory                      |
+| `movierender projection` | `render_projection_cmd`         | Render z-projections to TIFF files                          |
 
 Entry point defined in `pyproject.toml`: `movierender = "movierender.scripts:render.app"`
 
@@ -184,12 +171,12 @@ Entry point defined in `pyproject.toml`: `movierender = "movierender.scripts:ren
 
 Bridges MovieRender with FileOps via the plugin system.
 
-| Class | Purpose |
-|-------|---------|
-| `MovieHeaderReaderPlugin` | Extends FileOps `HeaderReaderPlugin`. Parses `[MOVIE]` sections from config files into `ConfigMovie` objects. Discovers and processes overlay sections. |
-| `PanelHeaderReaderPlugin` | Extends FileOps `HeaderReaderPlugin`. Parses `[PANEL]` sections from config files into `ConfigPanel` objects. |
-| `ArrowOverlayHeaderReaderPlugin` | Extends FileOps `HeaderReaderPlugin`. Parses `[OVERLAY]` sections of type `arrow` into `Arrow` overlay instances. |
-| `OverlayPlugin` | Extends FileOps `BaseFileOpsPlugin`. Wraps an `Overlay` class for plugin-based instantiation. |
+| Class                            | Purpose                                                                                                                                                 |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `MovieHeaderReaderPlugin`        | Extends FileOps `HeaderReaderPlugin`. Parses `[MOVIE]` sections from config files into `ConfigMovie` objects. Discovers and processes overlay sections. |
+| `PanelHeaderReaderPlugin`        | Extends FileOps `HeaderReaderPlugin`. Parses `[PANEL]` sections from config files into `ConfigPanel` objects.                                           |
+| `ArrowOverlayHeaderReaderPlugin` | Extends FileOps `HeaderReaderPlugin`. Parses `[OVERLAY]` sections of type `arrow` into `Arrow` overlay instances.                                       |
+| `OverlayPlugin`                  | Extends FileOps `BaseFileOpsPlugin`. Wraps an `Overlay` class for plugin-based instantiation.                                                           |
 
 ---
 
@@ -214,20 +201,20 @@ arrow_overlay_header_reader = 'movierender.plugins.fileops:ArrowOverlayHeaderRea
 
 ### 2. Key FileOps APIs Used
 
-| FileOps Module | Used By | Purpose |
-|----------------|---------|---------|
-| `fileops.image.ImageFile` | `MovieRenderer`, `SingleImage`, `CompositeRGBImage`, `PixelTools` | Image file abstraction (frames, channels, z-stacks) |
-| `fileops.image.MetadataImage` | `SingleImage`, `ImageHistogram` | Single image with metadata |
-| `fileops.image.ops.ZProjection` | `ImagePipeline` | Z-projection enumeration |
-| `fileops.image.exceptions.FrameNotFoundError` | `MovieRenderer`, panel layouts | Exception for missing frames |
-| `fileops.export.config.read_config` | Scripts | Parse `.cfg` files via plugin system |
-| `fileops.export.config.ConfigCopyright` | Panel layout | Copyright metadata |
-| `fileops.export.config_channel_section` | Header readers | Channel config override processing |
-| `fileops.export.config_sections` | Header readers | Section override processing |
-| `fileops.plugins.HeaderReaderPlugin` | Plugin bridge classes | Base class for config section readers |
-| `fileops.plugins.base_plugin.BaseFileOpsPlugin` | `OverlayPlugin` | Base class for FileOps plugins |
-| `fileops.logger.get_logger` | All modules | Logging |
-| `fileops.pathutils.ensure_dir` | `MovieRenderer` | Directory creation |
+| FileOps Module                                  | Used By                                                           | Purpose                                             |
+| ----------------------------------------------- | ----------------------------------------------------------------- | --------------------------------------------------- |
+| `fileops.image.ImageFile`                       | `MovieRenderer`, `SingleImage`, `CompositeRGBImage`, `PixelTools` | Image file abstraction (frames, channels, z-stacks) |
+| `fileops.image.MetadataImage`                   | `SingleImage`, `ImageHistogram`                                   | Single image with metadata                          |
+| `fileops.image.ops.ZProjection`                 | `ImagePipeline`                                                   | Z-projection enumeration                            |
+| `fileops.image.exceptions.FrameNotFoundError`   | `MovieRenderer`, panel layouts                                    | Exception for missing frames                        |
+| `fileops.export.config.read_config`             | Scripts                                                           | Parse `.cfg` files via plugin system                |
+| `fileops.export.config.ConfigCopyright`         | Panel layout                                                      | Copyright metadata                                  |
+| `fileops.export.config_channel_section`         | Header readers                                                    | Channel config override processing                  |
+| `fileops.export.config_sections`                | Header readers                                                    | Section override processing                         |
+| `fileops.plugins.HeaderReaderPlugin`            | Plugin bridge classes                                             | Base class for config section readers               |
+| `fileops.plugins.base_plugin.BaseFileOpsPlugin` | `OverlayPlugin`                                                   | Base class for FileOps plugins                      |
+| `fileops.logger.get_logger`                     | All modules                                                       | Logging                                             |
+| `fileops.pathutils.ensure_dir`                  | `MovieRenderer`                                                   | Directory creation                                  |
 
 ### 3. Plugin Discovery Flow
 
@@ -243,13 +230,13 @@ arrow_overlay_header_reader = 'movierender.plugins.fileops:ArrowOverlayHeaderRea
 
 ### MovieRender Class Diagram
 
-![MovieRender Class Diagram](class_diagram_movierender.svg)
+![MovieRender Class Diagram](figs/class_diagram_movierender.svg)
 
 Shows the internal class hierarchy: configuration types, overlay classes, render engine, layout composers, pipeline classes, and plugin bridge classes.
 
 ### FileOps Integration Diagram
 
-![FileOps Integration Diagram](class_diagram_fileops_integration.svg)
+![FileOps Integration Diagram](figs/class_diagram_fileops_integration.svg)
 
 Shows how MovieRender integrates with FileOps: plugin registration via entry points, image loading, config parsing, and the bridge classes that connect the two packages.
 
@@ -259,19 +246,19 @@ Shows how MovieRender integrates with FileOps: plugin registration via entry poi
 
 ### Movie Rendering Flow
 
-![Movie Rendering Communication Diagram](communication_diagram_movie_rendering.svg)
+![Movie Rendering Communication Diagram](figs/communication_diagram_movie_rendering.svg)
 
 End-to-end sequence: CLI invocation -> config parsing via FileOps plugins -> layout composer selection -> MovieRenderer creation -> frame-by-frame rendering (image pipeline + overlays) -> video assembly.
 
 ### Panel Rendering Flow
 
-![Panel Rendering Communication Diagram](communication_diagram_panel_rendering.svg)
+![Panel Rendering Communication Diagram](figs/communication_diagram_panel_rendering.svg)
 
 End-to-end sequence: CLI invocation -> config parsing -> `render_static_montage()` -> seaborn FacetGrid creation -> `plotimg()` for each cell (image loading, overlays, display) -> PDF export.
 
 ### FileOps Plugin System
 
-![FileOps Plugin Communication Diagram](communication_diagram_fileops_plugin.svg)
+![FileOps Plugin Communication Diagram](figs/communication_diagram_fileops_plugin.svg)
 
 Shows the plugin lifecycle: registration at import time, config file parsing via plugin registry, and overlay resolution during rendering.
 
@@ -331,22 +318,16 @@ color = yellow
 
 ## Dependencies
 
-| Package | Purpose |
-|---------|---------|
-| `imgfileops >= 0.3.0` | Sister project for image file handling |
-| `matplotlib >= 3.2.0` | Plotting and figure rendering |
-| `moviepy >= 1.0.3, < 2` | Video assembly from frames |
-| `numpy >= 1.16.0` | Array operations |
-| `pandas >= 2` | Data manipulation |
-| `scikit-image ~= 0.24` | Image processing (exposure, color) |
-| `seaborn ~= 0.13` | Statistical visualization (FacetGrid for panels) |
-| `typer >= 0.9.0` | CLI framework |
-| `roifile` | ImageJ ROI file reading |
+| Package                 | Purpose                                          |
+| ----------------------- | ------------------------------------------------ |
+| `imgfileops >= 0.3.0`   | Sister project for image file handling           |
+| `matplotlib >= 3.2.0`   | Plotting and figure rendering                    |
+| `moviepy >= 1.0.3, < 2` | Video assembly from frames                       |
+| `numpy >= 1.16.0`       | Array operations                                 |
+| `pandas >= 2`           | Data manipulation                                |
+| `scikit-image ~= 0.24`  | Image processing (exposure, color)               |
+| `seaborn ~= 0.13`       | Statistical visualization (FacetGrid for panels) |
+| `typer >= 0.9.0`        | CLI framework                                    |
+| `roifile`               | ImageJ ROI file reading                          |
 
 ---
-
-## License
-
-GNU Affero General Public License v3.0 (AGPL-3.0-only)
-
-Copyright (C) 2021-2025 Fabio Echegaray
