@@ -3,11 +3,9 @@ from fileops.image import ImageFile
 
 class PixelTools:
     def __init__(self, cimg: ImageFile):
-        self.width = 0
-        self.height = 0
-        self.um_per_pix = 0
-        for d in cimg.__dict__:
-            self.__dict__.update({d: cimg.__dict__[d]})
+        self.width = cimg.width
+        self.height = cimg.height
+        self.um_per_pix = cimg.um_per_pix
 
     def xy_ratio_to_pixels(self, x, y):
         # nfo = self.info

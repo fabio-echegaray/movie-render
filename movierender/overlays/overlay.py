@@ -75,7 +75,7 @@ def get_kwargs(kwargs: List[dict], keys_and_default_values: Dict) -> List[Any]:
 class Overlay(object):
     def __init__(self, ax=None, **kwargs):
         self.layers = [self]
-        self._kwargs = kwargs
+        self._kwargs: dict = kwargs if kwargs else {}
         self._renderer: MovieRenderer | None = None
         self.ax = ax
 
@@ -108,8 +108,7 @@ class Overlay(object):
     @property
     def configuration(self):
         cfg = dict()
-        if hasattr(self, "_kwargs"):
-            cfg.update(**self._kwargs)
+        cfg.update(**self._kwargs)
         for d in self.__dict__:
             if d not in ['uuid', 'ax', 'layers', '_renderer', '_kwargs']:
                 cfg.update({d: self.__dict__[d]})
