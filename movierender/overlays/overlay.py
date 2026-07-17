@@ -20,7 +20,7 @@ def iterable_elems_eq(l1: Iterable, l2: Iterable) -> bool:
             if not v1_in_l2:
                 return False
         elif type(v1) is list:
-            v1_in_l2 = np.any([dict_elems_eq(v1, v2) for v2 in l2])
+            v1_in_l2 = np.any([iterable_elems_eq(v1, v2) for v2 in l2])
             if not v1_in_l2:
                 return False
         else:
@@ -131,7 +131,8 @@ class Overlay(object):
 
     @configuration.setter
     def configuration(self, cfg):
-        assert type(cfg) is dict
+        if not isinstance(cfg, dict):
+            raise TypeError("configuration must be a dict.")
         if cfg["ax_on_grid"]:
             n_rows, n_cols, start, stop = cfg["gridspec"]
         for key, val in cfg.items():

@@ -1,13 +1,9 @@
-import os
-import sys
 from pathlib import Path
 
 import typer
 from fileops.image import TifffileOMEImageFile
 from tifffile import tifffile
 from typing_extensions import Annotated
-
-sys.path.append(Path(os.path.realpath(__file__)).parent.parent.parent.as_posix())
 
 from fileops.export.config import read_config, ConfigProjection
 from fileops.logger import get_logger
@@ -24,7 +20,7 @@ def render_projection(prj: ConfigProjection, overwrite=False):
         imf = prj.image_file
         fst_mdi = imf.image(imf.ix_at(0, 0, 0))
         dtype = fst_mdi.image.dtype
-        if type(imf) is TifffileOMEImageFile:
+        if isinstance(imf, TifffileOMEImageFile):
             tif = imf._tif
             page = tif.series[0].keyframe
             metadata = tif.imagej_metadata

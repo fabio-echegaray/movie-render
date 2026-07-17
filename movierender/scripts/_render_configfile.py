@@ -1,5 +1,3 @@
-import os
-import sys
 from pathlib import Path
 
 import numpy as np
@@ -9,8 +7,6 @@ from typing_extensions import Annotated
 from movierender.layouts import render_static_montage
 from movierender.scripts._render_movie import render_movie
 from movierender.scripts._render_projection import render_projection
-
-sys.path.append(Path(os.path.realpath(__file__)).parent.parent.parent.as_posix())
 
 from fileops.export.config import read_config, check_if_output_files_are_created
 from fileops.logger import get_logger
@@ -62,7 +58,7 @@ def render_configuration_file_cmd(
         for pan in cfg.panels:
             if show_file_info:
                 try:
-                    log.info(f"file {cfg_path}\r\n{mov.image_file.info.squeeze(axis=0)}")
+                    log.info(f"file {cfg_path}\r\n{pan.image_file.info.squeeze(axis=0)}")
                 except Exception as e:
                     log.error(e)
             render_static_montage(pan, copyright_info=cfg.copyright)
@@ -72,7 +68,7 @@ def render_configuration_file_cmd(
         for prj in cfg.projections:
             if show_file_info:
                 try:
-                    log.info(f"file {cfg_path}\r\n{mov.image_file.info.squeeze(axis=0)}")
+                    log.info(f"file {cfg_path}\r\n{prj.image_file.info.squeeze(axis=0)}")
                 except Exception as e:
                     log.error(e)
             render_projection(prj, overwrite=overwrite_file)

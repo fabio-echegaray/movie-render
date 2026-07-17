@@ -9,8 +9,8 @@ class ScaleBar(Overlay):
     def plot(self, ax=None, lw=None, fontdict=None, **kwargs):
         if ax is None:
             ax = self.ax
-        assert ax is not None, "No axes found to plot overlay."
-
+        if ax is None:
+            raise RuntimeError("No axes found to plot overlay.")
         def_values = get_kwargs([kwargs, self._kwargs],
                                 keys_and_default_values=dict(
                                     xy=(0, 0),
@@ -67,8 +67,8 @@ class Timestamp(Overlay):
     def plot(self, ax=None, **kwargs):
         if ax is None:
             ax = self.ax
-        assert ax is not None, "No axes found to plot overlay."
-
+        if ax is None:
+            raise RuntimeError("No axes found to plot overlay.")
         def_values = get_kwargs([kwargs, self._kwargs],
                                 keys_and_default_values=dict(
                                     xy=(0, 0),

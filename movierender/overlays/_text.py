@@ -3,7 +3,8 @@ from .overlay import Overlay, get_kwargs
 
 class Text(Overlay):
     def __init__(self, text, **kwargs):
-        assert text is not None, "Need text to render on axes."
+        if text is None:
+            raise ValueError("Need text to render on axes.")
         self.text = text
         self._kwargs = kwargs
         super().__init__(**kwargs)
@@ -11,7 +12,8 @@ class Text(Overlay):
     def plot(self, ax=None, xy=None, fontdict=None, **kwargs):
         if ax is None:
             ax = self.ax
-        assert ax is not None, "No axes found to plot overlay."
+        if ax is None:
+            raise RuntimeError("No axes found to plot overlay.")
 
         def_values = get_kwargs([kwargs, self._kwargs],
                                 keys_and_default_values=dict(

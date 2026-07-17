@@ -1,0 +1,209 @@
+MovieRender & FileOps — TODO List
+==================================
+
+Legend: [DONE] = fixed, [OPEN] = pending
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. CRITICAL BUGS
+────────────────
+
+MovieRender:
+
+  [DONE]  2. Undefined `self._file` (`_sequential.py:145`) — will crash with
+              `AttributeError` when `filename=None` during render.
+              Fixed: `self.image.image_path`.
+
+  [DONE]  4. Wrong variable `mov` in panel/projection loops
+              (`_render_configfile.py:65,75`) — references `mov` but the loop
+              variable is `pan` or `prj`.
+              Fixed: `pan.image_file` / `prj.image_file`.
+
+  [DONE]  5. Double-channel validation (`_z_array.py:25`) — checks `channel`
+              twice instead of checking `z` once.
+              Fixed: `data["z"].unique().size`.
+
+  [DONE]  6. Undefined `self.df` in ImagejROI (`_roi.py:22`) — crashes when
+              `_renderer` is None.
+              Fixed: ROI-based t_position fallback.
+
+  [OPEN]  1. `parallel | True` always forces parallel (`_render_movie.py:37`)
+              — `|` is bitwise OR, not logical. Every movie renders in
+              parallel mode regardless of the flag. Should be
+              `parallel=parallel`.
+
+  [OPEN]  3. Broken `__next__` iterator (`_sequential.py:76-83`) —
+              `self.image_pipeline` is always a list (always truthy), so the
+              `else` branch creating `SingleImage` is dead code. Passing the
+              list to `imp(...)` would fail since a list isn't callable.
+
+FileOps:
+
+  [OPEN]  7. `exit(100)` in library code (`_ome.py:51`) — terminates the
+              entire interpreter. Should raise an exception.
+
+  [OPEN]  8. `except BaseException` catching KeyboardInterrupt
+              (`factory.py:65`, `summary.py:293`) — silently swallows
+              system-level signals. Narrow to `except Exception`.
+
+  [OPEN]  9. Division by zero in `to_8bit` (`to_8bit.py:5`) — no guard for
+              `img.max() == 0`.
+
+  [NEW]   7b. `sys.exit(100)` in MovieRender (`_z_array.py`, `_render_sequential.py`)
+              — same issue as point 7 in FileOps. Should raise exceptions.
+
+  [NEW]   9b. Division by zero in `_roi.py:57` — missing guard when
+              computing scale.
+
+
+2. CODE QUALITY — ERROR HANDLING & VALIDATION
+─────────────────────────────────────────────
+
+  [DONE] 10. `sys.path.append` hacks in 4 MovieRender script files — removed
+              unnecessary path injection and unused `import os`/`import sys`.
+
+  [DONE] 11. Replace 22 `assert` statements with proper exceptions — assert
+              is stripped by `python -O`. Now using `if/raise` with
+              `ValueError`, `TypeError`, or `RuntimeError`.
+
+  [NEW]  16b. MovieRender's `PixelTools` copies all `__dict__` entries
+              (`pixel_tools.py:5-10`) — fragile duck-typing that leaks
+              private attributes. Should use explicit composition.
+
+  [NEW]  26b. `overlay.py` — `_kwargs` is sometimes `dict`, sometimes `None`
+              depending on initialization path. Inconsistent contract.
+
+  [NEW]  15b. `_experiment.py:14` — `self._renderer` used without null check
+              before accessing `.fig.canvas.get_renderer()`.
+
+  [NEW]  17b. `except Exception` swallowing errors in scripts — both projects
+              catch broad exceptions and only log them, masking bugs. The
+              `show_file_info` pattern is copy-pasted 3 times in
+              `_render_configfile.py` alone.
+
+  [NEW]  18b. Silent `except ValueError: pass` in config parsing (FileOps
+              `config_sections.py:21-41`) — invalid frame ranges are
+              silently ignored.
+
+
+3. CODE QUALITY — TYPE SAFETY
+─────────────────────────────
+
+  [NEW]  21b. String-slicing type check (`_image_pipeline_base.py:28,35`) —
+              `args[0].__class__.__name__[-13:] == 'MovieRenderer'` is
+              extremely fragile. Use `isinstance()` with a TYPE_CHECKING
+              import.
+
+  [NEW]  22b. `np.array` used as type hint in both projects — `np.array` is
+              a function, not a type. Should be `np.ndarray`.
+              Fixed: `np.array` → `np.ndarray` in `_image_rescale.py`.
+
+  [DONE]  23b. `type(x) is Y` instead of `isinstance` — 10+ occurrences across
+              both projects. Doesn't respect inheritance.
+              Fixed: replaced in _render_projection.py, _movie_header_reader.py,
+              _image_pipeline_single.py, _image_rescale.py, _base_composer.py,
+              overlay.py. Left iterable_elems_eq/dict_elems_eq untouched
+              (exact type matching prevents bool/int confusion).
+
+
+4. CODE QUALITY — DUPLICATION & ARCHITECTURE
+────────────────────────────────────────────
+
+  [NEW]  14b. MovieRender has 6+ instances of duplicated code:
+              — Axis-hiding boilerplate (`_sequential.py:211-230`)
+              — Image rescale dtype normalization (two pipeline files)
+              — Overlay consumption pattern in layout composers
+              — Config reading for panel overlays (`_time_array.py`, `_z_array.py`)
+              — Plugin overlay loading in header readers
+              — `show_file_info` display pattern
+
+  [NEW]  20b. FileOps duplicates `_find_associated_files` identically in two
+              files, and the pixel resolution calculation in five files.
+
+  [NEW]  12b. ConfigMovie/ConfigPanel should be dataclasses, not NamedTuples
+              — 23+ fields, immutable, no defaults, no validation. A
+              `@dataclass` with `field(default=...)` and `__post_init__`
+              validation would eliminate defensive code in header readers.
+
+  [NEW]  13b. Plugin naming convention is fragile and undocumented — FileOps
+              matches config types to readers by string-concatenating
+              `_header_reader` (`config.py:113`). A misnamed plugin silently
+              does nothing. Should be an explicit mapping or registry.
+
+  [NEW]  14c. 3 metadata mixin classes are 80%+ duplicated (FileOps) —
+              `MetadataOMETifffileMixin`, `MetadataImageJTifffileMixin`, and
+              `MetadataVersion10Mixin` share pixel resolution calculation,
+              frame consistency checks, and timestamp extraction. Extract
+              shared logic into a base class or utility functions.
+
+
+5. CODE QUALITY — SPECIFIC BUGS & FRAGILE CODE
+───────────────────────────────────────────────
+
+  [NEW]  17c. `_timeseries.py:26-28` — fragile string-based time parsing
+              via `strftime`/`strptime` round-trip. Should use
+              `pd.to_timedelta` directly.
+
+  [NEW]  18c. `_position.py:17-20` — `.assign(x=df[x], y=df[y])` ignores
+              renamed columns, causing silent data loss.
+
+  [NEW]  19b. `_base_composer.py:78` — `run_job` is called but only imported
+              via `importlib`, not as a direct import. Fragile.
+
+  [NEW]  21c. `_sequential.py:110` — `SingleImage.__call__` called with
+              `invert_y` kwarg but `SingleImage.__init__` doesn't accept it.
+
+  [NEW]  22c. `_sequential.py` — `_kwargs` dict mutation is shared across
+              frames, causing state leakage between iterations.
+
+  [NEW]  23c. `_render_configfile.py:30-32` — mutable default argument
+              `channels=0, zstack=0` in function signatures.
+
+  [NEW]  24b. `_render_panel.py:28` — same mutable default argument issue.
+
+
+6. DEPENDENCIES
+───────────────
+
+  [DONE] 10. `lmfit` and `future` are dead dependencies in FileOps — never
+              imported anywhere.
+              Fixed: removed from pyproject.toml.
+
+  [DONE] 11. `importlib_metadata` not declared — the Python <3.10 fallback
+              imports a package not in `pyproject.toml` dependencies.
+              Fixed: added `importlib_metadata>=1.0; python_version < '3.10'`.
+
+  [DONE] 24. MovieRender has 5+ dead/unnecessary dependencies — `asyncpool`,
+              `beautifulsoup4`, `descartes` (deprecated), `pyqt5` (Agg backend
+              is hardcoded), `scipy` (not imported).
+              Fixed: removed all 5 from pyproject.toml.
+
+  [OPEN] 25. Both projects lack optional dependency groups — FileOps forces
+              `vtk`, `pycromanager`, `matplotlib` etc. for basic TIFF loading.
+              MovieRender forces `pyqt5`.
+
+
+7. TESTING
+──────────
+
+  [OPEN] 27. Both projects have essentially no unit tests — MovieRender has 7
+              integration tests that only check exit codes. FileOps has 4 tests
+              with hardcoded absolute paths. Zero tests for core logic.
+
+  [OPEN] 28. `unittest.TestCase` instead of pytest — both projects should
+              modernize to pytest with plain assertions and fixtures.
+
+
+8. PERFORMANCE
+──────────────
+
+  [OPEN] 29. MovieRender saves every frame to disk then re-reads it
+              (`_sequential.py:260,130`) — the frame data is already a numpy
+              array; capturing it in memory would eliminate the I/O round-trip.
+
+  [OPEN] 30. FileOps re-reads config files multiple times (`config.py:295,322`)
+              — `build_config_list` parses the same file twice.
+
+  [OPEN] 31. Z-projection busy-wait polling (FileOps
+              `_shared_zproj_state_mixin.py:160-176`) — `time.sleep(2)` loop
+              instead of `threading.Event`.

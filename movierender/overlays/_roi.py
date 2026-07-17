@@ -17,9 +17,10 @@ class ImagejROI(Overlay):
     def plot(self, ax=None, xy=(0, 0), fontdict=None, **kwargs):
         if ax is None:
             ax = self.ax
-        assert ax is not None, "No axes found to plot overlay."
+        if ax is None:
+            raise RuntimeError("No axes found to plot overlay.")
 
-        fr = self._renderer.frame if self._renderer is not None else self.df['frame'].max()
+        fr = self._renderer.frame if self._renderer is not None else max(r.t_position for r in self.roi_list)
 
         # scale = self._renderer.image.pix_per_um
         scale = self._renderer.image.um_per_pix

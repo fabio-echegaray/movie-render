@@ -127,8 +127,8 @@ class MovieHeaderReaderPlugin(HeaderReaderPlugin):
                 movie_filename=movie_filename,
                 layout=cfg[mov]["layout"] if "layout" in cfg[mov] else "twoch-comp",
                 include_tracks=(
-                    include_tracks if type(include_tracks) is bool
-                    else include_tracks == "yes" if type(include_tracks) is str
+                    include_tracks if isinstance(include_tracks, bool)
+                    else include_tracks == "yes" if isinstance(include_tracks, str)
                     else False
                 ),
                 overlays=overlays_to_add
