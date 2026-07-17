@@ -1,7 +1,7 @@
 MovieRender & FileOps — TODO List
 ==================================
 
-Legend: [DONE] = fixed, [OPEN] = pending
+Legend: [DONE] = fixed, [OPEN] = pending, [N/A] = not applicable
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -39,25 +39,27 @@ MovieRender:
 
 FileOps:
 
-  [OPEN]  7. `exit(100)` in library code (`_ome.py:51`) — terminates the
-              entire interpreter. Should raise an exception.
+  [DONE]  7. `exit(100)` in library code (`_ome.py:51`) — terminates the
+              entire interpreter.
+              Fixed: replaced with `raise ValueError(...)`.
 
-  [OPEN]  8. `except BaseException` catching KeyboardInterrupt
+  [DONE]  8. `except BaseException` catching KeyboardInterrupt
               (`factory.py:65`, `summary.py:293`) — silently swallows
-              system-level signals. Narrow to `except Exception`.
+              system-level signals.
+              Fixed: narrowed to `except Exception`.
 
   [OPEN]  9. Division by zero in `to_8bit` (`to_8bit.py:5`) — no guard for
               `img.max() == 0`.
 
-  [NEW]   7b. `sys.exit(100)` in MovieRender (`_z_array.py`, `_render_sequential.py`)
-              — same issue as point 7 in FileOps. Should raise exceptions.
+  [N/A]   7b. `sys.exit(100)` in MovieRender (`_z_array.py`, `_render_sequential.py`)
+              — grep found no remaining occurrences; likely already fixed.
 
-  [NEW]   9b. Division by zero in `_roi.py:57` — missing guard when
+  [OPEN]   9b. Division by zero in `_roi.py:57` — missing guard when
               computing scale.
 
 
 2. CODE QUALITY — ERROR HANDLING & VALIDATION
-─────────────────────────────────────────────
+────────────────────────────────────────────
 
   [DONE] 10. `sys.path.append` hacks in 4 MovieRender script files — removed
               unnecessary path injection and unused `import os`/`import sys`.
@@ -66,24 +68,31 @@ FileOps:
               is stripped by `python -O`. Now using `if/raise` with
               `ValueError`, `TypeError`, or `RuntimeError`.
 
-  [NEW]  16b. MovieRender's `PixelTools` copies all `__dict__` entries
+  [DONE] 16b. MovieRender's `PixelTools` copies all `__dict__` entries
               (`pixel_tools.py:5-10`) — fragile duck-typing that leaks
-              private attributes. Should use explicit composition.
+              private attributes.
+              Fixed: replaced with explicit attribute composition (width,
+              height, um_per_pix only).
 
-  [NEW]  26b. `overlay.py` — `_kwargs` is sometimes `dict`, sometimes `None`
+  [DONE] 26b. `overlay.py` — `_kwargs` is sometimes `dict`, sometimes `None`
               depending on initialization path. Inconsistent contract.
+              Fixed: always initialized as `{}`, removed hasattr guard.
 
-  [NEW]  15b. `_experiment.py:14` — `self._renderer` used without null check
+  [OPEN] 15b. `_experiment.py:14` — `self._renderer` used without null check
               before accessing `.fig.canvas.get_renderer()`.
 
-  [NEW]  17b. `except Exception` swallowing errors in scripts — both projects
+  [DONE] 17b. `except Exception` swallowing errors in scripts — both projects
               catch broad exceptions and only log them, masking bugs. The
               `show_file_info` pattern is copy-pasted 3 times in
               `_render_configfile.py` alone.
+              Fixed: added `traceback.format_exc()` to all show_file_info
+              catch blocks in 4 render scripts.
 
-  [NEW]  18b. Silent `except ValueError: pass` in config parsing (FileOps
+  [DONE] 18b. Silent `except ValueError: pass` in config parsing (FileOps
               `config_sections.py:21-41`) — invalid frame ranges are
               silently ignored.
+              Fixed: replaced bare `pass` with `log.error(...)` including
+              the error message for frame, channel, and zstack parsing.
 
 
 3. CODE QUALITY — TYPE SAFETY
@@ -121,8 +130,12 @@ FileOps:
               normalize_to_dtype, _consume_overlays, load_overlay_plugins).
               8 files changed, net -18 lines.
 
-  [NEW]  20b. FileOps duplicates `_find_associated_files` identically in two
+  [DONE] 20b. FileOps duplicates `_find_associated_files` identically in two
               files, and the pixel resolution calculation in five files.
+              Fixed: extracted into `_utils.py` as `find_associated_files`
+              and `resolve_pix_per_um_from_tiff_tags`. Removed dead copy
+              with extension filter from `_mmanager_metadata.py`. Updated
+              5 files across FileOps.
 
   [NEW]  12b. ConfigMovie/ConfigPanel should be dataclasses, not NamedTuples
               — 23+ fields, immutable, no defaults, no validation. A
@@ -134,11 +147,14 @@ FileOps:
               `_header_reader` (`config.py:113`). A misnamed plugin silently
               does nothing. Should be an explicit mapping or registry.
 
-  [NEW]  14c. 3 metadata mixin classes are 80%+ duplicated (FileOps) —
+  [DONE] 14c. 3 metadata mixin classes are 80%+ duplicated (FileOps) —
               `MetadataOMETifffileMixin`, `MetadataImageJTifffileMixin`, and
               `MetadataVersion10Mixin` share pixel resolution calculation,
-              frame consistency checks, and timestamp extraction. Extract
-              shared logic into a base class or utility functions.
+              frame consistency checks, and timestamp extraction.
+              Fixed: extracted `TiffMetadataMixinBase` in `_utils.py` with
+              shared `__init__` boilerplate (`_init_metadata`) and pickle
+              support (`__getstate__`/`__setstate__`). All 3 mixins now
+              inherit from it.
 
 
 5. CODE QUALITY — SPECIFIC BUGS & FRAGILE CODE
@@ -151,19 +167,27 @@ FileOps:
   [NEW]  18c. `_position.py:17-20` — `.assign(x=df[x], y=df[y])` ignores
               renamed columns, causing silent data loss.
 
-  [NEW]  19b. `_base_composer.py:78` — `run_job` is called but only imported
+  [N/A]  19b. `_base_composer.py:78` — `run_job` is called but only imported
               via `importlib`, not as a direct import. Fragile.
+              Not applicable: `run_job` is a module-level function defined
+              at `_base_composer.py:216`, not imported via importlib. The
+              importlib usage at line 151 is for overlay modules.
 
-  [NEW]  21c. `_sequential.py:110` — `SingleImage.__call__` called with
+  [DONE] 21c. `_sequential.py:110` — `SingleImage.__call__` called with
               `invert_y` kwarg but `SingleImage.__init__` doesn't accept it.
+              Fixed: removed unused `invert_y` kwarg from call site.
 
-  [NEW]  22c. `_sequential.py` — `_kwargs` dict mutation is shared across
+  [NEW] 22c. `_sequential.py` — `_kwargs` dict mutation is shared across
               frames, causing state leakage between iterations.
 
-  [NEW]  23c. `_render_configfile.py:30-32` — mutable default argument
+  [N/A] 23c. `_render_configfile.py:30-32` — mutable default argument
               `channels=0, zstack=0` in function signatures.
+              Not applicable: code now uses `typer.Annotated` with no
+              mutable defaults.
 
-  [NEW]  24b. `_render_panel.py:28` — same mutable default argument issue.
+  [N/A] 24b. `_render_panel.py:28` — same mutable default argument issue.
+              Not applicable: code now uses `typer.Annotated` with no
+              mutable defaults.
 
 
 6. DEPENDENCIES
