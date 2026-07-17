@@ -3,7 +3,6 @@ from typing import Iterable
 import matplotlib.colors as mcolors
 import numpy as np
 from fileops.image import ImageFile
-from fileops.image.ops import rescale
 from skimage import color
 
 from movierender.render.pipelines._image_pipeline_base import ImagePipeline
@@ -59,9 +58,6 @@ class CompositeRGBImage(ImagePipeline):
                 continue
             if dtype is None:
                 dtype = _img.dtype
-
-            # Contrast enhancing by stretching the histogram
-            _img = rescale(_img, settings)
 
             rgb_vector_color = mcolors.to_rgb(settings['color'])
             if not isinstance(rgb_vector_color, tuple):
