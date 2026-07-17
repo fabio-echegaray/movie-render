@@ -1,13 +1,9 @@
-import os
-import sys
 from pathlib import Path
 
 import typer
 from typing_extensions import Annotated
 
 from movierender.layouts import render_static_montage
-
-sys.path.append(Path(os.path.realpath(__file__)).parent.parent.parent.as_posix())
 
 from fileops.export.config import read_config
 from fileops.logger import get_logger

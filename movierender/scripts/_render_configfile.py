@@ -1,5 +1,3 @@
-import os
-import sys
 from pathlib import Path
 
 import numpy as np
@@ -9,8 +7,6 @@ from typing_extensions import Annotated
 from movierender.layouts import render_static_montage
 from movierender.scripts._render_movie import render_movie
 from movierender.scripts._render_projection import render_projection
-
-sys.path.append(Path(os.path.realpath(__file__)).parent.parent.parent.as_posix())
 
 from fileops.export.config import read_config, check_if_output_files_are_created
 from fileops.logger import get_logger
