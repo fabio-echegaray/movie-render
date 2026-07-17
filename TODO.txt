@@ -95,7 +95,7 @@ FileOps:
               import.
               Fixed: lazy import + isinstance with TYPE_CHECKING guard.
 
-  [NEW]  22b. `np.array` used as type hint in both projects — `np.array` is
+  [DONE]  22b. `np.array` used as type hint in both projects — `np.array` is
               a function, not a type. Should be `np.ndarray`.
               Fixed: `np.array` → `np.ndarray` in `_image_rescale.py`.
 
@@ -181,7 +181,7 @@ FileOps:
 
   [OPEN] 25. Both projects lack optional dependency groups — FileOps forces
               `vtk`, `pycromanager`, `matplotlib` etc. for basic TIFF loading.
-              MovieRender forces `pyqt5`.
+              MovieRender pyqt5 dependency now removed (point 24).
 
 
 7. TESTING
