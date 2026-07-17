@@ -169,12 +169,14 @@ FileOps:
               imported anywhere.
               Fixed: removed from pyproject.toml.
 
-  [OPEN] 11. `importlib_metadata` not declared — the Python <3.10 fallback
+  [DONE] 11. `importlib_metadata` not declared — the Python <3.10 fallback
               imports a package not in `pyproject.toml` dependencies.
+              Fixed: added `importlib_metadata>=1.0; python_version < '3.10'`.
 
-  [OPEN] 24. MovieRender has 5+ dead/unnecessary dependencies — `asyncpool`,
+  [DONE] 24. MovieRender has 5+ dead/unnecessary dependencies — `asyncpool`,
               `beautifulsoup4`, `descartes` (deprecated), `pyqt5` (Agg backend
               is hardcoded), `scipy` (not imported).
+              Fixed: removed all 5 from pyproject.toml.
 
   [OPEN] 25. Both projects lack optional dependency groups — FileOps forces
               `vtk`, `pycromanager`, `matplotlib` etc. for basic TIFF loading.
