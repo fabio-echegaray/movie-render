@@ -31,6 +31,13 @@ class TestRender(TestCase):
         result = self.runner.invoke(app, args)
         self.assertEqual(result.exit_code, 0)
 
+    def test_render_movie_histogram_match_2D(self):
+        command_name = "movie"
+
+        args = [command_name, "example_data/test_ch_hist_match_movie.cfg"]
+        result = self.runner.invoke(app, args)
+        self.assertEqual(result.exit_code, 0)
+
     def test_render_projection(self):
         command_name = "projection"
 
