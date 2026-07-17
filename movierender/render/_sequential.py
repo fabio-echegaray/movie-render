@@ -170,15 +170,20 @@ class SequentialMovieRenderer:
             cpr_lst = []
 
         # render using ffmpeg
+        self.logger.info("Now rendering using ffmpeg.")
         dur = len(rendered_frames) / self.fps
         animation = mpy.VideoClip(make_frame_mpl, duration=dur)
         animation.write_videofile(filename,
                                   fps=self._cfg.fps,
                                   bitrate=self._cfg.bitrate,
-                                  # codec='libx264',
+                                  codec='libx265',
                                   # audio_codec='pcm_s32le',
                                   ffmpeg_params=[
                                       '-vf', 'pad=ceil(iw/2)*2:ceil(ih/2)*2',
+                                      '-crf', '18',
+                                      '-tag:v', 'hvc1',
+                                      '-preset', 'medium',
+                                      '-tune', 'grain',
                                       '-pix_fmt', 'yuv420p',
                                       '-metadata', f'title={self._cfg.title}',
                                       '-metadata', f'description={self._cfg.description}',

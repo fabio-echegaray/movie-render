@@ -54,7 +54,7 @@ def render_projection(prj: ConfigProjection, overwrite=False):
         # iterate through ImageFile and save projected images as TIFF
         for kf, fr in enumerate(prj.frames):
             for kc, ch in enumerate(prj.channels):
-                imz = imf.z_projection(fr, ch, prj.zstack_fn, as_8bit=False)
+                imz = imf.z_projection(fr, ch, projection=prj.zstack_fn, z_subset=prj.zstacks, as_8bit=False)
                 memmap[kf, kc, :, :] = imz.image
         memmap.flush()
 
