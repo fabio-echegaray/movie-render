@@ -9,6 +9,7 @@ from fileops.logger import get_logger
 from fileops.plugins import HeaderReaderPlugin
 
 from movierender.config import ConfigPanel
+from movierender.plugins.fileops._movie_header_reader import load_overlay_plugins
 
 _rowcol_dict = {
     "channel":  "channel",
@@ -59,17 +60,7 @@ class PanelHeaderReaderPlugin(HeaderReaderPlugin):
         cfg, param_override, img_file, roi = self._cfg, self._param_override, self._img_file, self._roi
 
         # find OVERLAY parsers from plugins
-        overlays = list()
-        for h in fileops.header_reader_plugins:
-            if "overlay" not in h.name:
-                continue
-            self.log.debug(f"Loading {h.name}")
-            clz = h.load()
-            if not issubclass(clz, HeaderReaderPlugin):
-                continue
-            cinst = clz(self._cfg_path, root_path=self._root_path)
-            if cinst.has_valid_header():
-                overlays.extend(cinst.process())
+        overlays = load_overlay_plugins(self._cfg_path, root_path=self._root_path)
 
         # process PANEL sections
         panel_def = list()

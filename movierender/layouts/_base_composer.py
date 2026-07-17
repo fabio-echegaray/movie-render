@@ -96,6 +96,17 @@ class BaseLayoutComposer:
         for key, val in cfg.items():
             self.__setattr__(key, val)
 
+    def _apply_overlays(self, ax, key, value):
+        for ovrl in self._pending_overlays:
+            if isinstance(ovrl, OverlayPlugin):
+                ovrl = ovrl.overlay
+                ovrl.ax = ax
+            if hasattr(ovrl, key):
+                if getattr(ovrl, key) == value:
+                    self.renderer += ovrl
+            else:
+                self.renderer += ovrl
+
     def make_layout(self):
         # include to the renderer any overlays that were added before the making of the layout
         while self._pending_overlays:
