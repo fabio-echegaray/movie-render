@@ -5,7 +5,7 @@ import skimage
 from skimage import exposure
 
 
-def rescale(img: np.array, settings, as_original_dtype=False) -> np.array:
+def rescale(img: np.ndarray, settings, as_original_dtype=False) -> np.ndarray:
     dtype = img.dtype
     img = skimage.util.img_as_float(img)
     _stn = copy.copy(settings)
@@ -16,10 +16,10 @@ def rescale(img: np.array, settings, as_original_dtype=False) -> np.array:
     if 'rescale' in _stn and ('gamma_value' in _stn or 'gamma_gain' in _stn):
         raise ValueError("Gamma values and rescale cannot be used at the same time")
     if 'rescale' in _stn and _stn['rescale']:
-        if type(_stn['rescale']) is dict:
+        if isinstance(_stn['rescale'], dict):
             mini, maxi = _stn['rescale']['range']
             img = exposure.rescale_intensity(img, in_range=(mini, maxi))
-        elif type(_stn['rescale']) is bool and _stn['rescale']:
+        elif isinstance(_stn['rescale'], bool) and _stn['rescale']:
             p_min, p_max = np.percentile(img, (0.1, 99.9))
             i_min = _stn['rescale_min'] / np.iinfo(dtype).max \
                 if 'rescale_min' in _stn and _stn['rescale_min'] is not None else p_min

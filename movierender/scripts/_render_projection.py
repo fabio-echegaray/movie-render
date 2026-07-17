@@ -20,7 +20,7 @@ def render_projection(prj: ConfigProjection, overwrite=False):
         imf = prj.image_file
         fst_mdi = imf.image(imf.ix_at(0, 0, 0))
         dtype = fst_mdi.image.dtype
-        if type(imf) is TifffileOMEImageFile:
+        if isinstance(imf, TifffileOMEImageFile):
             tif = imf._tif
             page = tif.series[0].keyframe
             metadata = tif.imagej_metadata

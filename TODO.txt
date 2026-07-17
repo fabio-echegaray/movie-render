@@ -96,9 +96,14 @@ FileOps:
 
   [NEW]  22b. `np.array` used as type hint in both projects — `np.array` is
               a function, not a type. Should be `np.ndarray`.
+              Fixed: `np.array` → `np.ndarray` in `_image_rescale.py`.
 
-  [NEW]  23b. `type(x) is Y` instead of `isinstance` — 10+ occurrences across
+  [DONE]  23b. `type(x) is Y` instead of `isinstance` — 10+ occurrences across
               both projects. Doesn't respect inheritance.
+              Fixed: replaced in _render_projection.py, _movie_header_reader.py,
+              _image_pipeline_single.py, _image_rescale.py, _base_composer.py,
+              overlay.py. Left iterable_elems_eq/dict_elems_eq untouched
+              (exact type matching prevents bool/int confusion).
 
 
 4. CODE QUALITY — DUPLICATION & ARCHITECTURE
@@ -160,8 +165,9 @@ FileOps:
 6. DEPENDENCIES
 ───────────────
 
-  [OPEN] 10. `lmfit` and `future` are dead dependencies in FileOps — never
+  [DONE] 10. `lmfit` and `future` are dead dependencies in FileOps — never
               imported anywhere.
+              Fixed: removed from pyproject.toml.
 
   [OPEN] 11. `importlib_metadata` not declared — the Python <3.10 fallback
               imports a package not in `pyproject.toml` dependencies.

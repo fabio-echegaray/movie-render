@@ -82,7 +82,7 @@ class BaseLayoutComposer:
 
     @configuration.setter
     def configuration(self, cfg):
-        if type(cfg) is not dict:
+        if not isinstance(cfg, dict):
             raise TypeError("configuration must be a dict.")
         for key, val in cfg.items():
             self.__setattr__(key, val)

@@ -23,7 +23,7 @@ class SingleImage(ImagePipeline):
         self.logger.debug(f"Retrieving frame {_frame} of channel {channel} at z-stack={self.zstack} "
                           f"(index={ix})")
         mimg = imf.image(ix)
-        img = mimg.image if (type(mimg) is MetadataImage and mimg.image is not None) else (
+        img = mimg.image if (isinstance(mimg, MetadataImage) and mimg.image is not None) else (
             np.zeros((imf.width, imf.height)))
         if adjust_exposure:
             p2, p98 = np.percentile(img, (2, 98))
