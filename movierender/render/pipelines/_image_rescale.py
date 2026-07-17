@@ -6,11 +6,13 @@ from skimage import exposure
 
 
 def normalize_to_dtype(img: np.ndarray, dtype: np.dtype) -> np.ndarray:
-    curr_dtype = img.dtype
-    if np.issubdtype(dtype, np.integer):
-        img = img * np.iinfo(dtype).max / np.iinfo(curr_dtype).max
-    elif np.issubdtype(dtype, np.floating):
-        img = img * np.finfo(dtype).max / np.finfo(curr_dtype).max
+    if img.dtype == dtype:
+        return img
+    if np.issubdtype(img.dtype, np.floating):
+        if np.issubdtype(dtype, np.integer):
+            return (img * np.iinfo(dtype).max).astype(dtype)
+    elif np.issubdtype(dtype, np.integer):
+        return (img.astype(np.float64) * np.iinfo(dtype).max / np.iinfo(img.dtype).max).astype(dtype)
     return img.astype(dtype)
 
 
