@@ -116,13 +116,21 @@ FileOps:
               — Axis-hiding boilerplate (`_sequential.py:211-230`)
               — Image rescale dtype normalization (two pipeline files)
               — Overlay consumption pattern in layout composers
-              — Config reading for panel overlays (`_time_array.py`, `_z_array.py`)
               — Plugin overlay loading in header readers
-              — `show_file_info` display pattern
               Fixed: extracted into shared utilities (_hide_axis,
-              normalize_to_dtype, _consume_overlays, make_panel_overlays,
-              load_overlay_plugins, log_file_info). 17 files changed,
-              net -21 lines.
+              normalize_to_dtype, _consume_overlays, load_overlay_plugins).
+              8 files changed, net -18 lines.
+
+  [DEFERRED] 14b.4 Config reading for panel overlays (`_time_array.py`,
+              `_z_array.py`) — `make_panel_overlays` function defined
+              but not yet wired into callers.
+              Deferred: architecture rewrite planned.
+
+  [DEFERRED] 14b.6 `show_file_info` display pattern — `log_file_info`
+              function defined but not yet wired into `_render_movie.py`,
+              `_render_panel.py`, `_render_projection.py`,
+              `_render_configfile.py`.
+              Deferred: same reason as 14b.4.
 
   [NEW]  20b. FileOps duplicates `_find_associated_files` identically in two
               files, and the pixel resolution calculation in five files.
