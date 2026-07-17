@@ -89,10 +89,11 @@ FileOps:
 3. CODE QUALITY — TYPE SAFETY
 ─────────────────────────────
 
-  [NEW]  21b. String-slicing type check (`_image_pipeline_base.py:28,35`) —
+  [DONE]  21b. String-slicing type check (`_image_pipeline_base.py:28,35`) —
               `args[0].__class__.__name__[-13:] == 'MovieRenderer'` is
               extremely fragile. Use `isinstance()` with a TYPE_CHECKING
               import.
+              Fixed: lazy import + isinstance with TYPE_CHECKING guard.
 
   [NEW]  22b. `np.array` used as type hint in both projects — `np.array` is
               a function, not a type. Should be `np.ndarray`.
