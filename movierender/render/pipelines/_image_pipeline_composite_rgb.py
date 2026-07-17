@@ -64,7 +64,8 @@ class CompositeRGBImage(ImagePipeline):
             _img = rescale(_img, settings)
 
             rgb_vector_color = mcolors.to_rgb(settings['color'])
-            assert isinstance(rgb_vector_color, tuple)
+            if not isinstance(rgb_vector_color, tuple):
+                raise TypeError("color must be convertible to RGB tuple.")
 
             _img = color.gray2rgb(_img)
             background += _img * rgb_vector_color * settings['intensity']

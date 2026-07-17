@@ -11,11 +11,15 @@ class PixelTools:
 
     def xy_ratio_to_pixels(self, x, y):
         # nfo = self.info
-        assert 0 <= x <= 1, "x is not in expected range."
-        assert 0 <= y <= 1, "y is not in expected range."
+        if not (0 <= x <= 1):
+            raise ValueError("x is not in expected range [0, 1].")
+        if not (0 <= y <= 1):
+            raise ValueError("y is not in expected range [0, 1].")
         return x * self.width, y * self.height
 
     def xy_ratio_to_um(self, x, y):
-        assert 0 <= x <= 1, "x is not in expected range."
-        assert 0 <= y <= 1, "y is not in expected range."
+        if not (0 <= x <= 1):
+            raise ValueError("x is not in expected range [0, 1].")
+        if not (0 <= y <= 1):
+            raise ValueError("y is not in expected range [0, 1].")
         return x * self.width * self.um_per_pix, y * self.height * self.um_per_pix

@@ -28,7 +28,8 @@ class Arrow(Overlay):
     def plot(self, ax=None, legend=False, lw=2, tail_length=10, frame=None, z=None, **kwargs):
         if ax is None:
             ax = self.ax
-        assert ax is not None, "No axes found to plot overlay."
+        if ax is None:
+            raise RuntimeError("No axes found to plot overlay.")
 
         def_values = get_kwargs([kwargs, self._kwargs],
                                 keys_and_default_values=dict(

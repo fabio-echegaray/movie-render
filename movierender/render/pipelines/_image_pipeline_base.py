@@ -45,7 +45,8 @@ class ImagePipeline:
                     "If you need to add more image pipelines, "
                     "consider providing an ax parameter to the class constructor.")
             else:
-                assert len(ovrl.image.frames) > 0, "No images to process."
+                if len(ovrl.image.frames) <= 0:
+                    raise ValueError("No images to process.")
                 ovrl.image_pipeline.append(self)
                 self._renderer = ovrl
                 return ovrl

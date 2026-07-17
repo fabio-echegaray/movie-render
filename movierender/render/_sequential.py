@@ -83,7 +83,8 @@ class SequentialMovieRenderer:
         return imp(invert_y=self.inv_y)
 
     def _load_image(self):
-        assert len(self.image.frames) > 1, "More than one frame needed to make a movie."
+        if len(self.image.frames) <= 1:
+            raise ValueError("More than one frame needed to make a movie.")
         self.logger.info(f"Loaded {self.image.image_path}. WxH({self.image.width},{self.image.height}), "
                          f"channels: {len(self.image.channels)}, "
                          f"frames: {len(self.image.frames)}, stacks: {len(self.image.zstacks)}")

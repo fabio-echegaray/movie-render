@@ -131,7 +131,8 @@ class Overlay(object):
 
     @configuration.setter
     def configuration(self, cfg):
-        assert type(cfg) is dict
+        if type(cfg) is not dict:
+            raise TypeError("configuration must be a dict.")
         if cfg["ax_on_grid"]:
             n_rows, n_cols, start, stop = cfg["gridspec"]
         for key, val in cfg.items():
