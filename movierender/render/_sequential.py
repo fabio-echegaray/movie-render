@@ -29,6 +29,15 @@ if TYPE_CHECKING:
 reading_image_lock = threading.Lock()
 
 
+def _hide_axis(ax):
+    ax.set_xticklabels([])
+    ax.set_yticklabels([])
+    ax.set_xticks([])
+    ax.set_yticks([])
+    for spine in ax.spines.values():
+        spine.set_visible(False)
+
+
 class SequentialMovieRenderer:
     layers: List[Overlay]
     image: ImageFile
@@ -218,25 +227,11 @@ class SequentialMovieRenderer:
             if imgp.ax is not None:
                 imgp.ax.cla()
             if not self.show_axis and imgp.ax is not None:
-                imgp.ax.set_xticklabels([])
-                imgp.ax.set_yticklabels([])
-                imgp.ax.set_xticks([])
-                imgp.ax.set_yticks([])
-                imgp.ax.spines['top'].set_visible(False)
-                imgp.ax.spines['right'].set_visible(False)
-                imgp.ax.spines['bottom'].set_visible(False)
-                imgp.ax.spines['left'].set_visible(False)
+                _hide_axis(imgp.ax)
 
         for ovrl in self.layers:
             if not ovrl.show_axis and ovrl.ax is not None:
-                ovrl.ax.set_xticklabels([])
-                ovrl.ax.set_yticklabels([])
-                ovrl.ax.set_xticks([])
-                ovrl.ax.set_yticks([])
-                ovrl.ax.spines['top'].set_visible(False)
-                ovrl.ax.spines['right'].set_visible(False)
-                ovrl.ax.spines['bottom'].set_visible(False)
-                ovrl.ax.spines['left'].set_visible(False)
+                _hide_axis(ovrl.ax)
 
         for imgp in self.image_pipeline:
             if type(imgp) == NullImage:

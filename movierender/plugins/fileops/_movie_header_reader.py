@@ -12,6 +12,20 @@ from movierender.config import ConfigMovie
 from movierender.overlays import ImagejROI
 
 
+def load_overlay_plugins(cfg_path, root_path=None):
+    overlays = list()
+    for h in fileops.header_reader_plugins:
+        if "overlay" not in h.name:
+            continue
+        clz = h.load()
+        if not issubclass(clz, HeaderReaderPlugin):
+            continue
+        cinst = clz(cfg_path, root_path=root_path)
+        if cinst.has_valid_header():
+            overlays.extend(cinst.process())
+    return overlays
+
+
 class MovieHeaderReaderPlugin(HeaderReaderPlugin):
     log = get_logger(name='MovieHeaderReaderPlugin')
 
@@ -67,17 +81,7 @@ class MovieHeaderReaderPlugin(HeaderReaderPlugin):
                         roi_lst.extend(cinst.process())
 
         # find OVERLAY parsers from plugins
-        overlays = list()
-        for h in fileops.header_reader_plugins:
-            if "overlay" not in h.name:
-                continue
-            self.log.debug(f"Loading {h.name}")
-            clz = h.load()
-            if not issubclass(clz, HeaderReaderPlugin):
-                continue
-            cinst = clz(self._cfg_path, root_path=self._root_path)
-            if cinst.has_valid_header():
-                overlays.extend(cinst.process())
+        overlays = load_overlay_plugins(self._cfg_path, root_path=self._root_path)
 
         # process MOVIE sections
         movie_def = list()

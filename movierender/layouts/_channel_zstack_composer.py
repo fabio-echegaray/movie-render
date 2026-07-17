@@ -8,7 +8,6 @@ import movierender.overlays as ovl
 from movierender import MovieRenderer, plt, gridspec
 from movierender.config import ConfigMovie
 from movierender.overlays.pixel_tools import PixelTools
-from movierender.plugins.overlay import OverlayPlugin
 from movierender.render.pipelines import NullImage, CompositeRGBImage
 from ._base_composer import BaseLayoutComposer
 from ._ch_config import channel_configuration
@@ -73,16 +72,7 @@ class LayoutZStackColumnComposer(BaseLayoutComposer):
                                       xy=t.xy_ratio_to_um(0.70, 0.95),
                                       fontdict={'size': 7, 'color': 'white'}, ax=ax)
 
-            # consume overlays previously added
-            for ovrl in self._pending_overlays:
-                if isinstance(ovrl, OverlayPlugin):
-                    ovrl = ovrl.overlay
-                    ovrl.ax = ax
-                if hasattr(ovrl, "z"):
-                    if getattr(ovrl, "z") == z_ix:
-                        self.renderer += ovrl
-                else:
-                    self.renderer += ovrl
+            self._apply_overlays(ax, "z", z_ix)
 
         for zk in z_ax_dct.keys():
             if zk > imf.n_zstacks - 1:
