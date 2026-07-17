@@ -89,7 +89,7 @@ class SequentialMovieRenderer:
             imp = SingleImage(self)
         self.time = (self.time + 1) % self._max_frame
 
-        return imp(invert_y=self.inv_y)
+        return imp()
 
     def _load_image(self):
         if len(self.image.frames) <= 1:
