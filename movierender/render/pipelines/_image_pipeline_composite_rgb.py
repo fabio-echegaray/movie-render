@@ -3,7 +3,7 @@ from typing import Iterable
 import matplotlib.colors as mcolors
 import numpy as np
 from fileops.image import ImageFile
-from fileops.image.ops import normalize_to_dtype
+from fileops.image.ops import normalize_to_dtype, rescale
 from skimage import color
 
 from movierender.render.pipelines._image_pipeline_base import ImagePipeline
@@ -70,7 +70,4 @@ class CompositeRGBImage(ImagePipeline):
             _img = color.gray2rgb(_img)
             background += _img * rgb_vector_color * settings['intensity']
 
-        if dtype is not None:
-            return normalize_to_dtype(background, dtype)
-        else:
-            return background
+        return normalize_to_dtype(background, dtype) if dtype is not None else background
