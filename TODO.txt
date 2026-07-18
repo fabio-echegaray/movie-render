@@ -1,7 +1,7 @@
 MovieRender & FileOps — TODO List
 ==================================
 
-Legend: [OPEN] = pending
+Legend: [OPEN] = pending, [DONE] = fixed
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -38,13 +38,16 @@ Legend: [OPEN] = pending
 7. TESTING
 ──────────
 
-  [OPEN] 27. FileOps has essentially no unit tests (4 tests with hardcoded
-              absolute paths). MovieRender now has 87 unit tests across
-              5 test files covering overlay utils, rescale, pipelines,
-              channel config, and secs_to_string.
+  [DONE] 27. FileOps had no unit tests (only 4 CLI tests with hardcoded lab
+              paths). Added pytest infrastructure (pyproject.toml config,
+              conftest.py with fixtures), 33 unit tests across 6 new files
+              covering to_8bit, config_sections, image_rescale, imagemeta,
+              bleach_correction, and factory. Migrated legacy tests from
+              unittest.TestCase to pytest style (config.py, summary.py).
 
-  [OPEN] 28. `unittest.TestCase` instead of pytest — both projects should
-              modernize to pytest with plain assertions and fixtures.
+  [DONE] 28. Both projects used unittest.TestCase. FileOps tests migrated
+              to pytest with plain assertions and fixtures. pyproject.toml
+              updated with [tool.pytest.ini_options] and test optional deps.
 
 
 8. PERFORMANCE
