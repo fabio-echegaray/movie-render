@@ -3,10 +3,10 @@ from typing import Iterable
 import matplotlib.colors as mcolors
 import numpy as np
 from fileops.image import ImageFile
+from fileops.image.ops import normalize_to_dtype
 from skimage import color
 
 from movierender.render.pipelines._image_pipeline_base import ImagePipeline
-from movierender.render.pipelines._image_rescale import rescale, normalize_to_dtype
 
 
 class CompositeRGBImage(ImagePipeline):
