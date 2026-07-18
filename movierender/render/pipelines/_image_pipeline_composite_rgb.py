@@ -2,6 +2,7 @@ from typing import Iterable
 
 import matplotlib.colors as mcolors
 import numpy as np
+import skimage
 from fileops.image import ImageFile
 from fileops.image.ops import normalize_to_dtype, rescale
 from skimage import color
@@ -64,6 +65,7 @@ class CompositeRGBImage(ImagePipeline):
             if not isinstance(rgb_vector_color, tuple):
                 raise TypeError("color must be convertible to RGB tuple.")
 
+            _img = skimage.util.img_as_float(_img)
             _img = color.gray2rgb(_img)
             background += _img * rgb_vector_color * settings['intensity']
 

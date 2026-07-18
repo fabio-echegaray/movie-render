@@ -60,8 +60,7 @@ def plotimg(data, panel: ConfigPanel = None, **kwargs):
                 # Overlay the histogram on the image plot
                 hst.plot(img)
             # rescale intensities
-            img = rescale(img, panel.channel_render_parameters[_ch], as_original_dtype=True)
-            img = skimage.util.img_as_float(img)
+            img = rescale(img, panel.channel_render_parameters[_ch])
             img = np.stack((img,) * 3, axis=-1) * colors.to_rgb(ch_par["color"])
         elif _ch == "merge":
             crgb = CompositeRGBImage(
