@@ -1,6 +1,3 @@
-import datetime
-import time as tim
-
 import numpy as np
 import pandas as pd
 from matplotlib import dates
@@ -22,11 +19,8 @@ class DataTimeseries(Overlay):
                    .rename(columns={frame: 'frame', time: 'time', x: 'x', y: 'y'}))
 
         # assuming 'x' values are time in seconds
-        # format seconds to date with this format '%H:%M:%S'
-        self.df.loc[:, 'x'] = list(
-            map(datetime.datetime.strptime, map(lambda s: tim.strftime('%H:%M:%S', tim.gmtime(s)), self.df['x']),
-                len(self.df['x']) * ['%H:%M:%S']))
-        self.df.loc[:, 'x'] = pd.to_datetime(self.df.loc[:, 'x'])
+        self.df.loc[:, 'x'] = pd.to_timedelta(self.df['x'], unit='s')
+        self.df.loc[:, 'x'] = pd.Timestamp('1970-01-01') + self.df.loc[:, 'x']
 
         super().__init__(**kwargs)
 
