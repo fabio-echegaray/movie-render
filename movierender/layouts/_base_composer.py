@@ -49,7 +49,11 @@ class BaseLayoutComposer:
 
         self.shared_tuple = (fileops.s_lock, fileops.s_dict, fileops.s_list, fileops.s_sem)
 
-        fname = movie.movie_filename if len(movie.movie_filename) > 0 else im.image_path.name
+        fname = (
+            movie.movie_filename
+            if len(movie.movie_filename) > 0
+            else im.image_path.name
+        )
         self.filename = prefix + fname
         if len(suffix) > 0:
             self.filename += "." + suffix
@@ -122,9 +126,12 @@ class BaseLayoutComposer:
         composer_array = [self, ]
         cfg = self.configuration
         cfg["renderer"].update({"overwrite": True})
+        mov = self._movie_configuration_params
         lcls = self.__class__
         for i in range(n_workers):
-            composer_instance = lcls(self._movie_configuration_params, **cfg["renderer"])
+            composer_instance = lcls(
+                mov, **cfg["renderer"]
+            )
             composer_instance._renderer_params = self._renderer_params
 
             # obtain overlay layers that are not coming from make_layout
