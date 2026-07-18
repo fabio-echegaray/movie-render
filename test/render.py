@@ -1,5 +1,6 @@
 from unittest import TestCase
 
+import fileops
 from typer.testing import CliRunner
 
 from movierender.scripts.render import app
@@ -9,6 +10,9 @@ class TestRender(TestCase):
     def __init__(self, *args):
         super().__init__(*args)
         self.runner = CliRunner()
+
+        # init shared variables used by FileOps
+        fileops.init_shared_state()
 
     def test_render_movie_different_frames(self):
         command_name = "movie"
