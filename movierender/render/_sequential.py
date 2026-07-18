@@ -83,13 +83,13 @@ class SequentialMovieRenderer:
         return self
 
     def __next__(self):
-        if self.image_pipeline is not None:
-            imp = self.image_pipeline
+        if len(self.image_pipeline) > 0:
+            for imgp in self.image_pipeline:
+                imgp()
         else:
-            imp = SingleImage(self)
+            SingleImage(self)()
         self.time = (self.time + 1) % self._max_frame
-
-        return imp()
+        return self._render
 
     def _load_image(self):
         if len(self.image.frames) <= 1:
