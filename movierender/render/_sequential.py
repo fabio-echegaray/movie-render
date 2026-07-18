@@ -190,6 +190,7 @@ class SequentialMovieRenderer:
                                   # audio_codec='pcm_s32le',
                                   ffmpeg_params=[
                                       '-vf', 'pad=ceil(iw/2)*2:ceil(ih/2)*2',
+                                      '-vf', 'scale=2880:trunc(ow/a/2)*2', # FIXME: turn max width into a parameter.
                                       '-crf', '18',
                                       '-tag:v', 'hvc1',
                                       '-preset', 'medium',
