@@ -12,15 +12,14 @@ class DataTimeseries(Overlay):
     def __init__(self, df: pd.DataFrame, x="time", y=None, frame="frame", time="time", style_dict=None, **kwargs):
         if not all([it in df.columns for it in [x, y]]):
             raise ValueError("Data point columns not found in DataFrame.")
-        self._x = x
-        self._y = y
-        self._f = frame
-        self._t = time
+        self._x = 'x'
+        self._y = 'y'
+        self._f = 'frame'
+        self._t = 'time'
         self._style = style_dict
         # Rename columns if parameters were given
         self.df = (df
-                   .rename(columns={frame: 'frame', time: 'time'})
-                   .assign(x=df[x], y=df[y]))
+                   .rename(columns={frame: 'frame', time: 'time', x: 'x', y: 'y'}))
 
         # assuming 'x' values are time in seconds
         # format seconds to date with this format '%H:%M:%S'
