@@ -1,6 +1,5 @@
 import concurrent
 import importlib
-import multiprocessing
 import os
 import signal
 import uuid
@@ -17,9 +16,6 @@ from movierender.config import ConfigMovie
 from movierender.overlays import Overlay
 from movierender.plugins.overlay import OverlayPlugin
 from movierender.render import MovieRenderer
-
-manager = multiprocessing.Manager()
-s_lock, s_dict, s_list, s_sem = manager.Lock(), manager.dict(), manager.list(), manager.Semaphore(os.cpu_count())
 
 
 def exit_signal_handler(signum, frame):
@@ -51,7 +47,7 @@ class BaseLayoutComposer:
 
         im = movie.image_file
 
-        self.shared_tuple = (s_lock, s_dict, s_list, s_sem)
+        self.shared_tuple = (fileops.s_lock, fileops.s_dict, fileops.s_list, fileops.s_sem)
 
         fname = movie.movie_filename if len(movie.movie_filename) > 0 else im.image_path.name
         self.filename = prefix + fname
