@@ -35,11 +35,11 @@ class LayoutCompositeComposer(BaseLayoutComposer):
                                       config=movie,
                                       fontdict={'size': 12},
                                       **self._renderer_params)
-
-        self.renderer += ovl.ScaleBar(um=movie.scalebar, lw=3,
-                                      xy=t.xy_ratio_to_um(0.80, 0.05),
-                                      fontdict={'size': 9},
-                                      ax=ax)
+        if movie.scalebar is not None and movie.scalebar > 0:
+            self.renderer += ovl.ScaleBar(um=movie.scalebar, lw=3,
+                                          xy=t.xy_ratio_to_um(0.80, 0.05),
+                                          fontdict={'size': 9},
+                                          ax=ax)
         self.renderer += ovl.Timestamp(xy=t.xy_ratio_to_um(0.02, 0.95), va='center', ax=ax)
         self.renderer += CompositeRGBImage(
             ax=ax,

@@ -1,10 +1,13 @@
 import logging
-from typing import Union, List, Set, Iterable
+from typing import TYPE_CHECKING, Union, List, Set, Iterable
 
 import numpy as np
 from fileops.image.ops import ZProjection
 
 from movierender.render.pipelines import PipelineException
+
+if TYPE_CHECKING:
+    from movierender.render import MovieRenderer
 
 
 class ImagePipeline:
@@ -24,8 +27,8 @@ class ImagePipeline:
             else "max"
         self.logger = logging.getLogger(__name__)
 
-        # if len(args) > 0 and isinstance(args[0], MovieRenderer):
-        if len(args) > 0 and args[0].__class__.__name__[-13:] == 'MovieRenderer':
+        from movierender.render import MovieRenderer
+        if len(args) > 0 and isinstance(args[0], MovieRenderer):
             self._renderer = args[0]
         else:
             self._renderer = None
@@ -33,8 +36,8 @@ class ImagePipeline:
         super().__init__()
 
     def __radd__(self, ovrl):
-        # if isinstance(ovrl, MovieRenderer):
-        if ovrl.__class__.__name__[-13:] == 'MovieRenderer':
+        from movierender.render import MovieRenderer
+        if isinstance(ovrl, MovieRenderer):
             ovrl_pipeline_filled = len(ovrl.image_pipeline) > 0
             ovrl_pipeline_empty = not ovrl_pipeline_filled
             at_least_one_ax_in_pipeline = ovrl_pipeline_filled and all([ip.ax is None for ip in ovrl.image_pipeline])

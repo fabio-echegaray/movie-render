@@ -15,10 +15,13 @@ def channel_configuration(channel_render_parameters):
         if np.any(['rescale' in k for k in ch_cfg.keys()]):
             ch_config[ch_cfg['name']].update({
                 'rescale':     ch_cfg['rescale'].lower() in ['true', 'yes']
-                               if 'rescale' in ch_cfg else True,
-                'rescale_min': float(ch_cfg['rescale_min']) if 'rescale_min' in ch_cfg else None,
-                'rescale_max': float(ch_cfg['rescale_max']) if 'rescale_max' in ch_cfg else None
+                               if 'rescale' in ch_cfg else True
             })
+            if 'rescale_min' in ch_cfg:
+                ch_config[ch_cfg['name']].update({'rescale_min': float(ch_cfg['rescale_min'])})
+            if 'rescale_max' in ch_cfg:
+                ch_config[ch_cfg['name']].update({'rescale_max': float(ch_cfg['rescale_max'])})
+
         elif np.any(['gamma' in k for k in ch_cfg.keys()]):
             ch_config[ch_cfg['name']].update({
                 'gamma_value': float(ch_cfg['gamma_value']) if 'gamma_value' in ch_cfg else 1.0,

@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import numpy as np
+import traceback
 import typer
 from typing_extensions import Annotated
 
@@ -47,6 +48,7 @@ def render_configuration_file_cmd(
                     log.info(f"file {cfg_path}\r\n{mov.image_file.info.squeeze(axis=0)}")
                 except Exception as e:
                     log.error(e)
+                    log.error(traceback.format_exc())
             try:
                 render_movie(mov, overwrite=overwrite_file, test=run_test)
             except FileExistsError:
@@ -61,6 +63,7 @@ def render_configuration_file_cmd(
                     log.info(f"file {cfg_path}\r\n{pan.image_file.info.squeeze(axis=0)}")
                 except Exception as e:
                     log.error(e)
+                    log.error(traceback.format_exc())
             render_static_montage(pan, copyright_info=cfg.copyright)
 
     # render projections specified in configuration file
@@ -71,4 +74,5 @@ def render_configuration_file_cmd(
                     log.info(f"file {cfg_path}\r\n{prj.image_file.info.squeeze(axis=0)}")
                 except Exception as e:
                     log.error(e)
+                    log.error(traceback.format_exc())
             render_projection(prj, overwrite=overwrite_file)

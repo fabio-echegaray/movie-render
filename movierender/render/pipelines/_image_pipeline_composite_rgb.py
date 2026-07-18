@@ -6,6 +6,7 @@ from fileops.image import ImageFile
 from skimage import color
 
 from movierender.render.pipelines._image_pipeline_base import ImagePipeline
+from movierender.render.pipelines._image_rescale import rescale, normalize_to_dtype
 
 
 class CompositeRGBImage(ImagePipeline):
@@ -67,10 +68,6 @@ class CompositeRGBImage(ImagePipeline):
             background += _img * rgb_vector_color * settings['intensity']
 
         if dtype is not None:
-            if np.issubdtype(dtype, np.integer):
-                background = background / background.max() * np.iinfo(dtype).max  # normalizes data in range 0 - max
-            elif np.issubdtype(dtype, np.floating):
-                background = background / background.max() * np.finfo(dtype).max  # normalizes data in range 0 - max
-            return background.astype(dtype)
+            return normalize_to_dtype(background, dtype)
         else:
             return background

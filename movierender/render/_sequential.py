@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import configparser
+import copy
 import logging
 import os
 import shutil
@@ -27,6 +28,15 @@ if TYPE_CHECKING:
     from movierender.overlays import Overlay
 
 reading_image_lock = threading.Lock()
+
+
+def _hide_axis(ax):
+    ax.set_xticklabels([])
+    ax.set_yticklabels([])
+    ax.set_xticks([])
+    ax.set_yticks([])
+    for spine in ax.spines.values():
+        spine.set_visible(False)
 
 
 class SequentialMovieRenderer:
@@ -74,13 +84,13 @@ class SequentialMovieRenderer:
         return self
 
     def __next__(self):
-        if self.image_pipeline is not None:
-            imp = self.image_pipeline
+        if len(self.image_pipeline) > 0:
+            for imgp in self.image_pipeline:
+                imgp()
         else:
-            imp = SingleImage(self)
+            SingleImage(self)()
         self.time = (self.time + 1) % self._max_frame
-
-        return imp(invert_y=self.inv_y)
+        return self._render
 
     def _load_image(self):
         if len(self.image.frames) <= 1:
@@ -218,25 +228,11 @@ class SequentialMovieRenderer:
             if imgp.ax is not None:
                 imgp.ax.cla()
             if not self.show_axis and imgp.ax is not None:
-                imgp.ax.set_xticklabels([])
-                imgp.ax.set_yticklabels([])
-                imgp.ax.set_xticks([])
-                imgp.ax.set_yticks([])
-                imgp.ax.spines['top'].set_visible(False)
-                imgp.ax.spines['right'].set_visible(False)
-                imgp.ax.spines['bottom'].set_visible(False)
-                imgp.ax.spines['left'].set_visible(False)
+                _hide_axis(imgp.ax)
 
         for ovrl in self.layers:
             if not ovrl.show_axis and ovrl.ax is not None:
-                ovrl.ax.set_xticklabels([])
-                ovrl.ax.set_yticklabels([])
-                ovrl.ax.set_xticks([])
-                ovrl.ax.set_yticks([])
-                ovrl.ax.spines['top'].set_visible(False)
-                ovrl.ax.spines['right'].set_visible(False)
-                ovrl.ax.spines['bottom'].set_visible(False)
-                ovrl.ax.spines['left'].set_visible(False)
+                _hide_axis(ovrl.ax)
 
         for imgp in self.image_pipeline:
             if type(imgp) == NullImage:
@@ -259,7 +255,7 @@ class SequentialMovieRenderer:
                 self.logger.error(e)
                 return f"failed to render frame {frame}"
             for ovrl in self.layers:
-                kwargs = self._kwargs.copy()
+                kwargs = copy.deepcopy(self._kwargs)
                 kwargs.update(show_axis=self.show_axis)
                 kwargs.update(**ovrl._kwargs)
                 kwargs.pop("timestamps")

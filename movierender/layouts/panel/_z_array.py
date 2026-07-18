@@ -34,9 +34,12 @@ def plotimg(data, panel: ConfigPanel = None, **kwargs):
     _fr = data["frame"].iloc[0]
     _ch = data["channel"].iloc[0]
     w_um, h_um = imf.width * imf.um_per_pix, imf.height * imf.um_per_pix
-    sbar = ovl.ScaleBar(ax=ax, um=panel.scalebar, lw=panel.scalebar_thickness,
-                        show_text=panel.draw_scalebar_text,
-                        xy=t.xy_ratio_to_um(0.05, 0.9), fontdict={'size': panel.fontsize})
+    if panel.scalebar is not None and panel.scalebar > 0:
+        sbar = ovl.ScaleBar(ax=ax, um=panel.scalebar, lw=panel.scalebar_thickness,
+                            show_text=panel.draw_scalebar_text,
+                            xy=t.xy_ratio_to_um(0.05, 0.9), fontdict={'size': panel.fontsize})
+    else:
+        sbar = None
     tsmp = ovl.Timestamp(ax=ax, xy=t.xy_ratio_to_um(0.02, 0.07),
                          timestamps=panel.image_file.timestamps,
                          string_format=panel.timestamp_format,
@@ -79,7 +82,8 @@ def plotimg(data, panel: ConfigPanel = None, **kwargs):
               interpolation='none', aspect='equal',  # resample=False,
               zorder=0)
 
-    sbar.plot()
+    if sbar is not None:
+        sbar.plot()
     tsmp.plot(frame=_fr)
     ztxt.plot(frame=_fr)
 

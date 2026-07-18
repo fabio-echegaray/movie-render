@@ -66,10 +66,25 @@ class TestImagePipeline:
         assert pipeline._renderer is None
 
     def test_renderer_set_from_arg(self):
-        mock_renderer = MagicMock()
-        mock_renderer.__class__.__name__ = "SequentialMovieRenderer"
+        from movierender.render import MovieRenderer
+        # MagicMock with spec=MovieRenderer passes isinstance checks
+        mock_renderer = MagicMock(spec=MovieRenderer)
         pipeline = ImagePipeline(mock_renderer)
         assert pipeline._renderer is mock_renderer
+
+    def test_renderer_set_from_real_renderer(self):
+        from movierender.render import MovieRenderer
+        from movierender.render.pipelines import ImagePipeline
+        # Monkey-patch to skip the complex __init__ for testing
+        orig_init = MovieRenderer.__init__
+        MovieRenderer.__init__ = lambda self, **kw: None
+        try:
+            renderer = MovieRenderer()
+            renderer.image_pipeline = []
+            pipeline = ImagePipeline(renderer)
+            assert pipeline._renderer is renderer
+        finally:
+            MovieRenderer.__init__ = orig_init
 
     def test_non_renderer_arg_sets_none(self):
         pipeline = ImagePipeline("not a renderer")

@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import pandas as pd
+import traceback
 import typer
 from typing_extensions import Annotated
 
@@ -61,4 +62,5 @@ def render_movie_cmd(
                     log.info(f"file {cfg_path}\r\n{mov.image_file.info.squeeze(axis=0)}")
             except Exception as e:
                 log.error(e)
+                log.error(traceback.format_exc())
         render_movie(mov, overwrite=overwrite_movie_file, test=run_test)

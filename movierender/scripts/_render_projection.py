@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import traceback
 import typer
 from fileops.image import TifffileOMEImageFile
 from tifffile import tifffile
@@ -81,4 +82,5 @@ def render_projection_cmd(
                 log.info(f"file {cfg_path}\r\n{prj.image_file.info.squeeze(axis=0)}")
             except Exception as e:
                 log.error(e)
+                log.error(traceback.format_exc())
         render_projection(prj, overwrite=overwrite_projection_file)

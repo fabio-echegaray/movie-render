@@ -13,7 +13,6 @@ class Treatment(Overlay):
             raise ValueError("Experiment label parameters needed to apply this overlay.")
 
         x0, y0 = xy
-        r = self._renderer.fig.canvas.get_renderer()
 
         # get dimensions of the dot
         dot = plt.scatter(x0, y0, s=fontdict['size'] ** 2, c=None, lw=0)

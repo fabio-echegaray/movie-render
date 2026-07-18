@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import traceback
 import typer
 from typing_extensions import Annotated
 
@@ -40,5 +41,6 @@ def render_panel_cmd(
                 log.info(f"file {cfg_path}\r\n{pan.image_file.info.squeeze(axis=0)}")
             except Exception as e:
                 log.error(e)
+                log.error(traceback.format_exc())
 
         render_static_montage(pan, copyright_info=cfg.copyright)
