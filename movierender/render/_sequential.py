@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import configparser
+import copy
 import logging
 import os
 import shutil
@@ -254,7 +255,7 @@ class SequentialMovieRenderer:
                 self.logger.error(e)
                 return f"failed to render frame {frame}"
             for ovrl in self.layers:
-                kwargs = self._kwargs.copy()
+                kwargs = copy.deepcopy(self._kwargs)
                 kwargs.update(show_axis=self.show_axis)
                 kwargs.update(**ovrl._kwargs)
                 kwargs.pop("timestamps")
