@@ -63,3 +63,45 @@ Legend: [OPEN] = pending, [DONE] = fixed
   [OPEN] 31. Z-projection busy-wait polling (FileOps
               `_shared_zproj_state_mixin.py:160-176`) — `time.sleep(2)` loop
               instead of `threading.Event`.
+
+
+9. IMAGE RESCALING — SIGNED INTEGER SIGN WRAP
+──────────────────────────────────────────────
+
+  Images look wrong (odd colours), likely because float values with negative range
+  are cast to unsigned integer types without clamping, causing sign wrap.
+  Possible root cause: dividing by img.max() or multiplying by np.iinfo(dtype).max
+  without first clamping the float range to [0,1] for unsigned targets.
+
+  [OPEN] 32. `normalize_to_dtype` in MovieRender (`_image_rescale.py:13`)
+              — multiplies float image by np.iinfo(dtype).max without
+              clamping. If float came from img_as_float of int16 (range
+              [-1,1]) and target is uint16, negatives wrap to arbitrary
+              positive values. Fix: clamp float to [0,1] before scaling.
+
+  [OPEN] 33. `to_8bit` in FileOps (`to_8bit.py:8`) — divides by img.max()
+              and casts to uint8. Negative int16 values become arbitrary
+              uint8 values. Fix: clamp to [0, img.max()] or use proper
+              range mapping before scaling.
+
+  [OPEN] 34. `rescale` in FileOps (`_image_rescale.py:34`) —
+              as_original_dtype path does img / img.max() * np.iinfo(dtype).max
+              without clamping. Same sign wrap issue for unsigned targets.
+              Fix: clamp to [0, 1] before scaling to dtype range.
+
+  [OPEN] 35. Broken import in MovieRender (`_image_pipeline_composite_rgb.py:6`)
+              — imports normalize_to_dtype from fileops.image.ops where it
+              does not exist. Will crash at runtime for any RGB composite.
+              Fix: import from movierender.render.pipelines._image_rescale.
+
+  [OPEN] 36. Double conversion in MovieRender panel layouts (`_time_array.py`,
+              `_z_array.py`) — rescale(as_original_dtype=True) then
+              img_as_float round-trip can distort data. The intermediate
+              dtype cast may lose range or overflow.
+
+  [OPEN] 37. `_img2D_histogram_matching.py:19` — match_histograms returns
+              float64, cast to original dtype without clamping. Values may
+              exceed dtype bounds.
+
+  [OPEN] 38. `photobleach_proc.py:77` — mdi.image + delta_i can overflow
+              original dtype bounds. No clamping after correction.
