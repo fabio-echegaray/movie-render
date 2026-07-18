@@ -31,3 +31,4 @@ class ConfigMovie(NamedTuple):
     layout: str
     include_tracks: Union[str, bool]
     overlays: List['Overlay'] | None
+    max_width: int = 2880
