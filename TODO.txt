@@ -48,8 +48,9 @@ Legend: [OPEN] = pending, [DONE] = fixed
 6. DEPENDENCIES
 ───────────────
 
-  [OPEN] 25. Both projects lack optional dependency groups — FileOps forces
+  [DONE] 25. Both projects lack optional dependency groups — FileOps forces
               `vtk`, `pycromanager`, `matplotlib` etc. for basic TIFF loading.
+              Unused deps already removed: `czifile` (FileOps), `shapely` (MovieRender).
 
 
 8. PERFORMANCE
