@@ -74,7 +74,7 @@ Legend: [OPEN] = pending, [DONE] = fixed
 
   ── BATCH 3 — Post-render cleanup ────────────────────────────────────────
 
-  [OPEN]  46. Stale z-projection cache across renders (`fileops/__init__.py`)
+  [DONE]  46. Stale z-projection cache across renders (`fileops/__init__.py`)
               — When `render_configuration_file_cmd` is called twice in the
               same process, the shared state (`s_dict`, `s_list`) from the
               first render persists. The second render finds entries in
