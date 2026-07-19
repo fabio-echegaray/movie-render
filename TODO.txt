@@ -8,10 +8,82 @@ Legend: [OPEN] = pending, [DONE] = fixed
 1. CRITICAL BUGS
 ────────────────
 
+  === Z-PROJECTION HANG — ROOT CAUSE ANALYSIS ===
+
+  The z-projection thread hangs during parallel rendering. Multiple interacting
+  bugs create a deadlock chain. Fixes are ordered by dependency — apply Batch 1
+  first (entry-point fixes), then Batch 2 (thread internals).
+
+  ── BATCH 1 — Entry-point fixes (must land first) ─────────────────────────
+
   [OPEN]  1. `parallel | True` always forces parallel (`_render_movie.py:37`)
-              — `|` is bitwise OR, not logical. Every movie renders in
-              parallel mode regardless of the flag. Should be
-              `parallel=parallel`.
+              — `|` is bitwise OR (`True | False` = 1), so every movie
+              renders in parallel mode regardless of the flag. Comment says
+              "remove True value set for debugging". This is the gate that
+              forces all renders into the broken parallel path.
+              Fix: change `parallel | True` to just `parallel`.
+
+  [DONE]  39. Tuple unpacking crash in non-parallel path (`_base_composer.py:208`)
+              — `shared_tuple` is a 4-element tuple (lock, dict, list, sem)
+              but the non-parallel `render()` path unpacks it into 3 vars,
+              causing `ValueError: too many values to unpack`. Also missing
+              `s_sem` arg to `init_shared()` (needs 4 args).
+              Fix: unpack into `s_lock, s_dict, s_list, s_sem = self.shared_tuple`
+              and pass all 4 to `imf.init_shared(...)`.
+
+  [DONE]  40. Duplicate `s_lock`, missing `s_semaphore` in `fileops/__init__.py`
+              — Line 13: `s_lock` declared twice, `s_semaphore` absent.
+              Line 25+28: two Lock objects created, first is orphaned.
+              Fix: rename second `s_lock` to `s_sem`, create one Lock only.
+
+  ── BATCH 2 — Z-projection thread internals ──────────────────────────────
+
+  [DONE]  41. `lock.release()` without matching `acquire()` (`_shared_zproj_state_mixin.py:167`)
+              — In `z_projection()`, the `else` branch at line 166 releases
+              `self._zcache_lock` without a prior `acquire()`. This corrupts
+              the lock state, causing subsequent `lock.acquire()` calls in
+              `_zproject()` (lines 195, 204, 249) to hang forever.
+              Fix: remove the stray `release()` at line 167; the lock is
+              not held in that branch.
+
+  [DONE]  42. Slice assignment destroys `Manager().list()` proxy (`_shared_zproj_state_mixin.py:67`)
+              — `self._zcache_priority = self._zcache_priority[20:]` replaces
+              the managed list proxy with a plain Python list. After this,
+              the z-project thread and main process hold different objects —
+              priority items appended via the proxy are invisible to the thread.
+              Also caused the z-project hang: `del self._zcache_priority[:20]`
+              removed frames consumers needed from the priority queue.
+              Fix: removed the entire `del self._zcache_priority[:20]` line.
+
+  [OPEN]  43. `lock.acquire()` without timeout (`_shared_zproj_state_mixin.py:195,204,249`)
+              — Three bare `acquire()` calls in `_zproject()` can hang forever
+              if the lock is held by a crashed/stuck process.
+              Fix: add `timeout=30` to all three and `continue` on failure.
+
+  [DONE]  44. Race condition: state mutated outside lock (`_shared_zproj_state_mixin.py:112-117`)
+              — In `z_projection()`, `ckeyelem['image'] = None` and
+              `ckeyelem['state'] = 'used'` happen after `lock.release()` at
+              line 110. Another thread can read inconsistent state.
+              Fix: hold lock while mutating, or re-acquire before mutations.
+
+  [DONE]  45. `signal.signal()` from non-main thread (`_shared_zproj_state_mixin.py:77`)
+              — `_zprj_thread()` calls `signal.signal(SIGTERM, ...)` which
+              only works in the main thread. Raises `ValueError` if called
+              from a worker thread.
+              Fix: remove or guard with `threading.current_thread() is threading.main_thread()`.
+
+  ── BATCH 3 — Post-render cleanup ────────────────────────────────────────
+
+  [OPEN]  46. Stale z-projection cache across renders (`fileops/__init__.py`)
+              — When `render_configuration_file_cmd` is called twice in the
+              same process, the shared state (`s_dict`, `s_list`) from the
+              first render persists. The second render finds entries in
+              `state='used'` and raises `FrameNotFoundError`, falling back
+              to sequential rendering (no cache). Memory from the first
+              render's cache is never freed.
+              Fix: add `reset_shared_state()` in `fileops/__init__.py` that
+              clears `s_dict` and `s_list`, and call it at the start of
+              `render_movie()` or `render_configuration_file_cmd()`.
 
 
 4. CODE QUALITY — DUPLICATION & ARCHITECTURE
