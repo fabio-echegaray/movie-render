@@ -41,7 +41,7 @@ Legend: [OPEN] = pending, [DONE] = fixed
 4. UX
 ──────
 
-  [OPEN] 47. Graceful early termination in `render_folder_cmd` (`_render_folder.py:34`)
+  [DONE] 47. Graceful early termination in `render_folder_cmd` (`_render_folder.py:34`)
               — When rendering a folder of config files, the user should be
               able to press Ctrl-C once to finish the current movie and stop
               (no further movies), or press Ctrl-C twice to terminate
