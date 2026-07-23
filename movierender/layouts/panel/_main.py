@@ -10,6 +10,8 @@ from matplotlib.backends.backend_pdf import PdfPages
 
 from movierender.config import ConfigPanel
 
+import fileops
+
 logger = logging.getLogger(__name__)
 
 
@@ -21,6 +23,7 @@ def grouper(iterable, n, fillvalue=None):
 
 
 def render_static_montage(panel: ConfigPanel, copyright_info: ConfigCopyright = None) -> Path:
+    fileops.reset_shared_state()
     logger.debug("Making montage of image.")
 
     # create dataframe of images that will be plotted

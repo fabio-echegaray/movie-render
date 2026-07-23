@@ -1,5 +1,5 @@
-MovieRender & FileOps — TODO List
-==================================
+MovieRender — Bug tracker
+========================
 
 Legend: [OPEN] = pending, [DONE] = fixed
 
@@ -9,9 +9,11 @@ Legend: [OPEN] = pending, [DONE] = fixed
 ────────────────
 
   [OPEN]  1. `parallel | True` always forces parallel (`_render_movie.py:37`)
-              — `|` is bitwise OR, not logical. Every movie renders in
-              parallel mode regardless of the flag. Should be
-              `parallel=parallel`.
+              — `|` is bitwise OR (`True | False` = 1), so every movie
+              renders in parallel mode regardless of the flag. Comment says
+              "remove True value set for debugging". This is the gate that
+              forces all renders into the broken parallel path.
+              Fix: change `parallel | True` to just `parallel`.
 
 
 4. CODE QUALITY — DUPLICATION & ARCHITECTURE
@@ -22,33 +24,6 @@ Legend: [OPEN] = pending, [DONE] = fixed
               `@dataclass` with `field(default=...)` and `__post_init__`
               validation would eliminate defensive code in header readers.
 
-  [OPEN]  13b. Plugin naming convention is fragile and undocumented — FileOps
-              matches config types to readers by string-concatenating
-              `_header_reader` (`config.py:113`). A misnamed plugin silently
-              does nothing. Should be an explicit mapping or registry.
-
-
-6. DEPENDENCIES
-───────────────
-
-  [OPEN] 25. Both projects lack optional dependency groups — FileOps forces
-              `vtk`, `pycromanager`, `matplotlib` etc. for basic TIFF loading.
-
-
-7. TESTING
-──────────
-
-  [DONE] 27. FileOps had no unit tests (only 4 CLI tests with hardcoded lab
-              paths). Added pytest infrastructure (pyproject.toml config,
-              conftest.py with fixtures), 33 unit tests across 6 new files
-              covering to_8bit, config_sections, image_rescale, imagemeta,
-              bleach_correction, and factory. Migrated legacy tests from
-              unittest.TestCase to pytest style (config.py, summary.py).
-
-  [DONE] 28. Both projects used unittest.TestCase. FileOps tests migrated
-              to pytest with plain assertions and fixtures. pyproject.toml
-              updated with [tool.pytest.ini_options] and test optional deps.
-
 
 8. PERFORMANCE
 ──────────────
@@ -56,10 +31,3 @@ Legend: [OPEN] = pending, [DONE] = fixed
   [OPEN] 29. MovieRender saves every frame to disk then re-reads it
               (`_sequential.py:260,130`) — the frame data is already a numpy
               array; capturing it in memory would eliminate the I/O round-trip.
-
-  [OPEN] 30. FileOps re-reads config files multiple times (`config.py:295,322`)
-              — `build_config_list` parses the same file twice.
-
-  [OPEN] 31. Z-projection busy-wait polling (FileOps
-              `_shared_zproj_state_mixin.py:160-176`) — `time.sleep(2)` loop
-              instead of `threading.Event`.

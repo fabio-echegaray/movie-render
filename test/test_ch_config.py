@@ -74,13 +74,13 @@ class TestChannelConfiguration:
         assert result["ch1"]["rescale_min"] == 100.0
         assert result["ch1"]["rescale_max"] == 2000.0
 
-    def test_rescale_min_max_default_none(self):
+    def test_rescale_min_max_default_absent(self):
         params = {
             0: {"name": "ch1", "color": "red", "rescale": "true"}
         }
         result = channel_configuration(params)
-        assert result["ch1"]["rescale_min"] is None
-        assert result["ch1"]["rescale_max"] is None
+        assert "rescale_min" not in result["ch1"]
+        assert "rescale_max" not in result["ch1"]
 
     def test_gamma_values(self):
         params = {

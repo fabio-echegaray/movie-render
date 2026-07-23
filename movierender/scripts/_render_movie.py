@@ -8,6 +8,7 @@ from typing_extensions import Annotated
 from movierender.config import ConfigMovie
 from movierender.layouts import LayoutChannelColumnComposer, LayoutZStackColumnComposer, LayoutCompositeComposer
 
+import fileops
 from fileops.export.config import read_config
 from fileops.logger import get_logger
 
@@ -15,6 +16,7 @@ log = get_logger(name='render-movie')
 
 
 def render_movie(mov: ConfigMovie, overwrite=False, parallel=False, test=False):
+    fileops.reset_shared_state()
     if len(mov.image_file.frames) == 1:
         log.warning("only one frame, skipping static image")
         return

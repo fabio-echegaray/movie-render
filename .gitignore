@@ -2,6 +2,7 @@
 /Tex/
 /videos/
 /venv/
+/.venv/
 /movierender.egg-info/
 /.idea/
 *.pyc

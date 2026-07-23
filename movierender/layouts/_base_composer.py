@@ -205,8 +205,8 @@ class BaseLayoutComposer:
             try:
                 self.log.info(f"Rendering movie into file {self.save_file_path}.")
                 imf = self._movie_configuration_params.image_file
-                s_lock, s_dict, s_list = self.shared_tuple
-                imf.init_shared(s_lock, s_dict, s_list)
+                s_lock, s_dict, s_list, s_sem = self.shared_tuple
+                imf.init_shared(s_lock, s_dict, s_list, s_sem)
                 self.make_layout()
                 self.renderer.render(filename=self.save_file_path.as_posix(), test=test)
             except KeyboardInterrupt:
