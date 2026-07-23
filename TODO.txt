@@ -1,5 +1,5 @@
-MovieRender & FileOps — TODO List
-==================================
+MovieRender — Bug tracker
+========================
 
 Legend: [OPEN] = pending, [DONE] = fixed
 
@@ -8,27 +8,12 @@ Legend: [OPEN] = pending, [DONE] = fixed
 1. CRITICAL BUGS
 ────────────────
 
-  === Z-PROJECTION HANG — ROOT CAUSE ANALYSIS ===
-
-  The z-projection thread hangs during parallel rendering. Multiple interacting
-  bugs create a deadlock chain. Fixes are ordered by dependency — apply Batch 1
-  first (entry-point fixes), then Batch 2 (thread internals).
-
-  ── BATCH 1 — Entry-point fixes (must land first) ─────────────────────────
-
   [OPEN]  1. `parallel | True` always forces parallel (`_render_movie.py:37`)
               — `|` is bitwise OR (`True | False` = 1), so every movie
               renders in parallel mode regardless of the flag. Comment says
               "remove True value set for debugging". This is the gate that
               forces all renders into the broken parallel path.
               Fix: change `parallel | True` to just `parallel`.
-
-  ── BATCH 2 — Z-projection thread internals ──────────────────────────────
-
-  [OPEN]  43. `lock.acquire()` without timeout (`_shared_zproj_state_mixin.py:195,204,249`)
-              — Three bare `acquire()` calls in `_zproject()` can hang forever
-              if the lock is held by a crashed/stuck process.
-              Fix: add `timeout=30` to all three and `continue` on failure.
 
 
 4. CODE QUALITY — DUPLICATION & ARCHITECTURE
@@ -39,19 +24,6 @@ Legend: [OPEN] = pending, [DONE] = fixed
               `@dataclass` with `field(default=...)` and `__post_init__`
               validation would eliminate defensive code in header readers.
 
-  [OPEN]  13b. Plugin naming convention is fragile and undocumented — FileOps
-              matches config types to readers by string-concatenating
-              `_header_reader` (`config.py:113`). A misnamed plugin silently
-              does nothing. Should be an explicit mapping or registry.
-
-
-6. DEPENDENCIES
-───────────────
-
-  [DONE] 25. Both projects lack optional dependency groups — FileOps forces
-              `vtk`, `pycromanager`, `matplotlib` etc. for basic TIFF loading.
-              Unused deps already removed: `czifile` (FileOps), `shapely` (MovieRender).
-
 
 8. PERFORMANCE
 ──────────────
@@ -59,10 +31,3 @@ Legend: [OPEN] = pending, [DONE] = fixed
   [OPEN] 29. MovieRender saves every frame to disk then re-reads it
               (`_sequential.py:260,130`) — the frame data is already a numpy
               array; capturing it in memory would eliminate the I/O round-trip.
-
-  [OPEN] 30. FileOps re-reads config files multiple times (`config.py:295,322`)
-              — `build_config_list` parses the same file twice.
-
-  [OPEN] 31. Z-projection busy-wait polling (FileOps
-              `_shared_zproj_state_mixin.py:160-176`) — `time.sleep(2)` loop
-              instead of `threading.Event`.
