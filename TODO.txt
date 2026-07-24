@@ -16,7 +16,7 @@ Legend: [OPEN] = pending, [DONE] = fixed
               Fix: change `parallel | True` to just `parallel`.
 
 
-4. CODE QUALITY — DUPLICATION & ARCHITECTURE
+2. CODE QUALITY — DUPLICATION & ARCHITECTURE
 ────────────────────────────────────────────
 
   [OPEN]  12b. ConfigMovie/ConfigPanel should be dataclasses, not NamedTuples
@@ -25,21 +25,30 @@ Legend: [OPEN] = pending, [DONE] = fixed
               validation would eliminate defensive code in header readers.
 
 
-8. PERFORMANCE
+3. PERFORMANCE
 ──────────────
 
   [OPEN] 29. MovieRender saves every frame to disk then re-reads it
               (`_sequential.py:260,130`) — the frame data is already a numpy
               array; capturing it in memory would eliminate the I/O round-trip.
+              Fix: compare `frame_count × frame_bytes` against available
+              system memory. If it fits, keep rendered frames in a list and
+              feed them directly to moviepy. Otherwise, fall back to the
+              current disk path. Available memory can be read via
+              `psutil.virtual_memory().available` or `os.sysconf`.
 
 
+4. UX
+──────
 
-Last point number: 46
+  [DONE] 47. Graceful early termination in `render_folder_cmd` (`_render_folder.py:34`)
+              — When rendering a folder of config files, the user should be
+              able to press Ctrl-C once to finish the current movie and stop
+              (no further movies), or press Ctrl-C twice to terminate
+              immediately. Currently, any KeyboardInterrupt kills the entire
+              batch mid-render.
+              Fix: catch KeyboardInterrupt in the loop; first occurrence
+              finishes current render and breaks, second raises.
 
+Last point number: 47
 
-
-
-
-TODO: add point. In function render_folder_cmd, add feature that adds early termination after rendering current movie by
-      virtue of pressing the combo keystroke ctrl-C or ctrl-X once. Two or more of these strokes would fully terminate
-      the current and following renders.
