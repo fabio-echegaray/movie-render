@@ -31,3 +31,15 @@ Legend: [OPEN] = pending, [DONE] = fixed
   [OPEN] 29. MovieRender saves every frame to disk then re-reads it
               (`_sequential.py:260,130`) — the frame data is already a numpy
               array; capturing it in memory would eliminate the I/O round-trip.
+
+
+
+Last point number: 46
+
+
+
+
+
+TODO: add point. In function render_folder_cmd, add feature that adds early termination after rendering current movie by
+      virtue of pressing the combo keystroke ctrl-C or ctrl-X once. Two or more of these strokes would fully terminate
+      the current and following renders.
