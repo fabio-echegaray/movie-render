@@ -49,6 +49,8 @@ Legend: [OPEN] = pending, [DONE] = fixed
               batch mid-render.
               Fix: catch KeyboardInterrupt in the loop; first occurrence
               finishes current render and breaks, second raises.
+              FIXME: after testing, pressing ctrl-C stops all threads of z-projection rendering, stopping the current
+                     render and hanging the system since there are no image fed. This bug is still open.
 
 Last point number: 47
 
