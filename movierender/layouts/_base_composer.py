@@ -210,10 +210,8 @@ class BaseLayoutComposer:
                 self.make_layout()
                 self.renderer.render(filename=self.save_file_path.as_posix(), test=test)
             except KeyboardInterrupt:
-                self.log.warning('Caught KeyboardInterrupt.')
-                if hasattr(fileops, "__IS_EXITING"):
-                    is_exiting = getattr(fileops, "__IS_EXITING")
-                    is_exiting.set()
+                self.log.warning('Caught KeyboardInterrupt — finishing current render.')
+                raise
 
 
 def run_job(cmpsr: BaseLayoutComposer, frame, shared_tuple):
