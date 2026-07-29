@@ -41,27 +41,33 @@ Legend: [OPEN] = pending, [DONE] = fixed
 4. UX
 ──────
 
-  [DONE] 47. Graceful early termination in `render_folder_cmd` (`_render_folder.py:34`)
-               — When rendering a folder of config files, the user should be
-               able to press Ctrl-C once to finish the current movie and stop
-               (no further movies), or press Ctrl-C twice to terminate
-               immediately. Currently, any KeyboardInterrupt kills the entire
-               batch mid-render.
-               Fix: catch KeyboardInterrupt in the loop; first occurrence
-               finishes current render and breaks, second raises.
+   [DONE] 47. Graceful early termination in `render_folder_cmd` (`_render_folder.py:34`)
+                — When rendering a folder of config files, the user should be
+                able to press Ctrl-C once to finish the current movie and stop
+                (no further movies), or press Ctrl-C twice to terminate
+                immediately. Currently, any KeyboardInterrupt kills the entire
+                batch mid-render.
+                Fix: two-phase SIGINT handler in `_render_folder.py`:
+                first Ctrl-C sets `fileops.__STOP_REQUESTED` and replaces
+                handler; current render finishes normally, folder loop checks
+                `__STOP_REQUESTED` after each render and breaks. Second Ctrl-C
+                sets `fileops.__THREAD_STOP_REQUESTED` (tells z-projection
+                background thread to stop) and raises `KeyboardInterrupt` for
+                immediate termination. `_base_composer.py` no longer catches
+                KeyboardInterrupt in the sequential path (unnecessary — first
+                press doesn't raise one, second press propagates through).
 
-  [DONE] 47b. Z-projection hang on Ctrl-C (`_base_composer.py:212`)
-               — First implementation of point 47 caused z-projection
-               background threads to hang the system. Pressing Ctrl-C stopped
-               all z-projection threads mid-computation, leaving the main
-               render loop waiting for images that would never arrive.
-               Fix: catch KeyboardInterrupt in _base_composer.py sequential
-               path (no re-raise) so the current render completes fully.
-               Do NOT set __IS_EXITING (it causes z_projection() to return
-               None, breaking the current render). Set stop_requested in
-               render_folder_cmd to prevent subsequent renders.
-               FileOps: removed SystemExit from _zproject() except clause
-               so second Ctrl-C terminates threads immediately.
+   [DONE] 47b. Z-projection hang on Ctrl-C (`_base_composer.py:212`)
+                — First implementation of point 47 caused z-projection
+                background threads to hang the system. Pressing Ctrl-C stopped
+                all z-projection threads mid-computation, leaving the main
+                render loop waiting for images that would never arrive.
+                Fix: two-event approach — `__STOP_REQUESTED` for the folder
+                loop (first Ctrl-C), `__THREAD_STOP_REQUESTED` for background
+                threads (second Ctrl-C / SIGTERM). Background thread checks
+                `__THREAD_STOP_REQUESTED` and exits when set.
+                FileOps: removed SystemExit from _zproject() except clause
+                so second Ctrl-C terminates threads immediately.
                 FileOps: `__IS_EXITING` renamed to `__THREAD_STOP_REQUESTED`.
 
 Last point number: 47

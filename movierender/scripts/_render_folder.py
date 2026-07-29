@@ -1,6 +1,8 @@
+import signal
 from pathlib import Path
 
 import typer
+import fileops
 from fileops.export.config import search_config_files
 from fileops.logger import get_logger
 from typing_extensions import Annotated
@@ -8,6 +10,18 @@ from typing_extensions import Annotated
 from movierender.scripts.render import render_configuration_file_cmd
 
 log = get_logger(name='render-folder')
+
+
+def _handle_first_sigint(signum, frame):
+    fileops.__STOP_REQUESTED.set()
+    log.warning("Interrupted — finishing current render and stopping.")
+    signal.signal(signal.SIGINT, _handle_second_sigint)
+
+
+def _handle_second_sigint(signum, frame):
+    fileops.__THREAD_STOP_REQUESTED.set()
+    signal.signal(signal.SIGINT, signal.default_int_handler)
+    raise KeyboardInterrupt()
 
 
 def render_folder_cmd(
@@ -31,7 +45,9 @@ def render_folder_cmd(
     if len(cfg_path_list)==0:
         log.warning("No configuration files were found.")
     total_rendered = 0
-    stop_requested = False
+    fileops.__STOP_REQUESTED.clear()
+    signal.signal(signal.SIGINT, _handle_first_sigint)
+
     for cfg_path in cfg_path_list:
         if cfg_path.parent.name[0:3] == "bad":
             continue
@@ -44,12 +60,17 @@ def render_folder_cmd(
                                           run_test=run_test)
             total_rendered += 1
         except KeyboardInterrupt:
-            log.warning("Interrupted — finishing current render and stopping.")
-            stop_requested = True
+            break
         except FileNotFoundError as e:
             log.error(e)
+        except Exception as e:
+            if fileops.__STOP_REQUESTED.is_set():
+                log.warning(f"Render interrupted: {e}")
+                break
+            raise
 
-        if stop_requested:
+        if fileops.__STOP_REQUESTED.is_set():
             break
 
+    signal.signal(signal.SIGINT, signal.default_int_handler)
     return total_rendered
