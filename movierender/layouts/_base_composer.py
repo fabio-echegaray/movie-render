@@ -19,8 +19,8 @@ from movierender.render import MovieRenderer
 
 
 def exit_signal_handler(signum, frame):
-    if hasattr(fileops, "__IS_EXITING"):
-        is_exiting = getattr(fileops, "__IS_EXITING")
+    if hasattr(fileops, "__THREAD_STOP_REQUESTED"):
+        is_exiting = getattr(fileops, "__THREAD_STOP_REQUESTED")
         is_exiting.set()
 
 
@@ -191,7 +191,7 @@ class BaseLayoutComposer:
                     self.log.debug(f"finished ix {k}; file {future.result()}.")
             except KeyboardInterrupt:
                 self.log.warning('Caught KeyboardInterrupt.')
-                fileops.__IS_EXITING.set()
+                fileops.__THREAD_STOP_REQUESTED.set()
 
         self.make_layout()
         self.renderer.render(filename=str(self.save_file_path), test=False)
@@ -202,20 +202,16 @@ class BaseLayoutComposer:
         if parallel and not test:
             self._render_parallel()
         else:
-            try:
-                self.log.info(f"Rendering movie into file {self.save_file_path}.")
-                imf = self._movie_configuration_params.image_file
-                s_lock, s_dict, s_list, s_sem = self.shared_tuple
-                imf.init_shared(s_lock, s_dict, s_list, s_sem)
-                self.make_layout()
-                self.renderer.render(filename=self.save_file_path.as_posix(), test=test)
-            except KeyboardInterrupt:
-                self.log.warning('Caught KeyboardInterrupt — finishing current render.')
-                raise
+            self.log.info(f"Rendering movie into file {self.save_file_path}.")
+            imf = self._movie_configuration_params.image_file
+            s_lock, s_dict, s_list, s_sem = self.shared_tuple
+            imf.init_shared(s_lock, s_dict, s_list, s_sem)
+            self.make_layout()
+            self.renderer.render(filename=self.save_file_path.as_posix(), test=test)
 
 
 def run_job(cmpsr: BaseLayoutComposer, frame, shared_tuple):
-    if fileops.__IS_EXITING.is_set():
+    if fileops.__THREAD_STOP_REQUESTED.is_set():
         return None
 
     s_lock, s_dict, s_list, s_sem = shared_tuple

@@ -35,7 +35,7 @@ def dict_elems_eq(d1: dict, d2: dict) -> bool:
     for k1, v1 in d1.items():
         if k1 not in d2:
             return False
-        if type(v1) in [int, float, bool, str] or np.isscalar(v1) or v1 is None:
+        if type(v1) in [int, float, bool, str] or np.ndim(v1) == 0 or v1 is None:
             if v1 != d2[k1]:
                 return False
         elif type(v1) is dict:
