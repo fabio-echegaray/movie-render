@@ -1,5 +1,5 @@
-MovieRender & FileOps — TODO List
-==================================
+MovieRender — Bug tracker
+========================
 
 Legend: [OPEN] = pending, [DONE] = fixed
 
@@ -8,14 +8,6 @@ Legend: [OPEN] = pending, [DONE] = fixed
 1. CRITICAL BUGS
 ────────────────
 
-  === Z-PROJECTION HANG — ROOT CAUSE ANALYSIS ===
-
-  The z-projection thread hangs during parallel rendering. Multiple interacting
-  bugs create a deadlock chain. Fixes are ordered by dependency — apply Batch 1
-  first (entry-point fixes), then Batch 2 (thread internals).
-
-  ── BATCH 1 — Entry-point fixes (must land first) ─────────────────────────
-
   [OPEN]  1. `parallel | True` always forces parallel (`_render_movie.py:37`)
               — `|` is bitwise OR (`True | False` = 1), so every movie
               renders in parallel mode regardless of the flag. Comment says
@@ -23,15 +15,8 @@ Legend: [OPEN] = pending, [DONE] = fixed
               forces all renders into the broken parallel path.
               Fix: change `parallel | True` to just `parallel`.
 
-  ── BATCH 2 — Z-projection thread internals ──────────────────────────────
 
-  [OPEN]  43. `lock.acquire()` without timeout (`_shared_zproj_state_mixin.py:195,204,249`)
-              — Three bare `acquire()` calls in `_zproject()` can hang forever
-              if the lock is held by a crashed/stuck process.
-              Fix: add `timeout=30` to all three and `continue` on failure.
-
-
-4. CODE QUALITY — DUPLICATION & ARCHITECTURE
+2. CODE QUALITY — DUPLICATION & ARCHITECTURE
 ────────────────────────────────────────────
 
   [OPEN]  12b. ConfigMovie/ConfigPanel should be dataclasses, not NamedTuples
@@ -39,30 +24,44 @@ Legend: [OPEN] = pending, [DONE] = fixed
               `@dataclass` with `field(default=...)` and `__post_init__`
               validation would eliminate defensive code in header readers.
 
-  [OPEN]  13b. Plugin naming convention is fragile and undocumented — FileOps
-              matches config types to readers by string-concatenating
-              `_header_reader` (`config.py:113`). A misnamed plugin silently
-              does nothing. Should be an explicit mapping or registry.
 
-
-6. DEPENDENCIES
-───────────────
-
-  [DONE] 25. Both projects lack optional dependency groups — FileOps forces
-              `vtk`, `pycromanager`, `matplotlib` etc. for basic TIFF loading.
-              Unused deps already removed: `czifile` (FileOps), `shapely` (MovieRender).
-
-
-8. PERFORMANCE
+3. PERFORMANCE
 ──────────────
 
   [OPEN] 29. MovieRender saves every frame to disk then re-reads it
               (`_sequential.py:260,130`) — the frame data is already a numpy
               array; capturing it in memory would eliminate the I/O round-trip.
+              Fix: compare `frame_count × frame_bytes` against available
+              system memory. If it fits, keep rendered frames in a list and
+              feed them directly to moviepy. Otherwise, fall back to the
+              current disk path. Available memory can be read via
+              `psutil.virtual_memory().available` or `os.sysconf`.
 
-  [OPEN] 30. FileOps re-reads config files multiple times (`config.py:295,322`)
-              — `build_config_list` parses the same file twice.
 
-  [OPEN] 31. Z-projection busy-wait polling (FileOps
-              `_shared_zproj_state_mixin.py:160-176`) — `time.sleep(2)` loop
-              instead of `threading.Event`.
+4. UX
+──────
+
+  [DONE] 47. Graceful early termination in `render_folder_cmd` (`_render_folder.py:34`)
+               — When rendering a folder of config files, the user should be
+               able to press Ctrl-C once to finish the current movie and stop
+               (no further movies), or press Ctrl-C twice to terminate
+               immediately. Currently, any KeyboardInterrupt kills the entire
+               batch mid-render.
+               Fix: catch KeyboardInterrupt in the loop; first occurrence
+               finishes current render and breaks, second raises.
+
+  [DONE] 47b. Z-projection hang on Ctrl-C (`_base_composer.py:212`)
+               — First implementation of point 47 caused z-projection
+               background threads to hang the system. Pressing Ctrl-C stopped
+               all z-projection threads mid-computation, leaving the main
+               render loop waiting for images that would never arrive.
+               Fix: catch KeyboardInterrupt in _base_composer.py sequential
+               path (no re-raise) so the current render completes fully.
+               Do NOT set __IS_EXITING (it causes z_projection() to return
+               None, breaking the current render). Set stop_requested in
+               render_folder_cmd to prevent subsequent renders.
+               FileOps: removed SystemExit from _zproject() except clause
+               so second Ctrl-C terminates threads immediately.
+
+Last point number: 47
+

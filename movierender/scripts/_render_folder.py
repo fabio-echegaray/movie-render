@@ -31,6 +31,7 @@ def render_folder_cmd(
     if len(cfg_path_list)==0:
         log.warning("No configuration files were found.")
     total_rendered = 0
+    stop_requested = False
     for cfg_path in cfg_path_list:
         if cfg_path.parent.name[0:3] == "bad":
             continue
@@ -42,7 +43,13 @@ def render_folder_cmd(
                                           with_root_path=with_root_path,
                                           run_test=run_test)
             total_rendered += 1
+        except KeyboardInterrupt:
+            log.warning("Interrupted — finishing current render and stopping.")
+            stop_requested = True
         except FileNotFoundError as e:
             log.error(e)
+
+        if stop_requested:
+            break
 
     return total_rendered
