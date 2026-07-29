@@ -62,6 +62,7 @@ Legend: [OPEN] = pending, [DONE] = fixed
                render_folder_cmd to prevent subsequent renders.
                FileOps: removed SystemExit from _zproject() except clause
                so second Ctrl-C terminates threads immediately.
+                FileOps: `__IS_EXITING` renamed to `__THREAD_STOP_REQUESTED`.
 
 Last point number: 47
 
