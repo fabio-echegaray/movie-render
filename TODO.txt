@@ -73,13 +73,14 @@ Legend: [OPEN] = pending, [DONE] = fixed
 5. CROSS-PROJECT
 ────────────────
 
-   [OPEN] 48. Check and align dependencies between FileOps and MovieRender
-               — MovieRender depends on FileOps at runtime (plugin entry
-               points + direct imports). When upgrading a dependency (e.g.,
-               numpy, scikit-image, tifffile), both projects must use
-               compatible versions. Currently there's no automated check.
-               Fix: compare pyproject.toml dependency specs between both
-               projects and ensure they're compatible, or add a CI step.
+   [DONE] 48. Check and align dependencies between FileOps and MovieRender
+               — MovieRender depended on imageio, roifile, tifffile, and
+               typing_extensions without listing them (relied on transitive
+               installs). Added all four explicitly.
+               — numpy spec tightened to `>=1.24,<2.0.0` to match FileOps
+               upper bound (numpy 2.x would break FileOps).
+               — FileOps pandas spec bumped from `>=1.2` to `>=2` to match
+               MovieRender requirement (projects are always co-installed).
 
    [DONE] 49. Upgrade numpy to >=2.0.0 across both projects
                — numpy 1.x is EOL; 2.x brings performance improvements and
