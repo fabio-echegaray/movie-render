@@ -70,5 +70,16 @@ Legend: [OPEN] = pending, [DONE] = fixed
                 so second Ctrl-C terminates threads immediately.
                 FileOps: `__IS_EXITING` renamed to `__THREAD_STOP_REQUESTED`.
 
-Last point number: 47
+5. CROSS-PROJECT
+────────────────
+
+   [OPEN] 48. Check and align dependencies between FileOps and MovieRender
+               — MovieRender depends on FileOps at runtime (plugin entry
+               points + direct imports). When upgrading a dependency (e.g.,
+               numpy, scikit-image, tifffile), both projects must use
+               compatible versions. Currently there's no automated check.
+               Fix: compare pyproject.toml dependency specs between both
+               projects and ensure they're compatible, or add a CI step.
+
+Last point number: 48
 
