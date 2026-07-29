@@ -81,7 +81,7 @@ Legend: [OPEN] = pending, [DONE] = fixed
                Fix: compare pyproject.toml dependency specs between both
                projects and ensure they're compatible, or add a CI step.
 
-   [OPEN] 49. Upgrade numpy to >=2.0.0 across both projects
+   [DONE] 49. Upgrade numpy to >=2.0.0 across both projects
                — numpy 1.x is EOL; 2.x brings performance improvements and
                new APIs. Breaking changes to fix:
                  * np.isscalar → np.ndim(obj) == 0  (overlay.py:38)
