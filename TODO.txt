@@ -97,5 +97,24 @@ Legend: [OPEN] = pending, [DONE] = fixed
                for 3.9, 3.10, 3.11; add 3.12, 3.13, and 3.14 so the full
                range of supported versions is declared.
 
-Last point number: 50
+   [OPEN] 51. Project-folder-level configuration with section-level overrides
+               — Add the ability to place a project-level config file (e.g.
+               in the root folder passed to `render_folder`) that sets
+               default rendering options (rescale, gamma, colors, etc.).
+               — Individual configuration file sections can override these
+               defaults, and section-level parameters take highest priority.
+               — This avoids repeating the same options across many config
+               files in the same project folder.
+
+   [OPEN] 52. Render commands access media files excessively before rendering
+               — Before a render starts, the same media files are opened,
+               read, and/or queried multiple times. This causes significant
+               startup delay (especially over network mounts).
+               — Root cause is likely in FileOps
+               (image loading, metadata parsing, file discovery).
+               — Needs profiling to identify redundant accesses, then
+               split fixes across MovieRender (call patterns) and
+               FileOps (caching, lazy loading).
+
+Last point number: 52
 
