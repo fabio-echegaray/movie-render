@@ -53,7 +53,7 @@ def plotimg(data, panel: ConfigPanel = None, **kwargs):
     hst = ovl.ImageHistogram(ax=ax, bins=50, color='white')
 
     try:
-        if np.isreal(_ch):
+        if np.isrealobj(_ch):
             img = imf.image(imf.ix_at(_ch, _z, _fr)).image
             ch_par = panel.channel_render_parameters[_ch]
             if "overlays" in ch_par and "histogram" in ch_par["overlays"]:
