@@ -47,7 +47,7 @@ class BaseLayoutComposer:
 
         im = movie.image_file
 
-        self.shared_tuple = (fileops.s_lock, fileops.s_dict, fileops.s_list, fileops.s_sem)
+        self.shared_tuple = fileops.get_shared_state()
 
         fname = (
             movie.movie_filename
