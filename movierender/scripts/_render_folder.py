@@ -4,6 +4,7 @@ from pathlib import Path
 import typer
 import fileops
 from fileops.export.config import search_config_files
+from fileops.image.exceptions import FrameNotFoundError
 from fileops.logger import get_logger
 from typing_extensions import Annotated
 
@@ -42,7 +43,7 @@ def render_folder_cmd(
         path = Path('.').absolute()
     cfg_path_list = search_config_files(path)
 
-    if len(cfg_path_list)==0:
+    if len(cfg_path_list) == 0:
         log.warning("No configuration files were found.")
     total_rendered = 0
     fileops.__STOP_REQUESTED.clear()
@@ -61,7 +62,7 @@ def render_folder_cmd(
             total_rendered += 1
         except KeyboardInterrupt:
             break
-        except FileNotFoundError as e:
+        except (FileNotFoundError, FrameNotFoundError) as e:
             log.error(e)
         except Exception as e:
             if fileops.__STOP_REQUESTED.is_set():
