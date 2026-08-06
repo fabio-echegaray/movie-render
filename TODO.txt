@@ -9,20 +9,40 @@ Legend: [OPEN] = pending, [DONE] = fixed
 ────────────────
 
   [OPEN]  1. `parallel | True` always forces parallel (`_render_movie.py:37`)
-              — `|` is bitwise OR (`True | False` = 1), so every movie
-              renders in parallel mode regardless of the flag. Comment says
-              "remove True value set for debugging". This is the gate that
-              forces all renders into the broken parallel path.
-              Fix: change `parallel | True` to just `parallel`.
+               — `|` is bitwise OR (`True | False` = 1), so every movie
+               renders in parallel mode regardless of the flag. Comment says
+               "remove True value set for debugging". This is the gate that
+               forces all renders into the broken parallel path.
+               Fix: change `parallel | True` to just `parallel`.
+
+   [OPEN] 53. FrameNotFoundError silently swallowed (`_sequential.py:166-167`)
+               — `except FrameNotFoundError: continue` — no log message,
+               no warning. Missing frames are silently omitted from output.
+               Fix: log a warning before continuing.
+
+   [OPEN] 54. Temp directory not cleaned up on exception (`_sequential.py:207`)
+               — `shutil.rmtree(self._tmp)` not in `try/finally` block.
+               If `write_videofile()` raises, the temp dir is orphaned.
+               Fix: wrap cleanup in `try/finally`.
 
 
 2. CODE QUALITY — DUPLICATION & ARCHITECTURE
 ────────────────────────────────────────────
 
-  [OPEN]  12b. ConfigMovie/ConfigPanel should be dataclasses, not NamedTuples
-              — 23+ fields, immutable, no defaults, no validation. A
-              `@dataclass` with `field(default=...)` and `__post_init__`
-              validation would eliminate defensive code in header readers.
+   [OPEN]  12b. ConfigMovie/ConfigPanel should be dataclasses, not NamedTuples
+               — 23+ fields, immutable, no defaults, no validation. A
+               `@dataclass` with `field(default=...)` and `__post_init__`
+               validation would eliminate defensive code in header readers.
+
+   [OPEN] 55. Missing re-exports in overlays/__init__.py and plugins/__init__.py
+               — `Arrow`, `ArrowOverlayPlugin`, `Position` defined but not
+               exported from `movierender.overlays`.
+               — `movierender.plugins/__init__.py` is completely empty.
+               Fix: add explicit re-exports.
+
+   [OPEN] 56. Variable `id` shadows built-in (`_arrow.py:16`, `plugins/overlay.py:14`)
+               — Parameters named `id` shadow the built-in `id()` function.
+               Fix: rename to `identifier` or `overlay_id`.
 
 
 3. PERFORMANCE
@@ -97,5 +117,24 @@ Legend: [OPEN] = pending, [DONE] = fixed
                for 3.9, 3.10, 3.11; add 3.12, 3.13, and 3.14 so the full
                range of supported versions is declared.
 
-Last point number: 50
+   [OPEN] 51. Project-folder-level configuration with section-level overrides
+               — Add the ability to place a project-level config file (e.g.
+               in the root folder passed to `render_folder`) that sets
+               default rendering options (rescale, gamma, colors, etc.).
+               — Individual configuration file sections can override these
+               defaults, and section-level parameters take highest priority.
+               — This avoids repeating the same options across many config
+               files in the same project folder.
+
+   [OPEN] 52. Render commands access media files excessively before rendering
+               — Before a render starts, the same media files are opened,
+               read, and/or queried multiple times. This causes significant
+               startup delay (especially over network mounts).
+               — Root cause is likely in FileOps
+               (image loading, metadata parsing, file discovery).
+               — Needs profiling to identify redundant accesses, then
+               split fixes across MovieRender (call patterns) and
+               FileOps (caching, lazy loading).
+
+Last point number: 52
 
