@@ -117,7 +117,7 @@ Legend: [OPEN] = pending, [DONE] = fixed
                for 3.9, 3.10, 3.11; add 3.12, 3.13, and 3.14 so the full
                range of supported versions is declared.
 
-   [OPEN] 51. Project-folder-level configuration with section-level overrides
+   [DONE] 51. Project-folder-level configuration with section-level overrides
                — Add the ability to place a project-level config file (e.g.
                in the root folder passed to `render_folder`) that sets
                default rendering options (rescale, gamma, colors, etc.).
@@ -125,6 +125,18 @@ Legend: [OPEN] = pending, [DONE] = fixed
                defaults, and section-level parameters take highest priority.
                — This avoids repeating the same options across many config
                files in the same project folder.
+               — Implementation: `render folder` auto-detects a file named
+               `defaults.cfg` in the root folder (or an explicit
+               `--defaults-file` path) and passes it to every render call.
+               FileOps merges it via configparser's `[DEFAULT]` section
+               (`read_config`, `read_data_section`,
+               `update_overrides_from_channel_sections`,
+               `check_if_output_files_are_created` and
+               `HeaderReaderPlugin` all accept a `defaults_file` argument,
+               read first so section values win). The defaults file is
+               excluded from the folder render list.
+               — Tests: FileOps `test/test_config_defaults.py`,
+               MovieRender `test/test_render_folder_defaults.py`.
 
    [DONE] 52. Render commands access media files excessively before rendering
                — Profiled the render flow: `read_config()` opened/read the

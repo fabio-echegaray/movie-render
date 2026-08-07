@@ -28,17 +28,21 @@ def render_configuration_file_cmd(
             bool, typer.Option(help="Set true if you want to overwrite the file")] = False,
         run_test: Annotated[
             bool, typer.Option(help="Only render first frame when rendering a movie")] = False,
+        defaults_file: Annotated[
+            Path, typer.Option(help="Path to a project-level defaults file whose [DEFAULT] section "
+                                    "applies to all sections of the configuration file.")] = None,
 ):
     if cfg_path.parent.name[0:3] == "bad":
         return
 
     log.info(f"Reading configuration file {cfg_path}")
     if not overwrite_file:
-        chk = check_if_output_files_are_created(cfg_path, with_root_path=with_root_path)
+        chk = check_if_output_files_are_created(cfg_path, with_root_path=with_root_path,
+                                                defaults_file=defaults_file)
         if np.all([created for i, created in chk.items()]):
             log.warning(f"All files are already created from configuration file {cfg_path}")
             return
-    cfg = read_config(cfg_path, with_root_path=with_root_path)
+    cfg = read_config(cfg_path, with_root_path=with_root_path, defaults_file=defaults_file)
 
     # cache the info of each media file so sections sharing the same file
     # (movies, panels, projections) do not re-query it
