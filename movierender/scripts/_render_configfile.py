@@ -40,15 +40,28 @@ def render_configuration_file_cmd(
             return
     cfg = read_config(cfg_path, with_root_path=with_root_path)
 
+    # cache the info of each media file so sections sharing the same file
+    # (movies, panels, projections) do not re-query it
+    _MISSING = object()
+    info_cache: dict = {}
+
+    def _log_file_info(image_file):
+        if not show_file_info:
+            return
+        info = info_cache.get(image_file, _MISSING)
+        if info is _MISSING:
+            info = image_file.info
+            info_cache[image_file] = info
+        try:
+            log.info(f"file {cfg_path}\r\n{info.squeeze(axis=0)}")
+        except Exception as e:
+            log.error(e)
+            log.error(traceback.format_exc())
+
     # make movies specified in configuration file
     if hasattr(cfg, 'movies'):  # attribute gets added by the plugin system should the file have a valid movie section
         for mov in cfg.movies:
-            if show_file_info:
-                try:
-                    log.info(f"file {cfg_path}\r\n{mov.image_file.info.squeeze(axis=0)}")
-                except Exception as e:
-                    log.error(e)
-                    log.error(traceback.format_exc())
+            _log_file_info(mov.image_file)
             try:
                 render_movie(mov, overwrite=overwrite_file, test=run_test)
             except FileExistsError:
@@ -58,21 +71,11 @@ def render_configuration_file_cmd(
     # render panels specified in configuration file
     if hasattr(cfg, 'panels'):  # attribute gets added by the plugin system should the file have a valid movie section
         for pan in cfg.panels:
-            if show_file_info:
-                try:
-                    log.info(f"file {cfg_path}\r\n{pan.image_file.info.squeeze(axis=0)}")
-                except Exception as e:
-                    log.error(e)
-                    log.error(traceback.format_exc())
+            _log_file_info(pan.image_file)
             render_static_montage(pan, copyright_info=cfg.copyright)
 
     # render projections specified in configuration file
     if hasattr(cfg, 'projections'):
         for prj in cfg.projections:
-            if show_file_info:
-                try:
-                    log.info(f"file {cfg_path}\r\n{prj.image_file.info.squeeze(axis=0)}")
-                except Exception as e:
-                    log.error(e)
-                    log.error(traceback.format_exc())
+            _log_file_info(prj.image_file)
             render_projection(prj, overwrite=overwrite_file)

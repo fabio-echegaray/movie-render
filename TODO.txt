@@ -126,15 +126,32 @@ Legend: [OPEN] = pending, [DONE] = fixed
                — This avoids repeating the same options across many config
                files in the same project folder.
 
-   [OPEN] 52. Render commands access media files excessively before rendering
-               — Before a render starts, the same media files are opened,
-               read, and/or queried multiple times. This causes significant
-               startup delay (especially over network mounts).
-               — Root cause is likely in FileOps
-               (image loading, metadata parsing, file discovery).
-               — Needs profiling to identify redundant accesses, then
-               split fixes across MovieRender (call patterns) and
-               FileOps (caching, lazy loading).
+   [DONE] 52. Render commands access media files excessively before rendering
+               — Profiled the render flow: `read_config()` opened/read the
+               media file once for projections (DATA section) and then AGAIN
+               inside every header-reader plugin that lazily loaded its own
+               data section (`HeaderReaderPlugin._img_file`/`_param_override`).
+               A movie-only config caused 2 media loads; adding ROI or arrow
+               overlay sections raised it to 3-4 loads per config file.
+               — FileOps fix (imgfileops, see FileOps TODO #19):
+                 * `HeaderReaderPlugin.__init__` accepts pre-loaded
+                   `cfg`/`img_file`/`param_override`/`roi` (seeded via a
+                   sentinel so a legitimate `roi=None` is still honored);
+                   `_load_data_section()` only fills slots that were not
+                   provided.
+                 * `read_config()` and `check_if_output_files_are_created()`
+                   pass their already-loaded objects into the plugins.
+               — MovieRender fix (call patterns):
+                 * `load_overlay_plugins()` and the nested ROI/OVERLAY
+                   plugin instantiation in `_movie_header_reader.py` (and
+                   the panel reader) propagate the shared data-section
+                   objects, so overlay/ROI readers reuse the loaded
+                   `img_file` instead of re-opening the file.
+                 * `.info` for a shared `image_file` is computed once per
+                   config file (`_render_configfile.py`, `_render_movie.py`,
+                   `_render_projection.py`), removing repeated stat() calls
+                   when several sections point at the same file.
+               — Result: exactly one media-file load per config file.
 
 Last point number: 52
 
