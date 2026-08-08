@@ -176,5 +176,20 @@ Legend: [OPEN] = pending, [DONE] = fixed
                 from terminal commands. This will potentially affect FileOps,
                 so include a point in their TODO.txt as well.
 
-Last point number: 57
+   [OPEN] 58. Specify color palettes and layout parameters for movies and panels
+                — Allow customizing title font size, title color, background
+                color, channel label color, label font, spacing, etc.
+                — Make the list of configurable parameters extensive.
+                — Separate the parsing of these graphic-state options from
+                their rendering into dedicated dataclasses/structures so
+                they are not scattered across the renderers.
+
+    [OPEN] 59. Add user documentation for project-level defaults (point 51)
+                — Point 51 (project-folder-level configuration via defaults.cfg)
+                lacks user-facing docs. Add a section to socs/main.md that
+                explains placing defaults.cfg in a render folder, the
+                `[DEFAULT]`, `[COPYRIGHT]`, and `[CHANNEL-N]` override precedence,
+                and how an explicit `--defaults-file` path overrides autodetection.
+
+Last point number: 59
 
