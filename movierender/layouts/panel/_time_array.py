@@ -43,7 +43,7 @@ def plotimg(data, panel: ConfigPanel = None, **kwargs):
 
         try:
             zstack_projection = 'max'
-            if np.isreal(_ch):
+            if np.isrealobj(_ch):
                 img = z_projection(imf, _fr, _ch, z_subset=panel.zstacks, projection=zstack_projection).image
                 ch_par = panel.channel_render_parameters[_ch]
                 if "overlays" in ch_par and "histogram" in ch_par["overlays"]:

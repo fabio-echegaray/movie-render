@@ -12,7 +12,7 @@ from movierender.config import ConfigMovie
 from movierender.overlays import ImagejROI
 
 
-def load_overlay_plugins(cfg_path, root_path=None):
+def load_overlay_plugins(cfg_path, root_path=None, **shared):
     overlays = list()
     for h in fileops.header_reader_plugins:
         if "overlay" not in h.name:
@@ -20,7 +20,7 @@ def load_overlay_plugins(cfg_path, root_path=None):
         clz = h.load()
         if not issubclass(clz, HeaderReaderPlugin):
             continue
-        cinst = clz(cfg_path, root_path=root_path)
+        cinst = clz(cfg_path, root_path=root_path, **shared)
         if cinst.has_valid_header():
             overlays.extend(cinst.process())
     return overlays
@@ -76,12 +76,15 @@ class MovieHeaderReaderPlugin(HeaderReaderPlugin):
                     clz = h.load()
                     if not issubclass(clz, HeaderReaderPlugin):
                         continue
-                    cinst = clz(self._cfg_path, root_path=self._root_path)
+                    # propagate the shared data-section objects to nested plugins
+                    cinst = clz(self._cfg_path, root_path=self._root_path,
+                                cfg=cfg, img_file=img_file, param_override=param_override, roi=roi)
                     if cinst.has_valid_header():
                         roi_lst.extend(cinst.process())
 
         # find OVERLAY parsers from plugins
-        overlays = load_overlay_plugins(self._cfg_path, root_path=self._root_path)
+        overlays = load_overlay_plugins(self._cfg_path, root_path=self._root_path,
+                                        cfg=cfg, img_file=img_file, param_override=param_override, roi=roi)
 
         # process MOVIE sections
         movie_def = list()

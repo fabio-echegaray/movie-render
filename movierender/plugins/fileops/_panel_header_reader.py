@@ -60,7 +60,8 @@ class PanelHeaderReaderPlugin(HeaderReaderPlugin):
         cfg, param_override, img_file, roi = self._cfg, self._param_override, self._img_file, self._roi
 
         # find OVERLAY parsers from plugins
-        overlays = load_overlay_plugins(self._cfg_path, root_path=self._root_path)
+        overlays = load_overlay_plugins(self._cfg_path, root_path=self._root_path,
+                                        cfg=cfg, img_file=img_file, param_override=param_override, roi=roi)
 
         # process PANEL sections
         panel_def = list()

@@ -281,16 +281,19 @@ Shows the plugin lifecycle: registration at import time, config file parsing via
 
 ## Dependencies
 
-| Package                 | Purpose                                          |
-| ----------------------- | ------------------------------------------------ |
-| `imgfileops >= 0.3.0`   | Sister project for image file handling           |
-| `matplotlib >= 3.2.0`   | Plotting and figure rendering                    |
-| `moviepy >= 1.0.3, < 2` | Video assembly from frames                       |
-| `numpy >= 1.16.0`       | Array operations                                 |
-| `pandas >= 2`           | Data manipulation                                |
-| `scikit-image ~= 0.24`  | Image processing (exposure, color)               |
-| `seaborn ~= 0.13`       | Statistical visualization (FacetGrid for panels) |
-| `typer >= 0.9.0`        | CLI framework                                    |
-| `roifile`               | ImageJ ROI file reading                          |
+| Package                  | Purpose                                          |
+| ------------------------ | ------------------------------------------------ |
+| `imageio >= 2.16.0`      | Image I/O (frame saving)                         |
+| `imgfileops >= 0.4.0`    | Sister project for image file handling           |
+| `matplotlib >= 3.2.0`    | Plotting and figure rendering                    |
+| `moviepy >= 1.0.3, < 2`  | Video assembly from frames                       |
+| `numpy >= 2.0.0`         | Array operations (2.x required)                  |
+| `pandas >= 2`            | Data manipulation                                |
+| `roifile >= 2023`        | ImageJ ROI file reading                          |
+| `scikit-image >= 0.24`   | Image processing (exposure, color)               |
+| `seaborn ~= 0.13`        | Statistical visualization (FacetGrid for panels) |
+| `tifffile >= 2023`       | TIFF file I/O for z-projections                  |
+| `typing_extensions >= 4` | Runtime typing utilities (Annotated)             |
+| `typer >= 0.9.0`         | CLI framework                                    |
 
 ---
