@@ -114,6 +114,6 @@ class PanelHeaderReaderPlugin(HeaderReaderPlugin):
                 filename=filename,
                 layout=cfg[pan]["layout"] if "layout" in cfg[pan] else "time-array",
                 fontsize=cfg[pan]["fontsize"] if "fontsize" in cfg[pan] else 7,
-                overlays=[ovr for ovr in overlays if ovr.id in ovr_ids]
+                overlays=[ovr for ovr in overlays if ovr.overlay_id in ovr_ids]
             ))
         return panel_def

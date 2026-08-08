@@ -103,7 +103,7 @@ class MovieHeaderReaderPlugin(HeaderReaderPlugin):
                 ovr_txt = cfg[mov]["overlays"]
                 if ovr_txt[0] == "[" and ovr_txt[-1] == "]":
                     ovr_ids = [s.strip() for s in ovr_txt[1:-1].split(",")]
-                    overlays_to_add.extend([ovr for ovr in overlays if ovr.id in ovr_ids])
+                    overlays_to_add.extend([ovr for ovr in overlays if ovr.overlay_id in ovr_ids])
 
             # find ROI IDs and append them to list of ROIs
             if "roi" in cfg[mov]:

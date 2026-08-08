@@ -40,9 +40,13 @@ Legend: [OPEN] = pending, [DONE] = fixed
                — `movierender.plugins/__init__.py` is completely empty.
                Fix: add explicit re-exports.
 
-   [OPEN] 56. Variable `id` shadows built-in (`_arrow.py:16`, `plugins/overlay.py:14`)
-               — Parameters named `id` shadow the built-in `id()` function.
-               Fix: rename to `identifier` or `overlay_id`.
+   [DONE] 56. Variable `id` shadows built-in (`_arrow.py:16`, `plugins/overlay.py:14`)
+                — Parameters named `id` shadow the built-in `id()` function.
+                Fix: rename to `identifier` or `overlay_id`.
+                — Renamed to `overlay_id` in `Arrow.__init__`,
+                `OverlayPlugin.__init__`, and the header readers
+                (`ovr.overlay_id in ovr_ids`, `ArrowOverlayPlugin(*xy,
+                overlay_id=...)`). The config-file key `id` is unchanged.
 
 
 3. PERFORMANCE

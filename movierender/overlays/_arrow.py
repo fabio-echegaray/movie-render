@@ -13,8 +13,8 @@ class ArrowOverlayPlugin(OverlayPlugin):
 
 
 class Arrow(Overlay):
-    def __init__(self, x, y, length=1, angle=0, id="default_arrow", c="yellow", style_dict=None, frame=None, **kwargs):
-        self.id = id
+    def __init__(self, x, y, length=1, angle=0, overlay_id="default_arrow", c="yellow", style_dict=None, frame=None, **kwargs):
+        self.overlay_id = overlay_id
         self._xy = (x, y)
         self._length = length
         self._angle = angle
