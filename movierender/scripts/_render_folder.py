@@ -1,3 +1,4 @@
+import logging
 import signal
 from pathlib import Path
 
@@ -48,6 +49,10 @@ def render_folder_cmd(
         log.info(f"No path provided")
         path = Path('.').absolute()
 
+    # when the stdout reader (e.g. a pipe) is gone, a log write raises BrokenPipeError.
+    # suppress the "--- Logging error ---" flood Python would otherwise print per line.
+    logging.raiseExceptions = False
+
     if defaults_file is None:
         auto = path / DEFAULT_DEFAULTS_FILE
         if auto.exists():
@@ -80,6 +85,8 @@ def render_folder_cmd(
                                           defaults_file=defaults_file)
             total_rendered += 1
         except KeyboardInterrupt:
+            break
+        except BrokenPipeError:
             break
         except (FileNotFoundError, FrameNotFoundError) as e:
             log.error(e)
