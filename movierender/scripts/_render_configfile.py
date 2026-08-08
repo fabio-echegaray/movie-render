@@ -5,6 +5,8 @@ import traceback
 import typer
 from typing_extensions import Annotated
 
+import fileops
+
 from movierender.layouts import render_static_montage
 from movierender.scripts._render_movie import render_movie
 from movierender.scripts._render_projection import render_projection
@@ -65,6 +67,9 @@ def render_configuration_file_cmd(
     # make movies specified in configuration file
     if hasattr(cfg, 'movies'):  # attribute gets added by the plugin system should the file have a valid movie section
         for mov in cfg.movies:
+            if fileops.__STOP_REQUESTED.is_set():
+                log.info("Stop requested, skipping remaining movies.")
+                break
             _log_file_info(mov.image_file)
             try:
                 render_movie(mov, overwrite=overwrite_file, test=run_test)

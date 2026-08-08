@@ -177,7 +177,9 @@ class BaseLayoutComposer:
         mov = self._movie_configuration_params
 
         future_to_mapping = dict()
-        with futures.ProcessPoolExecutor(max_workers=n_workers) as executor:
+        executor = futures.ProcessPoolExecutor(max_workers=n_workers)
+        interrupted = False
+        try:
             for k, fr in enumerate(mov.frames):
                 composer = composer_array[k % len(composer_array)]
 
@@ -192,6 +194,13 @@ class BaseLayoutComposer:
             except KeyboardInterrupt:
                 self.log.warning('Caught KeyboardInterrupt.')
                 fileops.__THREAD_STOP_REQUESTED.set()
+                interrupted = True
+        finally:
+            executor.shutdown(wait=not interrupted, cancel_futures=interrupted)
+
+        if interrupted:
+            self.log.warning("Movie render stopped, skipping video generation.")
+            return
 
         self.make_layout()
         self.renderer.render(filename=str(self.save_file_path), test=False)
