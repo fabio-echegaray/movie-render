@@ -163,7 +163,8 @@ class SequentialMovieRenderer:
             try:
                 self.render_frame(fr)
                 rendered_frames.append(fr)
-            except FrameNotFoundError:
+            except FrameNotFoundError as e:
+                self.logger.warning(f"frame {fr} not found, skipping (will be omitted from the movie): {e}")
                 continue
 
         # obtain copyright metadata

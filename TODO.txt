@@ -15,10 +15,12 @@ Legend: [OPEN] = pending, [DONE] = fixed
                forces all renders into the broken parallel path.
                Fix: change `parallel | True` to just `parallel`.
 
-   [OPEN] 53. FrameNotFoundError silently swallowed (`_sequential.py:166-167`)
-               — `except FrameNotFoundError: continue` — no log message,
-               no warning. Missing frames are silently omitted from output.
-               Fix: log a warning before continuing.
+   [DONE] 53. FrameNotFoundError silently swallowed (`_sequential.py:166-167`)
+                — `except FrameNotFoundError: continue` — no log message,
+                no warning. Missing frames are silently omitted from output.
+                Fix: log a warning before continuing.
+                — Now logs `frame {fr} not found, skipping (will be omitted
+                from the movie)` before continuing.
 
    [OPEN] 54. Temp directory not cleaned up on exception (`_sequential.py:207`)
                — `shutil.rmtree(self._tmp)` not in `try/finally` block.
@@ -169,5 +171,10 @@ Legend: [OPEN] = pending, [DONE] = fixed
                    when several sections point at the same file.
                — Result: exactly one media-file load per config file.
 
-Last point number: 52
+   [OPEN] 57. Make DEBUG level and lower logs optional in terminal commands
+                — Add an option to suppress DEBUG-level (and lower) log output
+                from terminal commands. This will potentially affect FileOps,
+                so include a point in their TODO.txt as well.
+
+Last point number: 57
 
