@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import List, Dict
 
 import fileops
+from fileops.export.config import read_config_copyright
 from fileops.export.config_channel_section import update_channel_config_with_section_overrides
 from fileops.export.config_sections import process_overrides_of_section
 from fileops.logger import get_logger
@@ -61,6 +62,10 @@ class MovieHeaderReaderPlugin(HeaderReaderPlugin):
             return []
 
         cfg, param_override, img_file, roi = self._cfg, self._param_override, self._img_file, self._roi
+
+        # read copyright from the merged configuration (defaults + config file) so
+        # a project-level defaults COPYRIGHT section is honoured by movies too
+        copyright_info = read_config_copyright(self._cfg_path, cfg)
 
         # process ROI sections in configuration file
         roi_lst = list()
@@ -137,7 +142,8 @@ class MovieHeaderReaderPlugin(HeaderReaderPlugin):
                     include_tracks if isinstance(include_tracks, bool)
                     else include_tracks == "yes" if isinstance(include_tracks, str)
                     else False
-                ),
-                overlays=overlays_to_add
-            ))
+                    ),
+                 overlays=overlays_to_add,
+                 copyright=copyright_info
+             ))
         return movie_def

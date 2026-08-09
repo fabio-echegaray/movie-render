@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import configparser
 import copy
 import logging
 import os
@@ -15,7 +14,6 @@ import imageio.v3 as iio
 import moviepy.editor as mpy
 import numpy as np
 import skimage
-from fileops.export.config import read_config_copyright
 from fileops.image import ImageFile
 from fileops.image.exceptions import FrameNotFoundError
 from fileops.pathutils import ensure_dir
@@ -167,10 +165,9 @@ class SequentialMovieRenderer:
                 self.logger.warning(f"frame {fr} not found, skipping (will be omitted from the movie): {e}")
                 continue
 
-        # obtain copyright metadata
-        cfg = configparser.ConfigParser()
-        cfg.read(self._cfg.configfile)
-        copyr = read_config_copyright(self._cfg.configfile, cfg)
+        # obtain copyright metadata from the ConfigMovie (read once from the
+        # merged configuration, which honours a defaults COPYRIGHT section)
+        copyr = self._cfg.copyright
         if copyr is not None:
             cpr_lst = [
                 '-metadata', f'artist={copyr.author}',
