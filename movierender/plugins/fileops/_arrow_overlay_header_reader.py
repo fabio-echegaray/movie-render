@@ -46,6 +46,6 @@ class ArrowOverlayHeaderReaderPlugin(HeaderReaderPlugin):
             length = length * img_file.pix_per_um
 
             arrow_def.append(
-                ArrowOverlayPlugin(*xy, id=cfg[arrow]["id"], length=length, angle=angle, frame=frame, z=z, c=color)
+                ArrowOverlayPlugin(*xy, overlay_id=cfg[arrow]["id"], length=length, angle=angle, frame=frame, z=z, c=color)
             )
         return arrow_def

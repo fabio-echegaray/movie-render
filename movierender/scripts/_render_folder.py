@@ -1,15 +1,19 @@
+import logging
 import signal
 from pathlib import Path
 
 import typer
 import fileops
 from fileops.export.config import search_config_files
+from fileops.image.exceptions import FrameNotFoundError
 from fileops.logger import get_logger
 from typing_extensions import Annotated
 
-from movierender.scripts.render import render_configuration_file_cmd
+from movierender.scripts._render_configfile import render_configuration_file_cmd
 
 log = get_logger(name='render-folder')
+
+DEFAULT_DEFAULTS_FILE = "defaults.cfg"
 
 
 def _handle_first_sigint(signum, frame):
@@ -36,13 +40,33 @@ def render_folder_cmd(
             bool, typer.Option(help="Set true if you want to overwrite the files")] = False,
         run_test: Annotated[
             bool, typer.Option(help="Only render first frame when rendering a movie")] = False,
+        defaults_file: Annotated[
+            Path, typer.Option(help="Path to a project-level defaults file whose [DEFAULT] section "
+                                    "applies to all configuration files in the folder. If not given, "
+                                    f"a file named '{DEFAULT_DEFAULTS_FILE}' in the root folder is used.")] = None,
 ):
     if path is None:
         log.info(f"No path provided")
         path = Path('.').absolute()
+
+    # when the stdout reader (e.g. a pipe) is gone, a log write raises BrokenPipeError.
+    # suppress the "--- Logging error ---" flood Python would otherwise print per line.
+    logging.raiseExceptions = False
+
+    if defaults_file is None:
+        auto = path / DEFAULT_DEFAULTS_FILE
+        if auto.exists():
+            defaults_file = auto
+
     cfg_path_list = search_config_files(path)
 
-    if len(cfg_path_list)==0:
+    # exclude project-level defaults files from the render list
+    if defaults_file is not None:
+        defaults_path = defaults_file.absolute()
+        cfg_path_list = [c for c in cfg_path_list if c.absolute() != defaults_path]
+    cfg_path_list = [c for c in cfg_path_list if c.name != DEFAULT_DEFAULTS_FILE]
+
+    if len(cfg_path_list) == 0:
         log.warning("No configuration files were found.")
     total_rendered = 0
     fileops.__STOP_REQUESTED.clear()
@@ -57,11 +81,14 @@ def render_folder_cmd(
             render_configuration_file_cmd(cfg_path,
                                           overwrite_file=overwrite_files,
                                           with_root_path=with_root_path,
-                                          run_test=run_test)
+                                          run_test=run_test,
+                                          defaults_file=defaults_file)
             total_rendered += 1
         except KeyboardInterrupt:
             break
-        except FileNotFoundError as e:
+        except BrokenPipeError:
+            break
+        except (FileNotFoundError, FrameNotFoundError) as e:
             log.error(e)
         except Exception as e:
             if fileops.__STOP_REQUESTED.is_set():

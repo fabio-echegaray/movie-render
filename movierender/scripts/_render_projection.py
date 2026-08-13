@@ -75,11 +75,19 @@ def render_projection_cmd(
     log.info(f"Reading configuration file {cfg_path}")
     cfg = read_config(cfg_path, with_root_path=with_root_path)
 
-    # make movies specified in configuration file
+    # cache the info of each media file so projections sharing the same file are not re-queried
+    _MISSING = object()
+    info_cache: dict = {}
+
+    # make projections specified in configuration file
     for prj in cfg.projections:
         if show_file_info:
+            info = info_cache.get(prj.image_file, _MISSING)
+            if info is _MISSING:
+                info = prj.image_file.info
+                info_cache[prj.image_file] = info
             try:
-                log.info(f"file {cfg_path}\r\n{prj.image_file.info.squeeze(axis=0)}")
+                log.info(f"file {cfg_path}\r\n{info.squeeze(axis=0)}")
             except Exception as e:
                 log.error(e)
                 log.error(traceback.format_exc())
