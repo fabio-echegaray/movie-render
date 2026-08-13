@@ -24,6 +24,10 @@ def exit_signal_handler(signum, frame):
         is_exiting.set()
 
 
+def _init_worker_process():
+    signal.signal(signal.SIGINT, signal.SIG_IGN)
+
+
 class BaseLayoutComposer:
     log = get_logger(name='BaseLayoutComposer')
 
@@ -177,7 +181,9 @@ class BaseLayoutComposer:
         mov = self._movie_configuration_params
 
         future_to_mapping = dict()
-        with futures.ProcessPoolExecutor(max_workers=n_workers) as executor:
+        executor = futures.ProcessPoolExecutor(max_workers=n_workers, initializer=_init_worker_process)
+        interrupted = False
+        try:
             for k, fr in enumerate(mov.frames):
                 composer = composer_array[k % len(composer_array)]
 
@@ -192,6 +198,13 @@ class BaseLayoutComposer:
             except KeyboardInterrupt:
                 self.log.warning('Caught KeyboardInterrupt.')
                 fileops.__THREAD_STOP_REQUESTED.set()
+                interrupted = True
+        finally:
+            executor.shutdown(wait=not interrupted, cancel_futures=interrupted)
+
+        if interrupted:
+            self.log.warning("Movie render stopped, skipping video generation.")
+            return
 
         self.make_layout()
         self.renderer.render(filename=str(self.save_file_path), test=False)

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import configparser
 import copy
 import logging
 import os
@@ -15,7 +14,6 @@ import imageio.v3 as iio
 import moviepy.editor as mpy
 import numpy as np
 import skimage
-from fileops.export.config import read_config_copyright
 from fileops.image import ImageFile
 from fileops.image.exceptions import FrameNotFoundError
 from fileops.pathutils import ensure_dir
@@ -125,7 +123,7 @@ class SequentialMovieRenderer:
             if img_path.exists():
                 new_path = self._cfg.movie_filename + ".test.png"
                 img_path.rename(new_path)
-                self.logger.info(f"Successfully rendered test image to {new_path}.")
+                self.logger.debug(f"Successfully rendered test image to {new_path}.")
             return
 
         def make_frame_mpl(t):
@@ -163,13 +161,13 @@ class SequentialMovieRenderer:
             try:
                 self.render_frame(fr)
                 rendered_frames.append(fr)
-            except FrameNotFoundError:
+            except FrameNotFoundError as e:
+                self.logger.warning(f"frame {fr} not found, skipping (will be omitted from the movie): {e}")
                 continue
 
-        # obtain copyright metadata
-        cfg = configparser.ConfigParser()
-        cfg.read(self._cfg.configfile)
-        copyr = read_config_copyright(self._cfg.configfile, cfg)
+        # obtain copyright metadata from the ConfigMovie (read once from the
+        # merged configuration, which honours a defaults COPYRIGHT section)
+        copyr = self._cfg.copyright
         if copyr is not None:
             cpr_lst = [
                 '-metadata', f'artist={copyr.author}',
@@ -210,14 +208,14 @@ class SequentialMovieRenderer:
         return f"<MovieRender object (sequential) at {hex(id(self))}> with {len(self._kwargs)} arguments."
 
     def render_frame(self, frame):
-        self.logger.info(f"rendering frame {frame}")
+        self.logger.debug(f"rendering frame {frame}")
         self.frame = frame
         # calculate time given frame
         self.time = (frame - self._frame_offset) / self.fps
 
         img_path = self._tmp.joinpath(f"f{frame:05d}.png")
         if os.path.exists(img_path):
-            self.logger.warning(f'File {img_path.name} already exists in folder {img_path.parent.name}.')
+            self.logger.debug(f'File {img_path.name} already exists in folder {img_path.parent.name}.')
             return
 
         # clear axes of all objects

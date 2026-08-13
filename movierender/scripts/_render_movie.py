@@ -55,13 +55,21 @@ def render_movie_cmd(
     log.info(f"Reading configuration file {cfg_path}")
     cfg = read_config(cfg_path, with_root_path=with_root_path)
 
+    # cache the info of each media file so movies sharing the same file are not re-queried
+    _MISSING = object()
+    info_cache: dict = {}
+
     # make movies specified in configuration file
     for mov in cfg.movies:
         if show_file_info:
+            info = info_cache.get(mov.image_file, _MISSING)
+            if info is _MISSING:
+                info = mov.image_file.info
+                info_cache[mov.image_file] = info
             try:
                 with pd.option_context("display.max_columns", None, "display.max_colwidth", None,
                                        "display.width", 1000):
-                    log.info(f"file {cfg_path}\r\n{mov.image_file.info.squeeze(axis=0)}")
+                    log.info(f"file {cfg_path}\r\n{info.squeeze(axis=0)}")
             except Exception as e:
                 log.error(e)
                 log.error(traceback.format_exc())

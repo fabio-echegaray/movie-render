@@ -7,6 +7,7 @@ from roifile import ImagejRoi
 
 if TYPE_CHECKING:
     from movierender.overlays import Overlay
+    from fileops.export.config import ConfigCopyright
 
 
 class ConfigMovie(NamedTuple):
@@ -31,4 +32,5 @@ class ConfigMovie(NamedTuple):
     layout: str
     include_tracks: Union[str, bool]
     overlays: List['Overlay'] | None
+    copyright: Union["ConfigCopyright", None] = None
     max_width: int = 2880
