@@ -36,11 +36,16 @@ Legend: [OPEN] = pending, [DONE] = fixed
               `@dataclass` with `field(default=...)` and `__post_init__`
               validation would eliminate defensive code in header readers.
 
-  [OPEN] 55. Missing re-exports in overlays/__init__.py and plugins/__init__.py
+  [DONE] 55. Missing re-exports in overlays/__init__.py and plugins/__init__.py
               — `Arrow`, `ArrowOverlayPlugin`, `Position` defined but not
               exported from `movierender.overlays`.
               — `movierender.plugins/__init__.py` is completely empty.
               Fix: add explicit re-exports.
+              — Implemented: Arrow, ArrowOverlayPlugin, Position exported
+                from overlays/__init__.py. OverlayPlugin re-exported from
+                plugins/__init__.py. Circular import fixed by importing
+                Overlay from movierender.overlays.overlay instead of
+                movierender.overlays.
 
   [DONE] 56. Variable `id` shadows built-in (`_arrow.py:16`, `plugins/overlay.py:14`)
                — Parameters named `id` shadow the built-in `id()` function.
