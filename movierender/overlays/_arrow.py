@@ -3,9 +3,11 @@ import numpy as np
 
 from movierender.plugins.overlay import OverlayPlugin
 from .overlay import Overlay, get_kwargs
+from movierender.config import LineProperties
 
 
 class ArrowOverlayPlugin(OverlayPlugin):
+    """Arrow overlay plugin with custom graphics options."""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -13,13 +15,15 @@ class ArrowOverlayPlugin(OverlayPlugin):
 
 
 class Arrow(Overlay):
-    def __init__(self, x, y, length=1, angle=0, overlay_id="default_arrow", c="yellow", style_dict=None, frame=None, **kwargs):
+    def __init__(self, x, y, length=1, angle=0, overlay_id="default_arrow", c="yellow", style_dict=None, frame=None,
+                 line_props=None, **kwargs):
         self.overlay_id = overlay_id
         self._xy = (x, y)
         self._length = length
         self._angle = angle
         self._angle_rad = np.deg2rad(angle)
-        self._c = mcolors.to_rgb(c)
+        self._line_props = line_props if line_props is not None else LineProperties(color=c)
+        self._c = mcolors.to_rgb(self._line_props.color)
         self._style = style_dict
         kwargs.update({"frame": frame})
 
@@ -35,8 +39,9 @@ class Arrow(Overlay):
                                 keys_and_default_values=dict(
                                     frame=None,
                                     z=None,
+                                    c=self._c,
                                 ))
-        fr, _z = def_values
+        fr, _z, c = def_values
 
         if fr is not None and (self._renderer is not None or frame is not None):
             if self._renderer is not None and fr != self._renderer.frame:
@@ -51,4 +56,4 @@ class Arrow(Overlay):
         x, y = self._xy
         xb, yb = x + length * np.cos(self._angle_rad), y + length * np.sin(self._angle_rad)
         ax.annotate("", xytext=(xb, yb), xy=(x, y),
-                    arrowprops=dict(arrowstyle="-|>", fc=self._c, ec=self._c, shrinkA=0), )
+                    arrowprops=dict(arrowstyle="-|>", fc=c, ec=c, shrinkA=0), )

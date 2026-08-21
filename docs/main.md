@@ -171,3 +171,133 @@ Trackmate data can be made available to the rendering of a movie.
 The relevant parameters for this section are:
 - `path`: path of where the Trackmate file is located.
 
+
+# Graphics Options
+
+MovieRender supports composable graphics parameters for both MOVIE and PANEL sections.
+These parameters can be defined at:
+
+* Project level: in defaults.cfg (auto-detected or via --defaults-file flag - point #71)
+* Individual section: each configuration file has its own values
+
+## Property Classes
+
+The graphics system uses three composable property classes:
+
+- **TextProperties**: Font name, size, and color for text elements
+- **LineProperties**: Color and width for line elements
+- **BackgroundProperties**: Background fill color
+
+## MOVIE Section Parameters
+
+### Scalebar Parameters
+```ini
+scalebar.font_name = Arial        # Font for scalebar text (default: Arial)
+scalebar.font_size = 9            # Font size in points (default: 12)
+scalebar.color = white            # Scalebar text color (default: white)
+scalebar.line_color = white       # Scalebar line color (default: white)
+scalebar.line_width = 3           # Scalebar line width in points (default: 1.0)
+```
+
+### Timestamp Parameters
+```ini
+timestamp.font_name = Arial       # Font for timestamp text (default: Arial)
+timestamp.font_size = 12          # Font size in points (default: 12)
+timestamp.color = white           # Timestamp text color (default: white)
+```
+
+### Channel Label Parameters
+These parameters control the appearance of channel name text labels overlaid on images.
+Note: These are separate from `[CHANNEL-N]` sections which define per-channel rendering parameters (color, intensity, etc.).
+```ini
+channel_label.font_name = Arial   # Font for channel labels (default: Arial)
+channel_label.font_size = 7       # Font size in points (default: 12)
+channel_label.color = white       # Channel label text color (default: white)
+```
+
+### Suptitle Parameters (Figure Title)
+```ini
+suptitle.font_name = Arial        # Font for figure suptitle (default: Arial)
+suptitle.font_size = 12           # Font size in points (default: 12)
+suptitle.color = black            # Suptitle text color (default: white)
+```
+
+### Background Parameters
+```ini
+background.color = black          # Figure background color (default: black)
+```
+
+### Example MOVIE Configuration
+```ini
+[DATA]
+image = example.ome.tif
+frame = all
+channel = [0,1]
+override_dt = 10
+
+[MOVIE]
+title = My Title
+description = A sample rendering of time series data
+fps = 10
+layout = twoch-comp
+zstack = all-max
+filename = output.mp4
+
+# Graphics parameters using dot-separated keys
+scalebar.font_size = 9
+scalebar.line_color = yellow
+scalebar.line_width = 3
+timestamp.font_size = 10
+timestamp.color = cyan
+channel_label.font_size = 8
+suptitle.font_size = 14
+suptitle.color = darkblue
+background.color = black
+```
+
+## PANEL Section Parameters
+
+### Scalebar Parameters
+```ini
+scalebar.font_name = Arial        # Font for scalebar text (default: Arial)
+scalebar.font_size = 12           # Font size in points (default: 12)
+scalebar.color = white            # Scalebar text color (default: white)
+scalebar.line_color = white       # Scalebar line color (default: white)
+scalebar.line_width = 1           # Scalebar line width in points (default: 1.0)
+```
+
+### Timestamp Parameters
+```ini
+timestamp.font_name = Arial       # Font for timestamp text (default: Arial)
+timestamp.font_size = 12          # Font size in points (default: 12)
+timestamp.color = white           # Timestamp text color (default: white)
+```
+
+### Background Parameters
+```ini
+background.color = white          # Figure background color (default: black)
+```
+
+### Example PANEL Configuration
+```ini
+[PANEL]
+title = Channel Analysis Overview
+description = Multi-channel time series display
+layout = time-array
+filename = panel_output.pdf
+
+# Graphics parameters
+scalebar.font_size = 10
+scalebar.line_color = white
+timestamp.font_size = 8
+timestamp.color = yellow
+background.color = white
+```
+
+## Color Formats
+
+All color parameters accept:
+- CSS color names: `'white'`, `'black'`, `'red'`, `'yellow'`, etc.
+- RGB tuples: `(255, 0, 68)`
+- Hex strings: `'#FF0D44'`
+

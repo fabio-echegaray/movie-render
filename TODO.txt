@@ -181,13 +181,21 @@ Legend: [OPEN] = pending, [DONE] = fixed
                from terminal commands. This will potentially affect FileOps,
                so include a point in their TODO.txt as well.
 
-  [OPEN] 58. Specify color palettes and layout parameters for movies and panels
+  [DONE] 58. Specify color palettes and graphic element parameters for movies and panels
                — Allow customizing title font size, title color, background
                color, channel label color, label font, spacing, etc.
                — Make the list of configurable parameters extensive.
                — Separate the parsing of these graphic-state options from
                their rendering into dedicated dataclasses/structures so
                they are not scattered across the renderers.
+               — Implemented: Composable property classes (TextProperties,
+                 LineProperties, BackgroundProperties) in _cfg_graphics.py.
+                 ConfigMovie has: scalebar_text, scalebar_line, timestamp,
+                 channel_text, suptitle, background. ConfigPanel has:
+                 scalebar_text, scalebar_line, timestamp, background.
+                 Header readers parse dotted config keys (e.g.
+                 scalebar.font_size=9) using parsing helpers. Layouts pass
+                 properties to overlays. All 104 tests pass.
 
   [OPEN] 59. Add user documentation for project-level defaults (point 51)
               — Point 51 (project-folder-level configuration via defaults.cfg)

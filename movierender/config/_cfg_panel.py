@@ -7,6 +7,9 @@ from roifile import ImagejRoi
 
 if TYPE_CHECKING:
     from movierender.overlays import OverlayPlugin
+    from movierender.config import (
+        TextProperties, LineProperties, BackgroundProperties
+    )
 
 
 class ConfigPanel(NamedTuple):
@@ -36,5 +39,9 @@ class ConfigPanel(NamedTuple):
     draw_frame_in_timestamp: bool
     filename: str
     layout: str
-    fontsize: int
-    overlays: List['OverlayPlugin'] | None
+    # Graphics parameters
+    scalebar_text: Union['TextProperties', None] = None
+    scalebar_line: Union['LineProperties', None] = None
+    timestamp: Union['TextProperties', None] = None
+    background: Union['BackgroundProperties', None] = None
+    overlays: List['OverlayPlugin'] | None = None
