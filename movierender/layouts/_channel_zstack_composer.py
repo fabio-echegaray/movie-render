@@ -7,6 +7,7 @@ from fileops.logger import get_logger
 import movierender.overlays as ovl
 from movierender import MovieRenderer, plt, gridspec
 from movierender.config import ConfigMovie
+from movierender.config import TextProperties, LineProperties
 from movierender.overlays.pixel_tools import PixelTools
 from movierender.render.pipelines import NullImage, CompositeRGBImage
 from ._base_composer import BaseLayoutComposer
@@ -31,6 +32,12 @@ class LayoutZStackColumnComposer(BaseLayoutComposer):
         movie = self._movie_configuration_params
         t = PixelTools(movie.image_file)
 
+        # Get graphics parameters from config or use defaults
+        sbar_text = movie.scalebar_text or TextProperties(font_size=9)
+        sbar_line = movie.scalebar_line or LineProperties(width=3)
+        tsmp_text = movie.timestamp or TextProperties()
+        ch_text = movie.channel_label or TextProperties(font_size=7)
+
         imf = movie.image_file
         z_ax_dct = dict()
         if imf.n_zstacks > 1:
@@ -49,7 +56,15 @@ class LayoutZStackColumnComposer(BaseLayoutComposer):
             z_ax_dct[0] = fig.gca()
             self.ax_lst.append(fig.gca())
 
-        fig.suptitle(self.fig_title)
+        # Apply suptitle styling from config
+        suptitle_props = movie.suptitle or TextProperties()
+        fig.suptitle(self.fig_title, fontname=suptitle_props.font_name,
+                     fontsize=suptitle_props.font_size, color=suptitle_props.color)
+
+        # Apply background color from config
+        bg_props = movie.background
+        if bg_props is not None:
+            fig.patch.set_facecolor(bg_props.color)
         self.renderer = MovieRenderer(fig=fig,
                                       config=movie,
                                       fontdict={'size': 12},
@@ -59,11 +74,13 @@ class LayoutZStackColumnComposer(BaseLayoutComposer):
         ch_cfg = channel_configuration(movie.channel_render_parameters)
         for ax, z_ix in zip(self.ax_lst, imf.zstacks):
             if movie.scalebar is not None and movie.scalebar > 0:
-                self.renderer += ovl.ScaleBar(um=movie.scalebar, lw=3,
+                self.renderer += ovl.ScaleBar(um=movie.scalebar, lw=sbar_line.width,
                                               xy=t.xy_ratio_to_um(0.80, 0.05),
-                                              fontdict={'size': 9},
+                                              text_props=sbar_text, line_props=sbar_line,
+                                              fontdict={'size': sbar_text.font_size},
                                               ax=ax)
-            self.renderer += ovl.Timestamp(xy=t.xy_ratio_to_um(0.02, 0.95), va='center', ax=ax)
+            self.renderer += ovl.Timestamp(xy=t.xy_ratio_to_um(0.02, 0.95), va='center',
+                                           text_props=tsmp_text, ax=ax)
             self.renderer += CompositeRGBImage(
                 ax=ax,
                 zstack=z_ix,
@@ -71,7 +88,9 @@ class LayoutZStackColumnComposer(BaseLayoutComposer):
             )
             self.renderer += ovl.Text(f'z{z_ix:02d}',
                                       xy=t.xy_ratio_to_um(0.70, 0.95),
-                                      fontdict={'size': 7, 'color': 'white'}, ax=ax)
+                                      text_props=ch_text,
+                                      fontdict={'size': ch_text.font_size, 'color': ch_text.color},
+                                      ax=ax)
 
             self._apply_overlays(ax, "z", z_ix)
 

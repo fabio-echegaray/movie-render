@@ -1,11 +1,13 @@
 from .overlay import Overlay, get_kwargs
+from movierender.config import TextProperties
 
 
 class Text(Overlay):
-    def __init__(self, text, **kwargs):
+    def __init__(self, text, text_props=None, **kwargs):
         if text is None:
             raise ValueError("Need text to render on axes.")
         self.text = text
+        self._text_props = text_props if text_props is not None else TextProperties()
         self._kwargs = kwargs
         super().__init__(**kwargs)
 
@@ -30,4 +32,6 @@ class Text(Overlay):
             xy = self._kwargs["xy"] if "xy" in self._kwargs else None
 
         x0, y0 = xy
-        ax.text(x0, y0, self.text, color=color, fontdict=fontdict, verticalalignment=va, zorder=zorder)
+        ax.text(x0, y0, self.text, color=self._text_props.color, fontdict=fontdict,
+                fontname=self._text_props.font_name, fontsize=self._text_props.font_size,
+                verticalalignment=va, zorder=zorder)

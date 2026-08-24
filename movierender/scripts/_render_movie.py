@@ -49,19 +49,38 @@ def render_movie_cmd(
             bool, typer.Option(help="Set true if you want to overwrite the file")] = False,
         run_test: Annotated[
             bool, typer.Option(help="Renders first frame only when true")] = False,
+        defaults_file: Annotated[
+            Path, typer.Option(help="Path to a project-level defaults file whose [DEFAULT] section "
+                                    "applies to all sections of the configuration file. If not given, "
+                                    "a file named 'defaults.cfg' in the current folder is used if it exists.")] = None,
 ):
     if cfg_path.parent.name[0:3] == "bad":
         return
+
+    if defaults_file is None:
+        log.debug(f"Found file with default information.")
+        auto = Path('.') / "defaults.cfg"
+        if auto.exists():
+            defaults_file = auto.absolute()
+
     log.info(f"Reading configuration file {cfg_path}")
-    cfg = read_config(cfg_path, with_root_path=with_root_path)
+    cfg = read_config(cfg_path, with_root_path=with_root_path, defaults_file=defaults_file)
+
+    # cache the info of each media file so movies sharing the same file are not re-queried
+    _MISSING = object()
+    info_cache: dict = {}
 
     # make movies specified in configuration file
     for mov in cfg.movies:
         if show_file_info:
+            info = info_cache.get(mov.image_file, _MISSING)
+            if info is _MISSING:
+                info = mov.image_file.info
+                info_cache[mov.image_file] = info
             try:
                 with pd.option_context("display.max_columns", None, "display.max_colwidth", None,
                                        "display.width", 1000):
-                    log.info(f"file {cfg_path}\r\n{mov.image_file.info.squeeze(axis=0)}")
+                    log.info(f"file {cfg_path}\r\n{info.squeeze(axis=0)}")
             except Exception as e:
                 log.error(e)
                 log.error(traceback.format_exc())

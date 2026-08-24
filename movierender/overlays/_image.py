@@ -1,6 +1,7 @@
 from fileops.logger import get_logger
 
 from .overlay import Overlay, get_kwargs
+from movierender.config import TextProperties, LineProperties
 
 
 class ScaleBar(Overlay):
@@ -21,9 +22,16 @@ class ScaleBar(Overlay):
                                     alpha=1.0,
                                     zorder=1,
                                     show_text=True,
-                                    fontdict=None)
+                                    fontdict=None,
+                                    text_props=None,
+                                    line_props=None)
                                 )
-        xy, um, scalebar_length, thickness, lw, alpha, zorder, show_text, fontdict = def_values
+        xy, um, scalebar_length, thickness, lw, alpha, zorder, show_text, fontdict, text_props, line_props = def_values
+
+        if text_props is None:
+            text_props = TextProperties()
+        if line_props is None:
+            line_props = LineProperties()
 
         if um is None and scalebar_length is None:
             self.log.warning("no scalebar length when trying to plot overlay.")
@@ -32,11 +40,13 @@ class ScaleBar(Overlay):
         lw = max(lw, thickness)
         x0, y0 = xy
 
-        ax.plot([x0, x0 + um], [y0, y0], c='w', lw=lw, zorder=1000)
+        ax.plot([x0, x0 + um], [y0, y0], c=line_props.color, lw=lw, zorder=1000)
         if show_text:
             # Add text below the scalebar
             sbar_lw2_um = 352.77778 * lw / 100 / 2
-            ax.text(x0 + um / 2, y0 + sbar_lw2_um, f'{um} um', color='w', fontdict=fontdict,
+            ax.text(x0 + um / 2, y0 + sbar_lw2_um, f'{um} um',
+                    color=text_props.color, fontdict=fontdict,
+                    fontname=text_props.font_name, fontsize=text_props.font_size,
                     horizontalalignment='center', zorder=1000)
 
 
@@ -81,9 +91,13 @@ class Timestamp(Overlay):
                                     color='white',
                                     alpha=1.0,
                                     zorder=1,
-                                    frame=self._renderer.frame if self._renderer is not None else None)
+                                    frame=self._renderer.frame if self._renderer is not None else None,
+                                    text_props=None)
                                 )
-        xy, string_format, timestamps, draw_frame, time_interval, fontdict, va, color, alpha, zorder, frame = def_values
+        xy, string_format, timestamps, draw_frame, time_interval, fontdict, va, color, alpha, zorder, frame, text_props = def_values
+
+        if text_props is None:
+            text_props = TextProperties(color=color)
 
         if frame is None or timestamps is None:
             self.log.warning("incomplete time information was given when trying to plot their overlay.")
@@ -97,4 +111,6 @@ class Timestamp(Overlay):
         txt = secs_to_string(secs, string_format)
 
         txt = f'{frame}  {txt}' if draw_frame else txt
-        ax.text(x0, y0, txt, color=color, fontdict=fontdict, verticalalignment=va, zorder=zorder)
+        ax.text(x0, y0, txt, color=text_props.color, fontdict=fontdict,
+                fontname=text_props.font_name, fontsize=text_props.font_size,
+                verticalalignment=va, zorder=zorder)

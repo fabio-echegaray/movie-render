@@ -2,13 +2,13 @@ import copy
 from pathlib import Path
 from typing import List, Dict
 
-import fileops
 from fileops.export.config_channel_section import update_channel_config_with_section_overrides
 from fileops.export.config_sections import process_overrides_of_section
 from fileops.logger import get_logger
 from fileops.plugins import HeaderReaderPlugin
 
 from movierender.config import ConfigPanel
+from movierender.config import _parse_text_props, _parse_line_props, _parse_background_props
 from movierender.plugins.fileops._movie_header_reader import load_overlay_plugins
 
 _rowcol_dict = {
@@ -60,7 +60,8 @@ class PanelHeaderReaderPlugin(HeaderReaderPlugin):
         cfg, param_override, img_file, roi = self._cfg, self._param_override, self._img_file, self._roi
 
         # find OVERLAY parsers from plugins
-        overlays = load_overlay_plugins(self._cfg_path, root_path=self._root_path)
+        overlays = load_overlay_plugins(self._cfg_path, root_path=self._root_path,
+                                        cfg=cfg, img_file=img_file, param_override=param_override, roi=roi)
 
         # process PANEL sections
         panel_def = list()
@@ -81,6 +82,12 @@ class PanelHeaderReaderPlugin(HeaderReaderPlugin):
                 ovr_txt = cfg[pan]["overlays"]
                 if ovr_txt[0] == "[" and ovr_txt[-1] == "]":
                     ovr_ids = [s.strip() for s in ovr_txt[1:-1].split(",") if len(s) > 0]
+
+            # parse graphics properties from dotted keys
+            scalebar_text = _parse_text_props(cfg[pan], "scalebar")
+            scalebar_line = _parse_line_props(cfg[pan], "scalebar")
+            timestamp = _parse_text_props(cfg[pan], "timestamp")
+            background = _parse_background_props(cfg[pan])
 
             panel_def.append(ConfigPanel(
                 header=pan,
@@ -112,7 +119,10 @@ class PanelHeaderReaderPlugin(HeaderReaderPlugin):
                 multipage=cfg[pan]["multipage"].lower() in ["true", "yes"] if "multipage" in cfg[pan] else False,
                 filename=filename,
                 layout=cfg[pan]["layout"] if "layout" in cfg[pan] else "time-array",
-                fontsize=cfg[pan]["fontsize"] if "fontsize" in cfg[pan] else 7,
-                overlays=[ovr for ovr in overlays if ovr.id in ovr_ids]
+                scalebar_text=scalebar_text,
+                scalebar_line=scalebar_line,
+                timestamp=timestamp,
+                background=background,
+                overlays=[ovr for ovr in overlays if ovr.overlay_id in ovr_ids]
             ))
         return panel_def

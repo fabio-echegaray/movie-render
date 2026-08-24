@@ -3,6 +3,7 @@ from fileops.logger import get_logger
 import movierender.overlays as ovl
 from movierender import MovieRenderer, CompositeRGBImage, plt
 from movierender.config import ConfigMovie
+from movierender.config import TextProperties, LineProperties
 from movierender.overlays.pixel_tools import PixelTools
 from ._base_composer import BaseLayoutComposer
 from ._ch_config import channel_configuration
@@ -23,8 +24,21 @@ class LayoutCompositeComposer(BaseLayoutComposer):
         movie = self._movie_configuration_params
         t = PixelTools(movie.image_file)
 
+        # Get graphics parameters from config or use defaults
+        sbar_text = movie.scalebar_text or TextProperties(font_size=9)
+        sbar_line = movie.scalebar_line or LineProperties(width=3)
+        tsmp_text = movie.timestamp or TextProperties()
+
         fig = plt.figure(figsize=(5.5, 5.5), dpi=self.dpi)
-        fig.suptitle(self.fig_title)
+        # Apply suptitle styling from config
+        suptitle_props = movie.suptitle or TextProperties()
+        fig.suptitle(self.fig_title, fontname=suptitle_props.font_name,
+                     fontsize=suptitle_props.font_size, color=suptitle_props.color)
+
+        # Apply background color from config
+        bg_props = movie.background
+        if bg_props is not None:
+            fig.patch.set_facecolor(bg_props.color)
 
         # only one axes is rendered
         ax = fig.gca()
@@ -36,11 +50,13 @@ class LayoutCompositeComposer(BaseLayoutComposer):
                                       fontdict={'size': 12},
                                       **self._renderer_params)
         if movie.scalebar is not None and movie.scalebar > 0:
-            self.renderer += ovl.ScaleBar(um=movie.scalebar, lw=3,
+            self.renderer += ovl.ScaleBar(um=movie.scalebar, lw=sbar_line.width,
                                           xy=t.xy_ratio_to_um(0.80, 0.05),
-                                          fontdict={'size': 9},
+                                          text_props=sbar_text, line_props=sbar_line,
+                                          fontdict={'size': sbar_text.font_size},
                                           ax=ax)
-        self.renderer += ovl.Timestamp(xy=t.xy_ratio_to_um(0.02, 0.95), va='center', ax=ax)
+        self.renderer += ovl.Timestamp(xy=t.xy_ratio_to_um(0.02, 0.95), va='center',
+                                       text_props=tsmp_text, ax=ax)
         self.renderer += CompositeRGBImage(
             ax=ax,
             zstack=movie.zstack,

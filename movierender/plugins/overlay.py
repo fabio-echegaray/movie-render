@@ -1,6 +1,6 @@
 from fileops.plugins.base_plugin import BaseFileOpsPlugin
 
-from movierender.overlays import Overlay
+from movierender.overlays.overlay import Overlay
 
 
 class OverlayPlugin(BaseFileOpsPlugin):
@@ -11,7 +11,7 @@ class OverlayPlugin(BaseFileOpsPlugin):
 
         self._args = args
         self._kwargs = kwargs
-        self.id = kwargs.get("id")
+        self.overlay_id = kwargs.get("overlay_id")
 
     @property
     def overlay(self):

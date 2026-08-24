@@ -23,12 +23,22 @@ def render_panel_cmd(
             bool, typer.Option(help="To show file metadata information before rendering the movie")] = True,
         # overwrite_file: Annotated[
         #     bool, typer.Option(help="Set true if you want to overwrite the file")] = False,
+        defaults_file: Annotated[
+            Path, typer.Option(help="Path to a project-level defaults file whose [DEFAULT] section "
+                                    "applies to all sections of the configuration file. If not given, "
+                                    "a file named 'defaults.cfg' in the current folder is used if it exists.")] = None,
 ):
     if cfg_path.parent.name[0:3] == "bad":
         return
 
+    if defaults_file is None:
+        log.debug(f"Found file with default information.")
+        auto = Path('.') / "defaults.cfg"
+        if auto.exists():
+            defaults_file = auto.absolute()
+
     log.info(f"Reading configuration file {cfg_path}")
-    cfg = read_config(cfg_path, with_root_path=with_root_path)
+    cfg = read_config(cfg_path, with_root_path=with_root_path, defaults_file=defaults_file)
 
     if not hasattr(cfg, "panels") or len(cfg.panels) == 0:
         log.warning(f"No panels found in configuration file.")

@@ -9,11 +9,23 @@ Legend: [OPEN] = pending, [DONE] = fixed
 ────────────────
 
   [OPEN]  1. `parallel | True` always forces parallel (`_render_movie.py:37`)
-              — `|` is bitwise OR (`True | False` = 1), so every movie
-              renders in parallel mode regardless of the flag. Comment says
-              "remove True value set for debugging". This is the gate that
-              forces all renders into the broken parallel path.
-              Fix: change `parallel | True` to just `parallel`.
+               — `|` is bitwise OR (`True | False` = 1), so every movie
+               renders in parallel mode regardless of the flag. Comment says
+               "remove True value set for debugging". This is the gate that
+               forces all renders into the broken parallel path.
+               Fix: change `parallel | True` to just `parallel`.
+
+  [DONE] 53. FrameNotFoundError silently swallowed (`_sequential.py:166-167`)
+               — `except FrameNotFoundError: continue` — no log message,
+               no warning. Missing frames are silently omitted from output.
+               Fix: log a warning before continuing.
+               — Now logs `frame {fr} not found, skipping (will be omitted
+               from the movie)` before continuing.
+
+  [OPEN] 54. Temp directory not cleaned up on exception (`_sequential.py:207`)
+              — `shutil.rmtree(self._tmp)` not in `try/finally` block.
+              If `write_videofile()` raises, the temp dir is orphaned.
+              Fix: wrap cleanup in `try/finally`.
 
 
 2. CODE QUALITY — DUPLICATION & ARCHITECTURE
@@ -23,6 +35,25 @@ Legend: [OPEN] = pending, [DONE] = fixed
               — 23+ fields, immutable, no defaults, no validation. A
               `@dataclass` with `field(default=...)` and `__post_init__`
               validation would eliminate defensive code in header readers.
+
+  [DONE] 55. Missing re-exports in overlays/__init__.py and plugins/__init__.py
+              — `Arrow`, `ArrowOverlayPlugin`, `Position` defined but not
+              exported from `movierender.overlays`.
+              — `movierender.plugins/__init__.py` is completely empty.
+              Fix: add explicit re-exports.
+              — Implemented: Arrow, ArrowOverlayPlugin, Position exported
+                from overlays/__init__.py. OverlayPlugin re-exported from
+                plugins/__init__.py. Circular import fixed by importing
+                Overlay from movierender.overlays.overlay instead of
+                movierender.overlays.
+
+  [DONE] 56. Variable `id` shadows built-in (`_arrow.py:16`, `plugins/overlay.py:14`)
+               — Parameters named `id` shadow the built-in `id()` function.
+               Fix: rename to `identifier` or `overlay_id`.
+               — Renamed to `overlay_id` in `Arrow.__init__`,
+               `OverlayPlugin.__init__`, and the header readers
+               (`ovr.overlay_id in ovr_ids`, `ArrowOverlayPlugin(*xy,
+               overlay_id=...)`). The config-file key `id` is unchanged.
 
 
 3. PERFORMANCE
@@ -47,21 +78,147 @@ Legend: [OPEN] = pending, [DONE] = fixed
                (no further movies), or press Ctrl-C twice to terminate
                immediately. Currently, any KeyboardInterrupt kills the entire
                batch mid-render.
-               Fix: catch KeyboardInterrupt in the loop; first occurrence
-               finishes current render and breaks, second raises.
+               Fix: two-phase SIGINT handler in `_render_folder.py`:
+               first Ctrl-C sets `fileops.__STOP_REQUESTED` and replaces
+               handler; current render finishes normally, folder loop checks
+               `__STOP_REQUESTED` after each render and breaks. Second Ctrl-C
+               sets `fileops.__THREAD_STOP_REQUESTED` (tells z-projection
+               background thread to stop) and raises `KeyboardInterrupt` for
+               immediate termination. `_base_composer.py` no longer catches
+               KeyboardInterrupt in the sequential path (unnecessary — first
+               press doesn't raise one, second press propagates through).
 
   [DONE] 47b. Z-projection hang on Ctrl-C (`_base_composer.py:212`)
                — First implementation of point 47 caused z-projection
                background threads to hang the system. Pressing Ctrl-C stopped
                all z-projection threads mid-computation, leaving the main
                render loop waiting for images that would never arrive.
-               Fix: catch KeyboardInterrupt in _base_composer.py sequential
-               path (no re-raise) so the current render completes fully.
-               Do NOT set __IS_EXITING (it causes z_projection() to return
-               None, breaking the current render). Set stop_requested in
-               render_folder_cmd to prevent subsequent renders.
+               Fix: two-event approach — `__STOP_REQUESTED` for the folder
+               loop (first Ctrl-C), `__THREAD_STOP_REQUESTED` for background
+               threads (second Ctrl-C / SIGTERM). Background thread checks
+               `__THREAD_STOP_REQUESTED` and exits when set.
                FileOps: removed SystemExit from _zproject() except clause
                so second Ctrl-C terminates threads immediately.
+               FileOps: `__IS_EXITING` renamed to `__THREAD_STOP_REQUESTED`.
 
-Last point number: 47
+5. CROSS-PROJECT
+────────────────
+
+  [DONE] 48. Check and align dependencies between FileOps and MovieRender
+              — MovieRender depended on imageio, roifile, tifffile, and
+              typing_extensions without listing them (relied on transitive
+              installs). Added all four explicitly.
+              — numpy spec tightened to `>=1.24,<2.0.0` to match FileOps
+              upper bound (numpy 2.x would break FileOps).
+              — FileOps pandas spec bumped from `>=1.2` to `>=2` to match
+              MovieRender requirement (projects are always co-installed).
+
+  [DONE] 49. Upgrade numpy to >=2.0.0 across both projects
+              — numpy 1.x is EOL; 2.x brings performance improvements and
+              new APIs. Breaking changes to fix:
+                * np.isscalar → np.ndim(obj) == 0  (overlay.py:38)
+                * np.isreal  → np.isrealobj        (_z_array.py:56,
+                                                    _time_array.py:46)
+                * np.NaN     → np.nan              (_mmanager_metadata.py:94,103)
+              — Both pyproject.toml files updated from `>=1.24,<2.0.0` to
+                `>=2.0.0` (upper bound removed).
+
+  [OPEN] 50. Add classifiers for Python 3.12, 3.13, 3.14 to pyproject.toml
+              — Keep existing `requires-python = ">=3.9"` and classifiers
+              for 3.9, 3.10, 3.11; add 3.12, 3.13, and 3.14 so the full
+              range of supported versions is declared.
+
+  [DONE] 51. Project-folder-level configuration with section-level overrides
+              — Add the ability to place a project-level config file (e.g.
+              in the root folder passed to `render_folder`) that sets
+              default rendering options (rescale, gamma, colors, etc.).
+              — Individual configuration file sections can override these
+              defaults, and section-level parameters take highest priority.
+              — This avoids repeating the same options across many config
+              files in the same project folder.
+              — Implementation: `render folder` auto-detects a file named
+              `defaults.cfg` in the root folder (or an explicit
+              `--defaults-file` path) and passes it to every render call.
+              FileOps merges it via configparser's `[DEFAULT]` section
+              (`read_config`, `read_data_section`,
+              `update_overrides_from_channel_sections`,
+              `check_if_output_files_are_created` and
+              `HeaderReaderPlugin` all accept a `defaults_file` argument,
+              read first so section values win). The defaults file is
+              excluded from the folder render list.
+              — Tests: FileOps `test/test_config_defaults.py`,
+              MovieRender `test/test_render_folder_defaults.py`.
+
+  [DONE] 52. Render commands access media files excessively before rendering
+              — Profiled the render flow: `read_config()` opened/read the
+              media file once for projections (DATA section) and then AGAIN
+              inside every header-reader plugin that lazily loaded its own
+              data section (`HeaderReaderPlugin._img_file`/`_param_override`).
+              A movie-only config caused 2 media loads; adding ROI or arrow
+              overlay sections raised it to 3-4 loads per config file.
+              — FileOps fix (imgfileops, see FileOps TODO #19):
+                * `HeaderReaderPlugin.__init__` accepts pre-loaded
+                  `cfg`/`img_file`/`param_override`/`roi` (seeded via a
+                  sentinel so a legitimate `roi=None` is still honored);
+                  `_load_data_section()` only fills slots that were not
+                  provided.
+                * `read_config()` and `check_if_output_files_are_created()`
+                  pass their already-loaded objects into the plugins.
+              — MovieRender fix (call patterns):
+                * `load_overlay_plugins()` and the nested ROI/OVERLAY
+                  plugin instantiation in `_movie_header_reader.py` (and
+                  the panel reader) propagate the shared data-section
+                  objects, so overlay/ROI readers reuse the loaded
+                  `img_file` instead of re-opening the file.
+                * `.info` for a shared `image_file` is computed once per
+                  config file (`_render_configfile.py`, `_render_movie.py`,
+                  `_render_projection.py`), removing repeated stat() calls
+                  when several sections point at the same file.
+              — Result: exactly one media-file load per config file.
+
+  [OPEN] 57. Make DEBUG level and lower logs optional in terminal commands
+               — Add an option to suppress DEBUG-level (and lower) log output
+               from terminal commands. This will potentially affect FileOps,
+               so include a point in their TODO.txt as well.
+
+  [DONE] 58. Specify color palettes and graphic element parameters for movies and panels
+               — Allow customizing title font size, title color, background
+               color, channel label color, label font, spacing, etc.
+               — Make the list of configurable parameters extensive.
+               — Separate the parsing of these graphic-state options from
+               their rendering into dedicated dataclasses/structures so
+               they are not scattered across the renderers.
+               — Implemented: Composable property classes (TextProperties,
+                 LineProperties, BackgroundProperties) in _cfg_graphics.py.
+                 ConfigMovie has: scalebar_text, scalebar_line, timestamp,
+                 channel_text, suptitle, background. ConfigPanel has:
+                 scalebar_text, scalebar_line, timestamp, background.
+                 Header readers parse dotted config keys (e.g.
+                 scalebar.font_size=9) using parsing helpers. Layouts pass
+                 properties to overlays. All 104 tests pass.
+
+  [OPEN] 59. Add user documentation for project-level defaults (point 51)
+              — Point 51 (project-folder-level configuration via defaults.cfg)
+              lacks user-facing docs. Add a section to socs/main.md that
+              explains placing defaults.cfg in a render folder, the
+              `[DEFAULT]`, `[COPYRIGHT]`, and `[CHANNEL-N]` override precedence,
+              and how an explicit `--defaults-file` path overrides autodetection.
+
+  [OPEN] 60. `zstack = all-max` (and similar) in export-definition logs an ERROR
+              instead of a warning
+              — When an export_definition.cfg contains a MOVIE section with a
+              `zstack` value that is not a parseable integer list (e.g.
+              `zstack = all-max` as a fallback for "all z-stacks"), the
+              ParameterOverride parser logs:
+                ERROR:export: error parsing zstacks in section <Section: MOVIE>:
+                invalid literal for int() with base 10: 'all-max'
+              The parse does not crash (the image's zstacks are used as a
+              fallback), but an ERROR-level log is misleading for what is a
+              benign/unknown value, and pollutes logs.
+              Fix: treat an unparseable/non-list `zstack` value as "all"
+              (log at DEBUG/WARNING level instead of ERROR) and fall back to
+              the image stack's z-slices silently, as is already done for the
+              default `zstack_fn = all-max` fallback.
+
+Last point number: 60
 

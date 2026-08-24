@@ -71,15 +71,33 @@ def render_projection_cmd(
             bool, typer.Option(help="To show file metadata information before rendering the movie")] = True,
         overwrite_projection_file: Annotated[
             bool, typer.Option(help="Set true if you want to overwrite the file")] = False,
+        defaults_file: Annotated[
+            Path, typer.Option(help="Path to a project-level defaults file whose [DEFAULT] section "
+                                    "applies to all sections of the configuration file. If not given, "
+                                    "a file named 'defaults.cfg' in the current folder is used if it exists.")] = None,
 ):
-    log.info(f"Reading configuration file {cfg_path}")
-    cfg = read_config(cfg_path, with_root_path=with_root_path)
+    if defaults_file is None:
+        log.debug(f"Found file with default information.")
+        auto = Path('.') / "defaults.cfg"
+        if auto.exists():
+            defaults_file = auto.absolute()
 
-    # make movies specified in configuration file
+    log.info(f"Reading configuration file {cfg_path}")
+    cfg = read_config(cfg_path, with_root_path=with_root_path, defaults_file=defaults_file)
+
+    # cache the info of each media file so projections sharing the same file are not re-queried
+    _MISSING = object()
+    info_cache: dict = {}
+
+    # make projections specified in configuration file
     for prj in cfg.projections:
         if show_file_info:
+            info = info_cache.get(prj.image_file, _MISSING)
+            if info is _MISSING:
+                info = prj.image_file.info
+                info_cache[prj.image_file] = info
             try:
-                log.info(f"file {cfg_path}\r\n{prj.image_file.info.squeeze(axis=0)}")
+                log.info(f"file {cfg_path}\r\n{info.squeeze(axis=0)}")
             except Exception as e:
                 log.error(e)
                 log.error(traceback.format_exc())

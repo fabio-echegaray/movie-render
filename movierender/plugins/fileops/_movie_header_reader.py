@@ -3,16 +3,18 @@ from pathlib import Path
 from typing import List, Dict
 
 import fileops
+from fileops.export.config import read_config_copyright
 from fileops.export.config_channel_section import update_channel_config_with_section_overrides
 from fileops.export.config_sections import process_overrides_of_section
 from fileops.logger import get_logger
 from fileops.plugins import HeaderReaderPlugin
 
 from movierender.config import ConfigMovie
+from movierender.config import _parse_text_props, _parse_line_props, _parse_background_props
 from movierender.overlays import ImagejROI
 
 
-def load_overlay_plugins(cfg_path, root_path=None):
+def load_overlay_plugins(cfg_path, root_path=None, **shared):
     overlays = list()
     for h in fileops.header_reader_plugins:
         if "overlay" not in h.name:
@@ -20,7 +22,7 @@ def load_overlay_plugins(cfg_path, root_path=None):
         clz = h.load()
         if not issubclass(clz, HeaderReaderPlugin):
             continue
-        cinst = clz(cfg_path, root_path=root_path)
+        cinst = clz(cfg_path, root_path=root_path, **shared)
         if cinst.has_valid_header():
             overlays.extend(cinst.process())
     return overlays
@@ -62,6 +64,10 @@ class MovieHeaderReaderPlugin(HeaderReaderPlugin):
 
         cfg, param_override, img_file, roi = self._cfg, self._param_override, self._img_file, self._roi
 
+        # read copyright from the merged configuration (defaults + config file) so
+        # a project-level defaults COPYRIGHT section is honoured by movies too
+        copyright_info = read_config_copyright(self._cfg_path, cfg)
+
         # process ROI sections in configuration file
         roi_lst = list()
         for p in fileops.config_type_plugins:
@@ -76,12 +82,15 @@ class MovieHeaderReaderPlugin(HeaderReaderPlugin):
                     clz = h.load()
                     if not issubclass(clz, HeaderReaderPlugin):
                         continue
-                    cinst = clz(self._cfg_path, root_path=self._root_path)
+                    # propagate the shared data-section objects to nested plugins
+                    cinst = clz(self._cfg_path, root_path=self._root_path,
+                                cfg=cfg, img_file=img_file, param_override=param_override, roi=roi)
                     if cinst.has_valid_header():
                         roi_lst.extend(cinst.process())
 
         # find OVERLAY parsers from plugins
-        overlays = load_overlay_plugins(self._cfg_path, root_path=self._root_path)
+        overlays = load_overlay_plugins(self._cfg_path, root_path=self._root_path,
+                                        cfg=cfg, img_file=img_file, param_override=param_override, roi=roi)
 
         # process MOVIE sections
         movie_def = list()
@@ -100,7 +109,7 @@ class MovieHeaderReaderPlugin(HeaderReaderPlugin):
                 ovr_txt = cfg[mov]["overlays"]
                 if ovr_txt[0] == "[" and ovr_txt[-1] == "]":
                     ovr_ids = [s.strip() for s in ovr_txt[1:-1].split(",")]
-                    overlays_to_add.extend([ovr for ovr in overlays if ovr.id in ovr_ids])
+                    overlays_to_add.extend([ovr for ovr in overlays if ovr.overlay_id in ovr_ids])
 
             # find ROI IDs and append them to list of ROIs
             if "roi" in cfg[mov]:
@@ -109,6 +118,14 @@ class MovieHeaderReaderPlugin(HeaderReaderPlugin):
                     roi_ids = [s.strip() for s in roi_txt[1:-1].split(",") if len(s) > 0]
                     if len(roi_ids) > 0:
                         overlays_to_add.extend(ImagejROI(r.geometry) for r in roi_lst if r.header in roi_ids and r.plot)
+
+            # parse graphics properties from dotted keys
+            scalebar_text = _parse_text_props(cfg[mov], "scalebar")
+            scalebar_line = _parse_line_props(cfg[mov], "scalebar")
+            timestamp = _parse_text_props(cfg[mov], "timestamp")
+            channel_label = _parse_text_props(cfg[mov], "channel_label")
+            suptitle = _parse_text_props(cfg[mov], "suptitle")
+            background = _parse_background_props(cfg[mov])
 
             movie_def.append(ConfigMovie(
                 header=mov,
@@ -134,7 +151,14 @@ class MovieHeaderReaderPlugin(HeaderReaderPlugin):
                     include_tracks if isinstance(include_tracks, bool)
                     else include_tracks == "yes" if isinstance(include_tracks, str)
                     else False
-                ),
-                overlays=overlays_to_add
+                    ),
+                overlays=overlays_to_add,
+                copyright=copyright_info,
+                scalebar_text=scalebar_text,
+                scalebar_line=scalebar_line,
+                timestamp=timestamp,
+                channel_label=channel_label,
+                suptitle=suptitle,
+                background=background,
             ))
         return movie_def
