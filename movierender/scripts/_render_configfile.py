@@ -32,10 +32,17 @@ def render_configuration_file_cmd(
             bool, typer.Option(help="Only render first frame when rendering a movie")] = False,
         defaults_file: Annotated[
             Path, typer.Option(help="Path to a project-level defaults file whose [DEFAULT] section "
-                                    "applies to all sections of the configuration file.")] = None,
+                                    "applies to all sections of the configuration file. If not given, "
+                                    "a file named 'defaults.cfg' in the current folder is used if it exists.")] = None,
 ):
     if cfg_path.parent.name[0:3] == "bad":
         return
+
+    if defaults_file is None:
+        log.info(f"Found file with default information.")
+        auto = Path('.') / "defaults.cfg"
+        if auto.exists():
+            defaults_file = auto.absolute()
 
     try:
         log.info(f"Reading configuration file {cfg_path}")
