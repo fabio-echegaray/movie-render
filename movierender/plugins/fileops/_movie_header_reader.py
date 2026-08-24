@@ -10,6 +10,7 @@ from fileops.logger import get_logger
 from fileops.plugins import HeaderReaderPlugin
 
 from movierender.config import ConfigMovie
+from movierender.config import _parse_text_props, _parse_line_props, _parse_background_props
 from movierender.overlays import ImagejROI
 
 
@@ -118,6 +119,14 @@ class MovieHeaderReaderPlugin(HeaderReaderPlugin):
                     if len(roi_ids) > 0:
                         overlays_to_add.extend(ImagejROI(r.geometry) for r in roi_lst if r.header in roi_ids and r.plot)
 
+            # parse graphics properties from dotted keys
+            scalebar_text = _parse_text_props(cfg[mov], "scalebar")
+            scalebar_line = _parse_line_props(cfg[mov], "scalebar")
+            timestamp = _parse_text_props(cfg[mov], "timestamp")
+            channel_label = _parse_text_props(cfg[mov], "channel_label")
+            suptitle = _parse_text_props(cfg[mov], "suptitle")
+            background = _parse_background_props(cfg[mov])
+
             movie_def.append(ConfigMovie(
                 header=mov,
                 configfile=self._cfg_path,
@@ -143,7 +152,13 @@ class MovieHeaderReaderPlugin(HeaderReaderPlugin):
                     else include_tracks == "yes" if isinstance(include_tracks, str)
                     else False
                     ),
-                 overlays=overlays_to_add,
-                 copyright=copyright_info
-             ))
+                overlays=overlays_to_add,
+                copyright=copyright_info,
+                scalebar_text=scalebar_text,
+                scalebar_line=scalebar_line,
+                timestamp=timestamp,
+                channel_label=channel_label,
+                suptitle=suptitle,
+                background=background,
+            ))
         return movie_def

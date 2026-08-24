@@ -68,6 +68,54 @@ Contains two `NamedTuple` classes that hold all parameters needed for rendering:
 
 These are produced by the FileOps plugin system when parsing `.cfg` files.
 
+#### Graphics Configuration System
+
+**Location:** `movierender/config/_cfg_graphics.py`
+
+The graphics configuration system uses composable property classes to define visual characteristics of graphic elements. Each class represents a style group and can be applied to any overlay or built-in element that uses those properties.
+
+| Class                    | Purpose                                           | Fields                                      |
+| ------------------------ | ------------------------------------------------- | ------------------------------------------- |
+| `TextProperties`         | Font and color properties for text elements       | `font_name`, `font_size`, `color`           |
+| `LineProperties`         | Color and width properties for line elements      | `color`, `width`                            |
+| `BackgroundProperties`   | Background fill properties                        | `color`                                     |
+
+**Design Principles:**
+- **Composability**: Property classes are independent of specific overlays
+- **Reusability**: Same property instances can be applied to multiple elements
+- **Type Safety**: NamedTuples provide immutable, typed configuration
+- **Default Values**: All fields have sensible defaults
+
+**Parsing Helpers:**
+- `_parse_text_props(cfg_section, prefix)` - Parse `TextProperties` from config with dot-separated keys
+- `_parse_line_props(cfg_section, prefix)` - Parse `LineProperties` from config with dot-separated keys
+- `_parse_background_props(cfg_section)` - Parse `BackgroundProperties` from config
+- `_parse_overlay_text_props(cfg_section)` - Parse `TextProperties` from overlay sections (no prefix)
+- `_parse_overlay_line_props(cfg_section)` - Parse `LineProperties` from overlay sections (no prefix)
+
+**Config File Format:**
+```ini
+[MOVIE]
+scalebar.font_name = Arial
+scalebar.font_size = 9
+scalebar.color = white
+scalebar.line_color = white
+scalebar.line_width = 3
+timestamp.font_size = 10
+timestamp.color = cyan
+channel_label.font_size = 8
+suptitle.font_size = 14
+suptitle.color = darkblue
+background.color = black
+```
+
+**Flow:**
+1. Config file contains dot-separated keys (e.g., `scalebar.font_size = 9`)
+2. Header readers (`MovieHeaderReaderPlugin`, `PanelHeaderReaderPlugin`) parse these keys using parsing helpers
+3. Property instances are stored in `ConfigMovie`/`ConfigPanel` fields
+4. Layout composers retrieve properties from config and pass them to overlays
+5. Overlays use property values when rendering
+
 ---
 
 ### Render Module
@@ -129,6 +177,28 @@ Visual annotations rendered on top of images.
 | `Treatment`      | Renders experimental treatment labels with colored dot indicators.                                                                                              |
 | `PixelTools`     | Utility class for coordinate conversions (ratio to pixels, ratio to micrometers).                                                                               |
 
+#### Graphics Property Integration
+
+Overlays accept property objects via their constructors:
+
+```python
+class ScaleBar(Overlay):
+    def __init__(self, ..., text_props=None, line_props=None, **kwargs):
+        self._text_props = text_props or TextProperties()
+        self._line_props = line_props or LineProperties()
+```
+
+**Property Usage:**
+- `ScaleBar`: Uses `TextProperties` for label, `LineProperties` for line
+- `Timestamp`: Uses `TextProperties` for time display
+- `Text`: Uses `TextProperties` for text rendering
+- `Arrow`: Uses `LineProperties` for arrow styling
+- `ImageHistogram`: Uses `LineProperties` for histogram bars
+- `Treatment`: Uses `TextProperties` for treatment labels
+
+**Backward Compatibility:**
+Overlays still support the existing `fontdict` and `color` kwargs for backward compatibility. Property objects take precedence when provided.
+
 ---
 
 ### Layouts Module
@@ -145,6 +215,40 @@ Manages figure creation, axes layout, and overlay placement for movies.
 | `LayoutZStackColumnComposer`  | Renders each z-slice in a separate subplot. Used for `layout = "z-N-col"`.                                                    |
 
 **Helper:** `channel_configuration()` transforms channel render parameters into a dictionary with color, intensity, and rescale settings.
+
+#### Graphics Property Usage in Layouts
+
+Layout composers retrieve graphics properties from `ConfigMovie` and pass them to overlays:
+
+```python
+def make_layout(self):
+    movie = self._movie_configuration_params
+    
+    # Get graphics parameters from config or use defaults
+    sbar_text = movie.scalebar_text or TextProperties(font_size=9)
+    sbar_line = movie.scalebar_line or LineProperties(width=3)
+    tsmp_text = movie.timestamp or TextProperties()
+    
+    # Pass properties to overlays
+    self.renderer += ovl.ScaleBar(..., text_props=sbar_text, line_props=sbar_line)
+    self.renderer += ovl.Timestamp(..., text_props=tsmp_text)
+```
+
+**Suptitle Styling:**
+Layout composers apply suptitle styling using `TextProperties`:
+```python
+suptitle_props = movie.suptitle or TextProperties()
+fig.suptitle(self.fig_title, fontname=suptitle_props.font_name,
+             fontsize=suptitle_props.font_size, color=suptitle_props.color)
+```
+
+**Background Color:**
+Layout composers apply background color using `BackgroundProperties`:
+```python
+bg_props = movie.background
+if bg_props is not None:
+    fig.patch.set_facecolor(bg_props.color)
+```
 
 ---
 

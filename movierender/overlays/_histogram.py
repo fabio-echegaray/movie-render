@@ -2,9 +2,14 @@ import numpy as np
 from fileops.image import MetadataImage
 
 from .overlay import Overlay
+from movierender.config import LineProperties
 
 
 class ImageHistogram(Overlay):
+    def __init__(self, line_props=None, **kwargs):
+        self._line_props = line_props if line_props is not None else LineProperties(color="magenta")
+        super().__init__(**kwargs)
+
     def plot(self, mdi: MetadataImage, bins=None, ax=None, color=None, **kwargs):
         if ax is None:
             ax = self.ax
@@ -12,7 +17,7 @@ class ImageHistogram(Overlay):
             raise RuntimeError("No axes found to plot overlay.")
 
         bins = bins if bins is not None else self._kwargs.get("bins", 10)
-        color = color if color is not None else self._kwargs.get("color", "magenta")
+        color = color if color is not None else self._line_props.color
 
         axi = ax.inset_axes(
             (0.5, 0.5, 0.47, 0.47),

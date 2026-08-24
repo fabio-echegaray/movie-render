@@ -1,6 +1,6 @@
 from fileops.plugins.base_plugin import BaseFileOpsPlugin
 
-from movierender.overlays import Overlay
+from movierender.overlays.overlay import Overlay
 
 
 class OverlayPlugin(BaseFileOpsPlugin):
