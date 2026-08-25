@@ -39,7 +39,6 @@ def render_configuration_file_cmd(
         return
 
     if defaults_file is None:
-        log.info(f"Found file with default information.")
         auto = Path('.') / "defaults.cfg"
         if auto.exists():
             defaults_file = auto.absolute()
