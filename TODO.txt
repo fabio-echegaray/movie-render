@@ -220,5 +220,10 @@ Legend: [OPEN] = pending, [DONE] = fixed
               the image stack's z-slices silently, as is already done for the
               default `zstack_fn = all-max` fallback.
 
-Last point number: 60
-# TODO: add a point to add an overlay showing channel name and color. Color can be a square the size of a character, and it should be shown before the name. Important parameters are point size (for both font and square), font name and properties.
+  [OPEN] 61. Channel name overlay with color indicator
+              — Add an overlay that displays the channel name preceded by a
+              small colored square (the size of a character) representing the
+              channel color. Configurable parameters: position, point size (for
+              both font and square), font name, and font properties.
+
+Last point number: 61
