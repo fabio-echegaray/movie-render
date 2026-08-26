@@ -275,4 +275,14 @@ Legend: [OPEN] = pending, [DONE] = fixed
                 result per-pixel by taking the color at each position's
                 maximum-intensity z.
 
-Last point number: 64
+  [OPEN] 65. Default text color is white — invisible on white backgrounds
+              — `TextProperties` defaults to `color='white'`, which is correct
+              on the default black background but becomes invisible when the
+              background is white (either from config or from the old
+              `savefig(facecolor='white')` bug). The suptitle (title text)
+              is the most visible example: white text on white background.
+              Fix: make text color contrast-aware — either default to black
+              and let the user override, or automatically pick black/white
+              based on the configured background luminance.
+
+Last point number: 65
