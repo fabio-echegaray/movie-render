@@ -64,6 +64,11 @@ class BackgroundProperties(NamedTuple):
     color: str = 'black'
 
 
+_TEXT_DEFAULTS = TextProperties()
+_LINE_DEFAULTS = LineProperties()
+_BACKGROUND_DEFAULTS = BackgroundProperties()
+
+
 # ---------------------------------------------------------------------------
 # Parsing helpers — used by header readers to convert config keys → property
 # instances. Shared between movie and panel readers.
@@ -82,14 +87,14 @@ def _parse_text_props(cfg_section, prefix) -> TextProperties:
     Returns:
         A TextProperties instance.
     """
-    font_name = cfg_section.get(f"{prefix}.font_name", TextProperties.font_name)
+    font_name = cfg_section.get(f"{prefix}.font_name", _TEXT_DEFAULTS.font_name)
     font_size = cfg_section.get(f"{prefix}.font_size", None)
-    color = cfg_section.get(f"{prefix}.color", TextProperties.color)
+    color = cfg_section.get(f"{prefix}.color", _TEXT_DEFAULTS.color)
 
     return TextProperties(
-        font_name=font_name if font_name else TextProperties.font_name,
-        font_size=int(font_size) if font_size else TextProperties.font_size,
-        color=color if color else TextProperties.color,
+        font_name=font_name if font_name else _TEXT_DEFAULTS.font_name,
+        font_size=int(font_size) if font_size else _TEXT_DEFAULTS.font_size,
+        color=color if color else _TEXT_DEFAULTS.color,
     )
 
 
@@ -109,8 +114,8 @@ def _parse_line_props(cfg_section, prefix) -> LineProperties:
     width = cfg_section.get(f"{prefix}.line_width", None)
 
     return LineProperties(
-        color=color if color else LineProperties.color,
-        width=float(width) if width else LineProperties.width,
+        color=color if color else _LINE_DEFAULTS.color,
+        width=float(width) if width else _LINE_DEFAULTS.width,
     )
 
 
@@ -128,7 +133,7 @@ def _parse_background_props(cfg_section) -> BackgroundProperties:
     color = cfg_section.get("background.color", None)
 
     return BackgroundProperties(
-        color=color if color else BackgroundProperties.color,
+        color=color if color else _BACKGROUND_DEFAULTS.color,
     )
 
 
@@ -143,14 +148,14 @@ def _parse_overlay_text_props(cfg_section) -> TextProperties:
     Returns:
         A TextProperties instance.
     """
-    font_name = cfg_section.get("font_name", TextProperties.font_name)
+    font_name = cfg_section.get("font_name", _TEXT_DEFAULTS.font_name)
     font_size = cfg_section.get("font_size", None)
-    color = cfg_section.get("font_color", TextProperties.color)
+    color = cfg_section.get("font_color", _TEXT_DEFAULTS.color)
 
     return TextProperties(
-        font_name=font_name if font_name else TextProperties.font_name,
-        font_size=int(font_size) if font_size else TextProperties.font_size,
-        color=color if color else TextProperties.color,
+        font_name=font_name if font_name else _TEXT_DEFAULTS.font_name,
+        font_size=int(font_size) if font_size else _TEXT_DEFAULTS.font_size,
+        color=color if color else _TEXT_DEFAULTS.color,
     )
 
 
@@ -169,6 +174,6 @@ def _parse_overlay_line_props(cfg_section) -> LineProperties:
     width = cfg_section.get("line_width", None)
 
     return LineProperties(
-        color=color if color else LineProperties.color,
-        width=float(width) if width else LineProperties.width,
+        color=color if color else _LINE_DEFAULTS.color,
+        width=float(width) if width else _LINE_DEFAULTS.width,
     )
