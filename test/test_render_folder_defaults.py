@@ -21,7 +21,7 @@ class TestRenderFolderDefaults(unittest.TestCase):
         cfg2.write_text("[DATA]\n")
 
         mock_render = MagicMock(return_value=None)
-        with patch.object(rf, "render_configuration_file_cmd", mock_render):
+        with patch.object(rf, "render_configuration_file", mock_render):
             n = rf.render_folder_cmd(self.tmp, overwrite_files=True)
 
         self.assertEqual(n, 2)
@@ -39,7 +39,7 @@ class TestRenderFolderDefaults(unittest.TestCase):
         cfg1.write_text("[DATA]\n")
 
         mock_render = MagicMock(return_value=None)
-        with patch.object(rf, "render_configuration_file_cmd", mock_render):
+        with patch.object(rf, "render_configuration_file", mock_render):
             n = rf.render_folder_cmd(self.tmp, overwrite_files=True)
 
         self.assertEqual(n, 1)
@@ -52,7 +52,7 @@ class TestRenderFolderDefaults(unittest.TestCase):
         defaults.write_text("[DEFAULT]\nfps = 15\n")
 
         mock_render = MagicMock(return_value=None)
-        with patch.object(rf, "render_configuration_file_cmd", mock_render):
+        with patch.object(rf, "render_configuration_file", mock_render):
             n = rf.render_folder_cmd(self.tmp, overwrite_files=True, defaults_file=defaults)
 
         self.assertEqual(n, 1)

@@ -226,7 +226,7 @@ Legend: [OPEN] = pending, [DONE] = fixed
               channel color. Configurable parameters: position, point size (for
               both font and square), font name, and font properties.
 
-  [OPEN] 62. Auto-detection of defaults.cfg in `render folder` does not search
+  [DONE] 62. Auto-detection of defaults.cfg in `render folder` does not search
               the path from CWD to the config file's directory
               — `render folder` auto-detects `defaults.cfg` only in the root
               `path` argument (`path / "defaults.cfg"`). When config files
@@ -243,7 +243,7 @@ Legend: [OPEN] = pending, [DONE] = fixed
               section/key. Individual commands (`render file`, `render movie`,
               etc.) correctly search only CWD.
               Implementation:
-              — Change `defaults_file` type from `Path | None` to
+              — Changed `defaults_file` type from `Path | None` to
                 `Path | list[Path] | None` across all functions that accept
                 it (`read_config`, `check_if_output_files_are_created`,
                 `read_data_section`, `update_overrides_from_channel_sections`,
