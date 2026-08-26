@@ -261,5 +261,6 @@ class SequentialMovieRenderer:
                 ovrl.plot(ax=self.ax if ovrl.ax is None else None, **kwargs)
 
         ensure_dir(self._tmp)
-        self.fig.savefig(img_path, facecolor='white', transparent=False)
+        bg_color = self._cfg.background.color if self._cfg.background is not None else 'white'
+        self.fig.savefig(img_path, facecolor=bg_color, transparent=False)
         return img_path

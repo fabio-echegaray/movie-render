@@ -242,6 +242,9 @@ Legend: [OPEN] = pending, [DONE] = fixed
                (`read_config`, `check_if_output_files_are_created`,
                `read_data_section`, `update_overrides_from_channel_sections`,
                `HeaderReaderPlugin`).
+               — Additionally, `savefig(facecolor='white')` in
+               `_sequential.py` was overriding the configured background
+               color. Fixed to use `self._cfg.background.color`.
 
   [DONE] 63. `fontdict` + `fontsize` alias conflict crashes rendering
               — Overlays `ScaleBar`, `Timestamp` (`_image.py`) and `Text`
