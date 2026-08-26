@@ -256,7 +256,7 @@ Legend: [OPEN] = pending, [DONE] = fixed
                 (closest first), and passes the list to
                 `render_configuration_file_cmd`.
 
-  [OPEN] 63. `fontdict` + `fontsize` alias conflict crashes rendering
+  [DONE] 63. `fontdict` + `fontsize` alias conflict crashes rendering
               — Overlays `ScaleBar`, `Timestamp` (`_image.py`) and `Text`
               (`_text.py`) pass both `fontdict=fontdict` (containing
               `{'size': N}`) and `fontsize=text_props.font_size` to
@@ -264,12 +264,8 @@ Legend: [OPEN] = pending, [DONE] = fixed
               aliases and raises:
                 TypeError: Got both 'size' and 'fontsize', which are
                 aliases of one another
-              Layouts (e.g. `_sequential.py:46`) set
-              `fontdict={'size': 10}`, so when an overlay also supplies
-              `fontsize=...`, the conflict triggers.
-              Fix: when `fontdict` is not None and contains `'size'`,
-              omit the redundant `fontsize` kwarg; alternatively, stop
-              using `fontdict` entirely and pass font kwargs individually.
+              Fix: merged `text_props` into `fontdict` via `setdefault`
+              and stopped passing redundant `fontsize`/`fontname` kwargs.
 
   [OPEN] 64. Depth-coded z-projection for PANELs and MOVIEs
               — Add a new z-projection mode that maps each z-slice to a

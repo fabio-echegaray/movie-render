@@ -44,9 +44,12 @@ class ScaleBar(Overlay):
         if show_text:
             # Add text below the scalebar
             sbar_lw2_um = 352.77778 * lw / 100 / 2
+            _fontdict = dict(fontdict) if fontdict else {}
+            _fontdict.setdefault('size', text_props.font_size)
+            _fontdict.setdefault('family', text_props.font_name)
+            _fontdict.setdefault('color', text_props.color)
             ax.text(x0 + um / 2, y0 + sbar_lw2_um, f'{um} um',
-                    color=text_props.color, fontdict=fontdict,
-                    fontname=text_props.font_name, fontsize=text_props.font_size,
+                    fontdict=_fontdict,
                     horizontalalignment='center', zorder=1000)
 
 
@@ -111,6 +114,10 @@ class Timestamp(Overlay):
         txt = secs_to_string(secs, string_format)
 
         txt = f'{frame}  {txt}' if draw_frame else txt
-        ax.text(x0, y0, txt, color=text_props.color, fontdict=fontdict,
-                fontname=text_props.font_name, fontsize=text_props.font_size,
+        _fontdict = dict(fontdict) if fontdict else {}
+        _fontdict.setdefault('size', text_props.font_size)
+        _fontdict.setdefault('family', text_props.font_name)
+        _fontdict.setdefault('color', text_props.color)
+        ax.text(x0, y0, txt,
+                fontdict=_fontdict,
                 verticalalignment=va, zorder=zorder)

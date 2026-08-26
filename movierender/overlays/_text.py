@@ -32,6 +32,10 @@ class Text(Overlay):
             xy = self._kwargs["xy"] if "xy" in self._kwargs else None
 
         x0, y0 = xy
-        ax.text(x0, y0, self.text, color=self._text_props.color, fontdict=fontdict,
-                fontname=self._text_props.font_name, fontsize=self._text_props.font_size,
+        _fontdict = dict(fontdict) if fontdict else {}
+        _fontdict.setdefault('size', self._text_props.font_size)
+        _fontdict.setdefault('family', self._text_props.font_name)
+        _fontdict.setdefault('color', self._text_props.color)
+        ax.text(x0, y0, self.text,
+                fontdict=_fontdict,
                 verticalalignment=va, zorder=zorder)
