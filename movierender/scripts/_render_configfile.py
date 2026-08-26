@@ -10,6 +10,7 @@ import fileops
 from movierender.layouts import render_static_montage
 from movierender.scripts._render_movie import render_movie
 from movierender.scripts._render_projection import render_projection
+from movierender.scripts._defaults import find_default_files
 
 from fileops.export.config import read_config, check_if_output_files_are_created
 from fileops.logger import get_logger
@@ -34,9 +35,7 @@ def render_configuration_file(
         return
 
     if defaults_file is None:
-        auto = Path('.') / "defaults.cfg"
-        if auto.exists():
-            defaults_file = auto.absolute()
+        defaults_file = find_default_files(cfg_path, None)
 
     try:
         log.info(f"Reading configuration file {cfg_path}")

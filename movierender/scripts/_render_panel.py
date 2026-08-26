@@ -5,6 +5,7 @@ import typer
 from typing_extensions import Annotated
 
 from movierender.layouts import render_static_montage
+from movierender.scripts._defaults import find_default_files
 
 from fileops.export.config import read_config
 from fileops.logger import get_logger
@@ -32,10 +33,7 @@ def render_panel_cmd(
         return
 
     if defaults_file is None:
-        log.debug(f"Found file with default information.")
-        auto = Path('.') / "defaults.cfg"
-        if auto.exists():
-            defaults_file = auto.absolute()
+        defaults_file = find_default_files(cfg_path, None)
 
     log.info(f"Reading configuration file {cfg_path}")
     cfg = read_config(cfg_path, with_root_path=with_root_path, defaults_file=defaults_file)
