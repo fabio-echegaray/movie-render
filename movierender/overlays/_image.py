@@ -2,6 +2,7 @@ from fileops.logger import get_logger
 
 from .overlay import Overlay, get_kwargs
 from movierender.config import TextProperties, LineProperties
+from movierender.config._cfg_graphics import resolve_text_color
 
 
 class ScaleBar(Overlay):
@@ -44,10 +45,11 @@ class ScaleBar(Overlay):
         if show_text:
             # Add text below the scalebar
             sbar_lw2_um = 352.77778 * lw / 100 / 2
+            bg_color = ax.get_figure().get_facecolor()
             _fontdict = dict(fontdict) if fontdict else {}
             _fontdict.setdefault('size', text_props.font_size)
             _fontdict.setdefault('family', text_props.font_name)
-            _fontdict.setdefault('color', text_props.color)
+            _fontdict.setdefault('color', resolve_text_color(text_props.color, bg_color))
             ax.text(x0 + um / 2, y0 + sbar_lw2_um, f'{um} um',
                     fontdict=_fontdict,
                     horizontalalignment='center', zorder=1000)
@@ -91,7 +93,7 @@ class Timestamp(Overlay):
                                     time_interval=self._renderer.image.time_interval if self._renderer is not None else 10 ** -6,
                                     fontdict=None,
                                     va='center',
-                                    color='white',
+                                    color=None,
                                     alpha=1.0,
                                     zorder=1,
                                     frame=self._renderer.frame if self._renderer is not None else None,
@@ -114,10 +116,11 @@ class Timestamp(Overlay):
         txt = secs_to_string(secs, string_format)
 
         txt = f'{frame}  {txt}' if draw_frame else txt
+        bg_color = ax.get_figure().get_facecolor()
         _fontdict = dict(fontdict) if fontdict else {}
         _fontdict.setdefault('size', text_props.font_size)
         _fontdict.setdefault('family', text_props.font_name)
-        _fontdict.setdefault('color', text_props.color)
+        _fontdict.setdefault('color', resolve_text_color(text_props.color, bg_color))
         ax.text(x0, y0, txt,
                 fontdict=_fontdict,
                 verticalalignment=va, zorder=zorder)

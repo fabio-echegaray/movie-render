@@ -1,5 +1,6 @@
 from .overlay import Overlay, get_kwargs
 from movierender.config import TextProperties
+from movierender.config._cfg_graphics import resolve_text_color
 
 
 class Text(Overlay):
@@ -32,10 +33,11 @@ class Text(Overlay):
             xy = self._kwargs["xy"] if "xy" in self._kwargs else None
 
         x0, y0 = xy
+        bg_color = ax.get_figure().get_facecolor()
         _fontdict = dict(fontdict) if fontdict else {}
         _fontdict.setdefault('size', self._text_props.font_size)
         _fontdict.setdefault('family', self._text_props.font_name)
-        _fontdict.setdefault('color', self._text_props.color)
+        _fontdict.setdefault('color', resolve_text_color(self._text_props.color, bg_color))
         ax.text(x0, y0, self.text,
                 fontdict=_fontdict,
                 verticalalignment=va, zorder=zorder)

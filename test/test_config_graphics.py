@@ -19,7 +19,7 @@ class TestTextProperties:
         tp = TextProperties()
         assert tp.font_name == 'Arial'
         assert tp.font_size == 12
-        assert tp.color == 'white'
+        assert tp.color is None  # None means auto-pick contrast color
 
     def test_custom_values(self):
         """Test that TextProperties accepts custom values."""

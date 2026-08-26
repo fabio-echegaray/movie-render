@@ -8,6 +8,7 @@ import movierender.overlays as ovl
 from movierender import MovieRenderer, plt, gridspec
 from movierender.config import ConfigMovie
 from movierender.config import TextProperties, LineProperties
+from movierender.config._cfg_graphics import resolve_text_color
 from movierender.overlays.pixel_tools import PixelTools
 from movierender.render.pipelines import NullImage, CompositeRGBImage
 from ._base_composer import BaseLayoutComposer
@@ -58,8 +59,10 @@ class LayoutZStackColumnComposer(BaseLayoutComposer):
 
         # Apply suptitle styling from config
         suptitle_props = movie.suptitle or TextProperties()
+        bg_color = movie.background.color if movie.background is not None else 'black'
         fig.suptitle(self.fig_title, fontname=suptitle_props.font_name,
-                     fontsize=suptitle_props.font_size, color=suptitle_props.color)
+                     fontsize=suptitle_props.font_size,
+                     color=resolve_text_color(suptitle_props.color, bg_color))
 
         # Apply background color from config
         bg_props = movie.background
@@ -89,7 +92,8 @@ class LayoutZStackColumnComposer(BaseLayoutComposer):
             self.renderer += ovl.Text(f'z{z_ix:02d}',
                                       xy=t.xy_ratio_to_um(0.70, 0.95),
                                       text_props=ch_text,
-                                      fontdict={'size': ch_text.font_size, 'color': ch_text.color},
+                                      fontdict={'size': ch_text.font_size,
+                                                'color': resolve_text_color(ch_text.color, bg_color)},
                                       ax=ax)
 
             self._apply_overlays(ax, "z", z_ix)
