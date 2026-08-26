@@ -256,4 +256,37 @@ Legend: [OPEN] = pending, [DONE] = fixed
                 (closest first), and passes the list to
                 `render_configuration_file_cmd`.
 
-Last point number: 62
+  [OPEN] 63. `fontdict` + `fontsize` alias conflict crashes rendering
+              — Overlays `ScaleBar`, `Timestamp` (`_image.py`) and `Text`
+              (`_text.py`) pass both `fontdict=fontdict` (containing
+              `{'size': N}`) and `fontsize=text_props.font_size` to
+              `ax.text()`. Matplotlib treats `size` and `fontsize` as
+              aliases and raises:
+                TypeError: Got both 'size' and 'fontsize', which are
+                aliases of one another
+              Layouts (e.g. `_sequential.py:46`) set
+              `fontdict={'size': 10}`, so when an overlay also supplies
+              `fontsize=...`, the conflict triggers.
+              Fix: when `fontdict` is not None and contains `'size'`,
+              omit the redundant `fontsize` kwarg; alternatively, stop
+              using `fontdict` entirely and pass font kwargs individually.
+
+  [OPEN] 64. Depth-coded z-projection for PANELs and MOVIEs
+              — Add a new z-projection mode that maps each z-slice to a
+              color along a colormap (e.g. blue→red, jet, etc.), producing
+              a 2D image where pixel color encodes the z-position of peak
+              intensity. This is Fiji's "Temporal-Color Code" macro:
+              https://github.com/fiji/fiji/blob/master/plugins/Scripts/
+              Image/Hyperstacks/Temporal-Color_Code.ijm
+              Reference: https://github.com/napari/napari/issues/4300
+              — Configurable parameters: colormap name (default: hsv or
+                jet), z-range (full or subset), intensity threshold.
+              — Should work for both individual MOVIE sections and PANEL
+                layouts, and compose with existing overlays.
+              — Implementation: new z-project mode in fileops (or a
+                MovieRender plugin) that assigns each z-slice an index,
+                maps index to a colormap color, and composites the
+                result per-pixel by taking the color at each position's
+                maximum-intensity z.
+
+Last point number: 64
