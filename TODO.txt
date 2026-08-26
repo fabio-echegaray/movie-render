@@ -226,4 +226,34 @@ Legend: [OPEN] = pending, [DONE] = fixed
               channel color. Configurable parameters: position, point size (for
               both font and square), font name, and font properties.
 
-Last point number: 61
+  [OPEN] 62. Auto-detection of defaults.cfg in `render folder` does not search
+              the path from CWD to the config file's directory
+              — `render folder` auto-detects `defaults.cfg` only in the root
+              `path` argument (`path / "defaults.cfg"`). When config files
+              live in subdirectories (e.g. `project/subdir/config.cfg`) and
+              `defaults.cfg` is at the project root (`project/defaults.cfg`),
+              running `render folder` from `project/` finds it, but running
+              from `project/subdir/` does not — the search only checks
+              `subdir/defaults.cfg`.
+              Fix: for each config file found, search for `defaults.cfg` in
+              each directory along the path from CWD to the config file's
+              directory (e.g. `CWD/defaults.cfg`, `CWD/subdir/defaults.cfg`,
+              etc.) and combine ALL sections of all found files. Closer
+              files to the config file take priority (override) for the same
+              section/key. Individual commands (`render file`, `render movie`,
+              etc.) correctly search only CWD.
+              Implementation:
+              — Change `defaults_file` type from `Path | None` to
+                `Path | list[Path] | None` across all functions that accept
+                it (`read_config`, `check_if_output_files_are_created`,
+                `read_data_section`, `update_overrides_from_channel_sections`,
+                `HeaderReaderPlugin`). When a list is passed, read all files
+                into ConfigParser closest-first (closest = highest priority).
+                Backward compatible: single Path callers unaffected.
+              — `render_folder_cmd` computes, for each config file, the list
+                of directories from CWD to the config file's directory,
+                searches each for `defaults.cfg`, collects found paths
+                (closest first), and passes the list to
+                `render_configuration_file_cmd`.
+
+Last point number: 62
