@@ -221,4 +221,4 @@ Legend: [OPEN] = pending, [DONE] = fixed
               default `zstack_fn = all-max` fallback.
 
 Last point number: 60
-
+# TODO: add a point to add an overlay showing channel name and color. Color can be a square the size of a character, and it should be shown before the name. Important parameters are point size (for both font and square), font name and properties.
