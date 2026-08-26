@@ -127,9 +127,10 @@ class TestParseTextProps:
         section = MockSection()
         result = _parse_text_props(section, 'scalebar')
 
-        assert result.font_name == TextProperties.font_name
-        assert result.font_size == TextProperties.font_size
-        assert result.color == TextProperties.color
+        defaults = TextProperties()
+        assert result.font_name == defaults.font_name
+        assert result.font_size == defaults.font_size
+        assert result.color == defaults.color
 
 
 class TestParseLineProps:
@@ -162,8 +163,9 @@ class TestParseLineProps:
         section = MockSection()
         result = _parse_line_props(section, 'scalebar')
 
-        assert result.color == LineProperties.color
-        assert result.width == LineProperties.width
+        defaults = LineProperties()
+        assert result.color == defaults.color
+        assert result.width == defaults.width
 
 
 class TestParseBackgroundProps:
@@ -192,7 +194,7 @@ class TestParseBackgroundProps:
         section = MockSection()
         result = _parse_background_props(section)
 
-        assert result.color == BackgroundProperties.color
+        assert result.color == BackgroundProperties().color
 
 
 class TestOverlayTextProps:

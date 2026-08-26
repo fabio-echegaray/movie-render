@@ -70,6 +70,14 @@ class TestRender(TestCase):
         result = self.runner.invoke(app, args)
         self.assertEqual(result.exit_code, 0)
 
+    def test_render_file_rejects_directory(self):
+        command_name = "file"
+
+        args = [command_name, "test/example_data"]
+        result = self.runner.invoke(app, args)
+        self.assertNotEqual(result.exit_code, 0)
+        self.assertIn("use 'movierender folder'", result.stderr)
+
 
 if __name__ == "__main__":
     app()
