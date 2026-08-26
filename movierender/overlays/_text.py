@@ -38,6 +38,8 @@ class Text(Overlay):
         _fontdict.setdefault('size', self._text_props.font_size)
         _fontdict.setdefault('family', self._text_props.font_name)
         _fontdict.setdefault('color', resolve_text_color(self._text_props.color, bg_color))
+        if self._text_props.font_weight:
+            _fontdict.setdefault('weight', self._text_props.font_weight)
         ax.text(x0, y0, self.text,
                 fontdict=_fontdict,
                 verticalalignment=va, zorder=zorder)

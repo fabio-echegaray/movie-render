@@ -50,6 +50,8 @@ class ScaleBar(Overlay):
             _fontdict.setdefault('size', text_props.font_size)
             _fontdict.setdefault('family', text_props.font_name)
             _fontdict.setdefault('color', resolve_text_color(text_props.color, bg_color))
+            if text_props.font_weight:
+                _fontdict.setdefault('weight', text_props.font_weight)
             ax.text(x0 + um / 2, y0 + sbar_lw2_um, f'{um} um',
                     fontdict=_fontdict,
                     horizontalalignment='center', zorder=1000)
@@ -121,6 +123,8 @@ class Timestamp(Overlay):
         _fontdict.setdefault('size', text_props.font_size)
         _fontdict.setdefault('family', text_props.font_name)
         _fontdict.setdefault('color', resolve_text_color(text_props.color, bg_color))
+        if text_props.font_weight:
+            _fontdict.setdefault('weight', text_props.font_weight)
         ax.text(x0, y0, txt,
                 fontdict=_fontdict,
                 verticalalignment=va, zorder=zorder)

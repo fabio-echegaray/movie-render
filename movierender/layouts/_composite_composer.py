@@ -36,6 +36,7 @@ class LayoutCompositeComposer(BaseLayoutComposer):
         bg_color = movie.background.color if movie.background is not None else 'black'
         fig.suptitle(self.fig_title, fontname=suptitle_props.font_name,
                      fontsize=suptitle_props.font_size,
+                     fontweight=suptitle_props.font_weight,
                      color=resolve_text_color(suptitle_props.color, bg_color))
 
         # Apply background color from config

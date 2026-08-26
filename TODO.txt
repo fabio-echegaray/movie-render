@@ -289,4 +289,18 @@ Legend: [OPEN] = pending, [DONE] = fixed
               passing to overlays. Overlays resolve `None` against the
                figure's face color.
 
-Last point number: 65
+  [DONE] 66. Font weight support for text elements
+               — `TextProperties` only had `font_name`, `font_size`, and
+               `color`, with no way to set bold/italic weight. Users want
+               to make suptitle bold via `suptitle.font_weight = bold` in
+               `defaults.cfg`.
+               Fix: added `font_weight: str | None = None` to
+               `TextProperties`. Updated `_parse_text_props` and
+               `_parse_overlay_text_props` to parse `{prefix}.font_weight`
+               and `font_weight` keys. Overlays (`ScaleBar`, `Timestamp`,
+               `Text`, `Experiment`) pass `font_weight` through fontdict.
+               Layouts pass `fontweight` to `fig.suptitle()`.
+               `_CHANNEL_ATTRIBUTE_KEYS` and channel config passthrough
+               updated to include `font_weight`.
+
+Last point number: 66
