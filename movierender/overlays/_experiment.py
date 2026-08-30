@@ -38,6 +38,7 @@ class Treatment(Overlay):
                          va='center_baseline',  # vertical can be center, top, bottom, baseline, center_baseline
                          color=self._text_props.color,
                          fontname=self._text_props.font_name,
-                         fontsize=self._text_props.font_size)
+                         fontsize=self._text_props.font_size,
+                         fontweight=self._text_props.font_weight)
 
             y0 -= 1.5 * bb.height / self._renderer.pix_per_um

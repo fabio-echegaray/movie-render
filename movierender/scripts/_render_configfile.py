@@ -10,6 +10,7 @@ import fileops
 from movierender.layouts import render_static_montage
 from movierender.scripts._render_movie import render_movie
 from movierender.scripts._render_projection import render_projection
+from movierender.scripts._defaults import find_default_files
 
 from fileops.export.config import read_config, check_if_output_files_are_created
 from fileops.logger import get_logger
@@ -17,37 +18,24 @@ from fileops.logger import get_logger
 log = get_logger(name='render-movie')
 
 
-def render_configuration_file_cmd(
-        cfg_path: Annotated[
-            Path, typer.Argument(help="Name of the configuration file of the movie to be rendered")],
-        with_root_path: Annotated[
-            Path, typer.Option(
-                help="Path where the image file should be looked in if the path in the configuration file is relative. "
-                     "If no path is given, the current folder will be used.")] = None,
-        show_file_info: Annotated[
-            bool, typer.Option(help="To show file metadata information before rendering the movie")] = True,
-        overwrite_file: Annotated[
-            bool, typer.Option(help="Set true if you want to overwrite the file")] = False,
-        run_test: Annotated[
-            bool, typer.Option(help="Only render first frame when rendering a movie")] = False,
-        defaults_file: Annotated[
-            Path, typer.Option(help="Path to a project-level defaults file whose [DEFAULT] section "
-                                    "applies to all sections of the configuration file. If not given, "
-                                    "a file named 'defaults.cfg' in the current folder is used if it exists.")] = None,
+def render_configuration_file(
+        cfg_path: Path,
+        with_root_path: Path | None = None,
+        show_file_info: bool = True,
+        overwrite_file: bool = False,
+        run_test: bool = False,
+        defaults_file: Path | list[Path] | None = None,
 ):
     if cfg_path.is_dir():
-        raise typer.BadParameter(
-            "this is a directory; use 'movierender folder' to render configuration files in it",
-            param_hint="cfg_path",
+        raise ValueError(
+            f"{cfg_path} is a directory; use 'movierender folder' to render configuration files in it",
         )
 
     if cfg_path.parent.name[0:3] == "bad":
         return
 
     if defaults_file is None:
-        auto = Path('.') / "defaults.cfg"
-        if auto.exists():
-            defaults_file = auto.absolute()
+        defaults_file = find_default_files(cfg_path, None)
 
     try:
         log.info(f"Reading configuration file {cfg_path}")
@@ -104,3 +92,24 @@ def render_configuration_file_cmd(
         for prj in cfg.projections:
             _log_file_info(prj.image_file)
             render_projection(prj, overwrite=overwrite_file)
+
+
+def render_configuration_file_cmd(
+        cfg_path: Annotated[
+            Path, typer.Argument(help="Name of the configuration file of the movie to be rendered")],
+        with_root_path: Annotated[
+            Path, typer.Option(
+                help="Path where the image file should be looked in if the path in the configuration file is relative. "
+                     "If no path is given, the current folder will be used.")] = None,
+        show_file_info: Annotated[
+            bool, typer.Option(help="To show file metadata information before rendering the movie")] = True,
+        overwrite_file: Annotated[
+            bool, typer.Option(help="Set true if you want to overwrite the file")] = False,
+        run_test: Annotated[
+            bool, typer.Option(help="Only render first frame when rendering a movie")] = False,
+        defaults_file: Annotated[
+            Path, typer.Option(help="Path to a project-level defaults file whose [DEFAULT] section "
+                                    "applies to all sections of the configuration file. If not given, "
+                                    "a file named 'defaults.cfg' in the current folder is used if it exists.")] = None,
+):
+    render_configuration_file(cfg_path, with_root_path, show_file_info, overwrite_file, run_test, defaults_file)

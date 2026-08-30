@@ -8,6 +8,7 @@ import movierender.overlays as ovl
 from movierender import MovieRenderer, CompositeRGBImage, plt, gridspec
 from movierender.config import ConfigMovie
 from movierender.config import TextProperties, LineProperties
+from movierender.config._cfg_graphics import resolve_text_color
 from movierender.overlays.pixel_tools import PixelTools
 from ._base_composer import BaseLayoutComposer
 from ._ch_config import channel_configuration
@@ -53,8 +54,11 @@ class LayoutChannelColumnComposer(BaseLayoutComposer):
 
         # Apply suptitle styling from config
         suptitle_props = movie.suptitle or TextProperties()
+        bg_color = movie.background.color if movie.background is not None else 'black'
         fig.suptitle(self.fig_title, fontname=suptitle_props.font_name,
-                     fontsize=suptitle_props.font_size, color=suptitle_props.color)
+                     fontsize=suptitle_props.font_size,
+                     fontweight=suptitle_props.font_weight,
+                     color=resolve_text_color(suptitle_props.color, bg_color))
 
         # Apply background color from config
         bg_props = movie.background
@@ -85,17 +89,22 @@ class LayoutChannelColumnComposer(BaseLayoutComposer):
             )
             # Use per-channel font properties if available, otherwise use global channel_label
             ch_label_props = ch_text
-            if 'font_name' in ch_cfg or 'font_size' in ch_cfg or 'font_color' in ch_cfg:
+            if 'font_name' in ch_cfg or 'font_size' in ch_cfg or 'font_color' in ch_cfg or 'font_weight' in ch_cfg:
                 from movierender.config import TextProperties
                 ch_label_props = TextProperties(
                     font_name=ch_cfg.get('font_name', ch_text.font_name),
                     font_size=int(ch_cfg.get('font_size', ch_text.font_size)),
+                    font_weight=ch_cfg.get('font_weight', ch_text.font_weight),
                     color=ch_cfg.get('font_color', ch_text.color)
                 )
+            ch_label_color = resolve_text_color(ch_label_props.color, bg_color)
+            ch_fontdict = {'size': ch_label_props.font_size, 'color': ch_label_color}
+            if ch_label_props.font_weight:
+                ch_fontdict['weight'] = ch_label_props.font_weight
             self.renderer += ovl.Text(f'{ch_cfg["name"]}',
                                       xy=t.xy_ratio_to_um(0.70, 0.95),
                                       text_props=ch_label_props,
-                                      fontdict={'size': ch_label_props.font_size, 'color': ch_label_props.color},
+                                      fontdict=ch_fontdict,
                                       ax=ax)
 
             self._apply_overlays(ax, "channel", ch_cfg_ix)

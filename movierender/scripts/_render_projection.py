@@ -8,6 +8,7 @@ from typing_extensions import Annotated
 
 from fileops.export.config import read_config, ConfigProjection
 from fileops.logger import get_logger
+from movierender.scripts._defaults import find_default_files
 
 log = get_logger(name='render-projection')
 
@@ -77,10 +78,7 @@ def render_projection_cmd(
                                     "a file named 'defaults.cfg' in the current folder is used if it exists.")] = None,
 ):
     if defaults_file is None:
-        log.debug(f"Found file with default information.")
-        auto = Path('.') / "defaults.cfg"
-        if auto.exists():
-            defaults_file = auto.absolute()
+        defaults_file = find_default_files(cfg_path, None)
 
     log.info(f"Reading configuration file {cfg_path}")
     cfg = read_config(cfg_path, with_root_path=with_root_path, defaults_file=defaults_file)

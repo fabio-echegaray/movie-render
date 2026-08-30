@@ -4,6 +4,7 @@ import movierender.overlays as ovl
 from movierender import MovieRenderer, CompositeRGBImage, plt
 from movierender.config import ConfigMovie
 from movierender.config import TextProperties, LineProperties
+from movierender.config._cfg_graphics import resolve_text_color
 from movierender.overlays.pixel_tools import PixelTools
 from ._base_composer import BaseLayoutComposer
 from ._ch_config import channel_configuration
@@ -32,8 +33,11 @@ class LayoutCompositeComposer(BaseLayoutComposer):
         fig = plt.figure(figsize=(5.5, 5.5), dpi=self.dpi)
         # Apply suptitle styling from config
         suptitle_props = movie.suptitle or TextProperties()
+        bg_color = movie.background.color if movie.background is not None else 'black'
         fig.suptitle(self.fig_title, fontname=suptitle_props.font_name,
-                     fontsize=suptitle_props.font_size, color=suptitle_props.color)
+                     fontsize=suptitle_props.font_size,
+                     fontweight=suptitle_props.font_weight,
+                     color=resolve_text_color(suptitle_props.color, bg_color))
 
         # Apply background color from config
         bg_props = movie.background

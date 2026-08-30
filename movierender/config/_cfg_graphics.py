@@ -32,11 +32,16 @@ class TextProperties(NamedTuple):
     Attributes:
         font_name: Font family name (e.g. 'Arial', 'Helvetica').
         font_size: Font size in points.
+        font_weight: Font weight (e.g. 'normal', 'bold'). ``None`` means
+                     default matplotlib weight.
         color: Text color as CSS name, RGB tuple, or hex string.
+               ``None`` means "auto-pick black or white to contrast with
+               the background" (resolved at render time).
     """
     font_name: str = 'Arial'
     font_size: int = 12
-    color: str = 'white'
+    font_weight: str | None = None
+    color: str | None = None
 
 
 class LineProperties(NamedTuple):
@@ -69,6 +74,25 @@ _LINE_DEFAULTS = LineProperties()
 _BACKGROUND_DEFAULTS = BackgroundProperties()
 
 
+def contrast_color(bg_color: str) -> str:
+    """Return 'black' or 'white' to contrast with the given background color.
+
+    Uses the ITU-R BT.601 luminance formula to decide whether the
+    background is light or dark.
+    """
+    from matplotlib.colors import to_rgb
+    r, g, b = to_rgb(bg_color)
+    luminance = 0.299 * r + 0.587 * g + 0.114 * b
+    return 'black' if luminance > 0.5 else 'white'
+
+
+def resolve_text_color(text_color: str | None, bg_color: str | None) -> str:
+    """Resolve a text color, auto-picking contrast color when *text_color* is ``None``."""
+    if text_color is not None:
+        return text_color
+    return contrast_color(bg_color or 'black')
+
+
 # ---------------------------------------------------------------------------
 # Parsing helpers — used by header readers to convert config keys → property
 # instances. Shared between movie and panel readers.
@@ -89,11 +113,13 @@ def _parse_text_props(cfg_section, prefix) -> TextProperties:
     """
     font_name = cfg_section.get(f"{prefix}.font_name", _TEXT_DEFAULTS.font_name)
     font_size = cfg_section.get(f"{prefix}.font_size", None)
+    font_weight = cfg_section.get(f"{prefix}.font_weight", None)
     color = cfg_section.get(f"{prefix}.color", _TEXT_DEFAULTS.color)
 
     return TextProperties(
         font_name=font_name if font_name else _TEXT_DEFAULTS.font_name,
         font_size=int(font_size) if font_size else _TEXT_DEFAULTS.font_size,
+        font_weight=font_weight if font_weight else _TEXT_DEFAULTS.font_weight,
         color=color if color else _TEXT_DEFAULTS.color,
     )
 
@@ -150,11 +176,13 @@ def _parse_overlay_text_props(cfg_section) -> TextProperties:
     """
     font_name = cfg_section.get("font_name", _TEXT_DEFAULTS.font_name)
     font_size = cfg_section.get("font_size", None)
+    font_weight = cfg_section.get("font_weight", None)
     color = cfg_section.get("font_color", _TEXT_DEFAULTS.color)
 
     return TextProperties(
         font_name=font_name if font_name else _TEXT_DEFAULTS.font_name,
         font_size=int(font_size) if font_size else _TEXT_DEFAULTS.font_size,
+        font_weight=font_weight if font_weight else _TEXT_DEFAULTS.font_weight,
         color=color if color else _TEXT_DEFAULTS.color,
     )
 

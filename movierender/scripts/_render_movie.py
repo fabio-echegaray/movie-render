@@ -7,6 +7,7 @@ from typing_extensions import Annotated
 
 from movierender.config import ConfigMovie
 from movierender.layouts import LayoutChannelColumnComposer, LayoutZStackColumnComposer, LayoutCompositeComposer
+from movierender.scripts._defaults import find_default_files
 
 import fileops
 from fileops.export.config import read_config
@@ -58,10 +59,7 @@ def render_movie_cmd(
         return
 
     if defaults_file is None:
-        log.debug(f"Found file with default information.")
-        auto = Path('.') / "defaults.cfg"
-        if auto.exists():
-            defaults_file = auto.absolute()
+        defaults_file = find_default_files(cfg_path, None)
 
     log.info(f"Reading configuration file {cfg_path}")
     cfg = read_config(cfg_path, with_root_path=with_root_path, defaults_file=defaults_file)
