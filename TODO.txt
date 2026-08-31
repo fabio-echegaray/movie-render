@@ -220,5 +220,87 @@ Legend: [OPEN] = pending, [DONE] = fixed
               the image stack's z-slices silently, as is already done for the
               default `zstack_fn = all-max` fallback.
 
-Last point number: 60
-# TODO: add a point to add an overlay showing channel name and color. Color can be a square the size of a character, and it should be shown before the name. Important parameters are point size (for both font and square), font name and properties.
+  [OPEN] 61. Channel name overlay with color indicator
+              — Add an overlay that displays the channel name preceded by a
+              small colored square (the size of a character) representing the
+              channel color. Configurable parameters: position, point size (for
+              both font and square), font name, and font properties.
+
+  [DONE] 62. Auto-detection of defaults.cfg does not search upstream directories
+               — Previously, `render folder` auto-detected `defaults.cfg` only
+               in the root `path` argument, and individual commands (`render file`,
+               `render movie`, `render panel`, `render projection`) only checked
+               CWD. When config files live in subdirectories and `defaults.cfg`
+               is at a parent directory, the search missed it.
+               Fix: all commands now search for `defaults.cfg` from the config
+               file's directory up to CWD, then up to filesystem root. Found
+               files are combined (closest to config file = highest priority).
+               Individual commands accept `--defaults-file` to override.
+               Implementation: `find_defaults_files()` in `_defaults.py` used
+               by all entry points. `defaults_file` type changed from
+               `Path | None` to `Path | list[Path] | None` across FileOps
+               (`read_config`, `check_if_output_files_are_created`,
+               `read_data_section`, `update_overrides_from_channel_sections`,
+               `HeaderReaderPlugin`).
+               — Additionally, `savefig(facecolor='white')` in
+               `_sequential.py` was overriding the configured background
+               color. Fixed to use `self._cfg.background.color`.
+
+  [DONE] 63. `fontdict` + `fontsize` alias conflict crashes rendering
+              — Overlays `ScaleBar`, `Timestamp` (`_image.py`) and `Text`
+              (`_text.py`) pass both `fontdict=fontdict` (containing
+              `{'size': N}`) and `fontsize=text_props.font_size` to
+              `ax.text()`. Matplotlib treats `size` and `fontsize` as
+              aliases and raises:
+                TypeError: Got both 'size' and 'fontsize', which are
+                aliases of one another
+              Fix: merged `text_props` into `fontdict` via `setdefault`
+              and stopped passing redundant `fontsize`/`fontname` kwargs.
+
+  [OPEN] 64. Depth-coded z-projection for PANELs and MOVIEs
+              — Add a new z-projection mode that maps each z-slice to a
+              color along a colormap (e.g. blue→red, jet, etc.), producing
+              a 2D image where pixel color encodes the z-position of peak
+              intensity. This is Fiji's "Temporal-Color Code" macro:
+              https://github.com/fiji/fiji/blob/master/plugins/Scripts/
+              Image/Hyperstacks/Temporal-Color_Code.ijm
+              Reference: https://github.com/napari/napari/issues/4300
+              — Configurable parameters: colormap name (default: hsv or
+                jet), z-range (full or subset), intensity threshold.
+              — Should work for both individual MOVIE sections and PANEL
+                layouts, and compose with existing overlays.
+              — Implementation: new z-project mode in fileops (or a
+                MovieRender plugin) that assigns each z-slice an index,
+                maps index to a colormap color, and composites the
+                result per-pixel by taking the color at each position's
+                maximum-intensity z.
+
+  [DONE] 65. Default text color is white — invisible on white backgrounds
+              — `TextProperties` defaults to `color='white'`, which is correct
+              on the default black background but becomes invisible when the
+              background is white (either from config or from the old
+              `savefig(facecolor='white')` bug). The suptitle (title text)
+              is the most visible example: white text on white background.
+              Fix: changed `TextProperties.color` default from `'white'` to
+              `None` (meaning "auto-pick"). Added `contrast_color(bg_color)`
+              and `resolve_text_color(text_color, bg_color)` helpers that
+              use ITU-R BT.601 luminance to pick black or white. Layouts
+              resolve `None` colors against the configured background before
+              passing to overlays. Overlays resolve `None` against the
+               figure's face color.
+
+  [DONE] 66. Font weight support for text elements
+               — `TextProperties` only had `font_name`, `font_size`, and
+               `color`, with no way to set bold/italic weight. Users want
+               to make suptitle bold via `suptitle.font_weight = bold` in
+               `defaults.cfg`.
+               Fix: added `font_weight: str | None = None` to
+               `TextProperties`. Updated `_parse_text_props` and
+               `_parse_overlay_text_props` to parse `{prefix}.font_weight`
+               and `font_weight` keys. Overlays (`ScaleBar`, `Timestamp`,
+               `Text`, `Experiment`) pass `font_weight` through fontdict.
+               Layouts pass `fontweight` to `fig.suptitle()`.
+               `_CHANNEL_ATTRIBUTE_KEYS` and channel config passthrough
+               updated to include `font_weight`.
+
+Last point number: 66

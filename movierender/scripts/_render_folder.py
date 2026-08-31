@@ -9,11 +9,10 @@ from fileops.image.exceptions import FrameNotFoundError
 from fileops.logger import get_logger
 from typing_extensions import Annotated
 
-from movierender.scripts._render_configfile import render_configuration_file_cmd
+from movierender.scripts._render_configfile import render_configuration_file
+from movierender.scripts._defaults import find_default_files, DEFAULT_DEFAULTS_FILE
 
 log = get_logger(name='render-folder')
-
-DEFAULT_DEFAULTS_FILE = "defaults.cfg"
 
 
 def _handle_first_sigint(signum, frame):
@@ -61,11 +60,14 @@ def render_folder_cmd(
 
     cfg_path_list = search_config_files(path)
 
-    # exclude project-level defaults files from the render list
-    if defaults_file is not None:
-        defaults_path = defaults_file.absolute()
-        cfg_path_list = [c for c in cfg_path_list if c.absolute() != defaults_path]
+    # exclude all defaults files from the render list
     cfg_path_list = [c for c in cfg_path_list if c.name != DEFAULT_DEFAULTS_FILE]
+    if defaults_file is not None:
+        if isinstance(defaults_file, Path):
+            excluded_paths = {defaults_file.absolute()}
+        else:
+            excluded_paths = {df.absolute() for df in defaults_file}
+        cfg_path_list = [c for c in cfg_path_list if c.absolute() not in excluded_paths]
 
     if len(cfg_path_list) == 0:
         log.warning("No configuration files were found.")
@@ -77,13 +79,16 @@ def render_folder_cmd(
         if cfg_path.parent.name[0:3] == "bad":
             continue
 
+        # find all defaults.cfg files from CWD to this config file's directory
+        cfg_defaults = find_default_files(cfg_path, defaults_file)
+
         log.info(f"Reading configuration file {cfg_path}")
         try:
-            render_configuration_file_cmd(cfg_path,
-                                          overwrite_file=overwrite_files,
-                                          with_root_path=with_root_path,
-                                          run_test=run_test,
-                                          defaults_file=defaults_file)
+            render_configuration_file(cfg_path,
+                                      overwrite_file=overwrite_files,
+                                      with_root_path=with_root_path,
+                                      run_test=run_test,
+                                      defaults_file=cfg_defaults)
             total_rendered += 1
         except KeyboardInterrupt:
             break
