@@ -294,4 +294,17 @@ Legend: [OPEN] = pending, [DONE] = fixed
                `_CHANNEL_ATTRIBUTE_KEYS` and channel config passthrough
                updated to include `font_weight`.
 
-Last point number: 66
+  [DONE] 67. Circular import between plugins.overlay and overlays
+               — `plugins/overlay.py` imported `Overlay` from
+               `movierender.overlays.overlay` at module level, while
+               `overlays/_arrow.py` imports `OverlayPlugin` from
+               `plugins/overlay.py` — an import-order-dependent cycle. When
+               the overlays package was imported first (e.g. running
+               `pytest test/test_movie_defaults.py` in isolation) this caused
+               `ImportError: cannot import name 'OverlayPlugin' from
+               partially initialized module 'movierender.plugins.overlay'`.
+               Fix: `plugins/overlay.py` imports `Overlay` only under
+               `TYPE_CHECKING` and uses `from __future__ import annotations`
+               so the class-level annotation is not evaluated at runtime.
+
+Last point number: 67
