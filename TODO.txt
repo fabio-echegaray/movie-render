@@ -202,23 +202,14 @@ Legend: [OPEN] = pending, [DONE] = fixed
               lacks user-facing docs. Add a section to socs/main.md that
               explains placing defaults.cfg in a render folder, the
               `[DEFAULT]`, `[COPYRIGHT]`, and `[CHANNEL-N]` override precedence,
-              and how an explicit `--defaults-file` path overrides autodetection.
+               and how an explicit `--defaults-file` path overrides autodetection.
 
-  [OPEN] 60. `zstack = all-max` (and similar) in export-definition logs an ERROR
-              instead of a warning
-              — When an export_definition.cfg contains a MOVIE section with a
-              `zstack` value that is not a parseable integer list (e.g.
-              `zstack = all-max` as a fallback for "all z-stacks"), the
-              ParameterOverride parser logs:
-                ERROR:export: error parsing zstacks in section <Section: MOVIE>:
-                invalid literal for int() with base 10: 'all-max'
-              The parse does not crash (the image's zstacks are used as a
-              fallback), but an ERROR-level log is misleading for what is a
-              benign/unknown value, and pollutes logs.
-              Fix: treat an unparseable/non-list `zstack` value as "all"
-              (log at DEBUG/WARNING level instead of ERROR) and fall back to
-              the image stack's z-slices silently, as is already done for the
-              default `zstack_fn = all-max` fallback.
+  [OBSOLETE] 60. `zstack = all-max` (and similar) in export-definition logs an
+               ERROR instead of a warning
+               — MOVED to FileOps TODO #34. This bug lives in
+               `fileops/export/config_sections.py:process_overrides_of_section`,
+               which is FileOps code. The fix (`log.error` → `log.warning`
+               for unparseable zstack values) is tracked there.
 
   [OPEN] 61. Channel name overlay with color indicator
               — Add an overlay that displays the channel name preceded by a
@@ -303,4 +294,17 @@ Legend: [OPEN] = pending, [DONE] = fixed
                `_CHANNEL_ATTRIBUTE_KEYS` and channel config passthrough
                updated to include `font_weight`.
 
-Last point number: 66
+  [DONE] 67. Circular import between plugins.overlay and overlays
+               — `plugins/overlay.py` imported `Overlay` from
+               `movierender.overlays.overlay` at module level, while
+               `overlays/_arrow.py` imports `OverlayPlugin` from
+               `plugins/overlay.py` — an import-order-dependent cycle. When
+               the overlays package was imported first (e.g. running
+               `pytest test/test_movie_defaults.py` in isolation) this caused
+               `ImportError: cannot import name 'OverlayPlugin' from
+               partially initialized module 'movierender.plugins.overlay'`.
+               Fix: `plugins/overlay.py` imports `Overlay` only under
+               `TYPE_CHECKING` and uses `from __future__ import annotations`
+               so the class-level annotation is not evaluated at runtime.
+
+Last point number: 67

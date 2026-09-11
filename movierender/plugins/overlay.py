@@ -1,6 +1,11 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from fileops.plugins.base_plugin import BaseFileOpsPlugin
 
-from movierender.overlays.overlay import Overlay
+if TYPE_CHECKING:
+    from movierender.overlays.overlay import Overlay
 
 
 class OverlayPlugin(BaseFileOpsPlugin):
