@@ -307,4 +307,21 @@ Legend: [OPEN] = pending, [DONE] = fixed
                `TYPE_CHECKING` and uses `from __future__ import annotations`
                so the class-level annotation is not evaluated at runtime.
 
-Last point number: 67
+  [DONE] 68. Panel rendering crashes in `Timestamp.plot()` (AttributeError:
+               'NoneType' object has no attribute 'image')
+               — Panels (time-array/z-array layouts, `_time_array.py` /
+               `_z_array.py`) create the Timestamp overlay without a frame
+               renderer and pass `timestamps`/`frame` explicitly. The overlay's
+               defaults in `plot()` evaluate `self._renderer.image.timestamps`
+               eagerly, so `plot()` crashed with AttributeError even though the
+               caller supplied timestamps (the `time_interval` and `frame`
+               defaults already guarded against a None renderer; `timestamps`
+               did not — reintroduced in commit ba1dea2a, 2026-07-15).
+               — Fix: guard that default too —
+               `timestamps=self._renderer.image.timestamps if self._renderer
+               is not None else None`. When neither a renderer nor explicit
+               timestamps exist, the overlay warns and skips (no crash).
+               — Regression tests in `test/test_overlay_utils.py`
+               (TestTimestampOverlayWithoutRenderer).
+
+Last point number: 68

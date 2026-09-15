@@ -90,7 +90,7 @@ class Timestamp(Overlay):
                                 keys_and_default_values=dict(
                                     xy=(0, 0),
                                     string_format='hh:mm:ss',
-                                    timestamps=self._renderer.image.timestamps,
+                                    timestamps=self._renderer.image.timestamps if self._renderer is not None else None,
                                     draw_frame=True,
                                     time_interval=self._renderer.image.time_interval if self._renderer is not None else 10 ** -6,
                                     fontdict=None,

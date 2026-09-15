@@ -126,3 +126,38 @@ class TestGetKwargs:
     def test_none_value_stored(self):
         result = get_kwargs([{"x": None}], {"x": 42})
         assert result == [None]
+
+
+class TestTimestampOverlayWithoutRenderer:
+    """Timestamp.plot() must not touch self._renderer when it is None.
+
+    Panels (time-array and z-array layouts) create the Timestamp overlay
+    directly without a renderer and pass timestamps/frame explicitly. The
+    default values in plot() used to evaluate ``self._renderer.image``
+    eagerly, crashing with AttributeError even when the caller supplied
+    timestamps.
+    """
+
+    def _make_timestamp(self, fig, **kwargs):
+        from movierender.overlays._image import Timestamp
+        return Timestamp(ax=fig.add_subplot(111), xy=(0, 0), **kwargs)
+
+    def test_with_explicit_timestamps_plots(self):
+        import matplotlib
+        matplotlib.use("Agg")
+        import matplotlib.pyplot as plt
+        fig = plt.figure()
+        tsmp = self._make_timestamp(
+            fig, timestamps=[0, 60, 120], time_interval=60.0,
+            draw_frame=True, string_format="hh:mm:ss")
+        tsmp.plot(frame=1)
+        plt.close(fig)
+
+    def test_without_any_time_info_warns_and_returns(self):
+        import matplotlib
+        matplotlib.use("Agg")
+        import matplotlib.pyplot as plt
+        fig = plt.figure()
+        tsmp = self._make_timestamp(fig)
+        tsmp.plot()
+        plt.close(fig)
