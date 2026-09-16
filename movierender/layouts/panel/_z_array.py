@@ -35,7 +35,7 @@ def plotimg(data, panel: ConfigPanel = None, **kwargs):
     _fr = data["frame"].iloc[0]
     _ch = data["channel"].iloc[0]
     w_um, h_um = imf.width * imf.um_per_pix, imf.height * imf.um_per_pix
-    
+
     # Get graphics parameters from config or use defaults
     sbar_text = panel.scalebar_text or TextProperties(font_size=12)
     sbar_line = panel.scalebar_line or LineProperties(color='white', width=1)
@@ -49,21 +49,20 @@ def plotimg(data, panel: ConfigPanel = None, **kwargs):
                             fontdict={'size': sbar_text.font_size})
     else:
         sbar = None
-    
+
     tsmp = ovl.Timestamp(ax=ax, xy=t.xy_ratio_to_um(0.02, 0.07),
                          timestamps=panel.image_file.timestamps,
                          string_format=panel.timestamp_format,
                          time_interval=panel.image_file.time_interval,
                          draw_frame=panel.draw_frame_in_timestamp,
-                         text_props=tsmp_text,
-                         fontdict={'size': tsmp_text.font_size})
+                         text_props=tsmp_text)
 
     # z_txt=f"z{_z:02d}({_z * imf.um_per_z:0.2f}um)"
     z_txt = f"z{_z * imf.um_per_z:0.2f}um"
     ztxt = ovl.Text(z_txt, ax=ax, xy=t.xy_ratio_to_um(0.50, 0.07),
                     text_props=sbar_text,
                     fontdict={'size': sbar_text.font_size, 'color': sbar_text.color})
-    
+
     hst = ovl.ImageHistogram(ax=ax, bins=50)
 
     try:

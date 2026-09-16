@@ -24,12 +24,12 @@ def plotimg(data, panel: ConfigPanel = None, **kwargs):
     ax = plt.gca()
 
     w_um, h_um = imf.width * imf.um_per_pix, imf.height * imf.um_per_pix
-    
+
     # Get graphics parameters from config or use defaults
     sbar_text = panel.scalebar_text or TextProperties(font_size=12)
     sbar_line = panel.scalebar_line or LineProperties(color='white', width=1)
     tsmp_text = panel.timestamp or TextProperties(font_size=12)
-    
+
     if panel.scalebar is not None and panel.scalebar > 0:
         sbar = ovl.ScaleBar(ax=ax, um=panel.scalebar, lw=panel.scalebar_thickness,
                             show_text=panel.draw_scalebar_text,
@@ -38,15 +38,14 @@ def plotimg(data, panel: ConfigPanel = None, **kwargs):
                             fontdict={'size': sbar_text.font_size})
     else:
         sbar = None
-    
+
     tsmp = ovl.Timestamp(ax=ax, xy=t.xy_ratio_to_um(0.02, 0.1),
                          timestamps=panel.image_file.timestamps,
                          string_format=panel.timestamp_format,
                          time_interval=panel.image_file.time_interval,
                          draw_frame=panel.draw_frame_in_timestamp,
-                         text_props=tsmp_text,
-                         fontdict={'size': tsmp_text.font_size})
-    
+                         text_props=tsmp_text)
+
     hst = ovl.ImageHistogram(ax=ax, bins=50)
 
     if data["z"].unique().size >= 1 and data["frame"].unique().size == 1 and data["channel"].unique().size == 1:

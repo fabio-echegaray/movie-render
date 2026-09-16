@@ -98,11 +98,21 @@ def resolve_text_color(text_color: str | None, bg_color: str | None) -> str:
 # instances. Shared between movie and panel readers.
 # ---------------------------------------------------------------------------
 
+def _get_prefixed_key(cfg_section, prefix, attr):
+    """Fetch ``{prefix}.{attr}`` from a config section, falling back to the
+    underscore form ``{prefix}_{attr}`` so that both the dotted-key syntax
+    (``timestamp.color``) and the legacy underscore syntax
+    (``timestamp_color``) are accepted."""
+    return cfg_section.get(f"{prefix}.{attr}", None) or cfg_section.get(f"{prefix}_{attr}", None)
+
+
 def _parse_text_props(cfg_section, prefix) -> TextProperties:
-    """Parse TextProperties from a config section using dot-separated keys.
+    """Parse TextProperties from a config section.
 
     Looks for keys like ``{prefix}.font_name``, ``{prefix}.font_size``,
-    ``{prefix}.color``.  Missing keys fall back to TextProperties defaults.
+    ``{prefix}.color`` (or their underscore equivalents ``{prefix}_font_name``,
+    ``{prefix}_font_size``, ``{prefix}_color``).  Missing keys fall back to
+    TextProperties defaults.
 
     Args:
         cfg_section: A configparser section proxy (e.g. ``cfg["MOVIE"]``).
@@ -111,10 +121,10 @@ def _parse_text_props(cfg_section, prefix) -> TextProperties:
     Returns:
         A TextProperties instance.
     """
-    font_name = cfg_section.get(f"{prefix}.font_name", _TEXT_DEFAULTS.font_name)
-    font_size = cfg_section.get(f"{prefix}.font_size", None)
-    font_weight = cfg_section.get(f"{prefix}.font_weight", None)
-    color = cfg_section.get(f"{prefix}.color", _TEXT_DEFAULTS.color)
+    font_name = _get_prefixed_key(cfg_section, prefix, "font_name")
+    font_size = _get_prefixed_key(cfg_section, prefix, "font_size")
+    font_weight = _get_prefixed_key(cfg_section, prefix, "font_weight")
+    color = _get_prefixed_key(cfg_section, prefix, "color")
 
     return TextProperties(
         font_name=font_name if font_name else _TEXT_DEFAULTS.font_name,
@@ -125,9 +135,11 @@ def _parse_text_props(cfg_section, prefix) -> TextProperties:
 
 
 def _parse_line_props(cfg_section, prefix) -> LineProperties:
-    """Parse LineProperties from a config section using dot-separated keys.
+    """Parse LineProperties from a config section.
 
-    Looks for keys like ``{prefix}.line_color``, ``{prefix}.line_width``.
+    Looks for keys like ``{prefix}.line_color``, ``{prefix}.line_width``
+    (or their underscore equivalents ``{prefix}_line_color``,
+    ``{prefix}_line_width``).
 
     Args:
         cfg_section: A configparser section proxy.
@@ -136,8 +148,8 @@ def _parse_line_props(cfg_section, prefix) -> LineProperties:
     Returns:
         A LineProperties instance.
     """
-    color = cfg_section.get(f"{prefix}.line_color", None)
-    width = cfg_section.get(f"{prefix}.line_width", None)
+    color = _get_prefixed_key(cfg_section, prefix, "line_color")
+    width = _get_prefixed_key(cfg_section, prefix, "line_width")
 
     return LineProperties(
         color=color if color else _LINE_DEFAULTS.color,
@@ -148,7 +160,7 @@ def _parse_line_props(cfg_section, prefix) -> LineProperties:
 def _parse_background_props(cfg_section) -> BackgroundProperties:
     """Parse BackgroundProperties from a config section.
 
-    Looks for key ``background.color``.
+    Looks for key ``background.color`` (or ``background_color``).
 
     Args:
         cfg_section: A configparser section proxy.
@@ -156,7 +168,7 @@ def _parse_background_props(cfg_section) -> BackgroundProperties:
     Returns:
         A BackgroundProperties instance.
     """
-    color = cfg_section.get("background.color", None)
+    color = cfg_section.get("background.color", None) or cfg_section.get("background_color", None)
 
     return BackgroundProperties(
         color=color if color else _BACKGROUND_DEFAULTS.color,

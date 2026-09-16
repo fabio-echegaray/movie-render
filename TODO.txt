@@ -324,4 +324,19 @@ Legend: [OPEN] = pending, [DONE] = fixed
                — Regression tests in `test/test_overlay_utils.py`
                (TestTimestampOverlayWithoutRenderer).
 
-Last point number: 68
+  [DONE] 69. `timestamp_color` / `timestamp_font_size` ignored in configs
+               — Panel (`figs/definitions/chx-2003/panel/export_definition.cfg`)
+               sets `timestamp_color = white`, `timestamp_font_size = 10`,
+               but `_parse_text_props(cfg_section, 'timestamp')` only reads
+               the dotted keys `timestamp.color` / `timestamp.font_size`.
+               `timestamp_color`/`timestamp_font_size` are different keys to
+               configparser, so the parser silently returned the defaults
+               (`TextProperties(font_name='Arial', font_size=12, color=None)`)
+               and the rendered timestamp ignored the configured colour/size.
+               — Fix: `_get_prefixed_key()` falls back from the dotted form
+               to the underscore form for `_parse_text_props`,
+               `_parse_line_props` and `_parse_background_props`, so both
+               syntaxes work (`timestamp.color` or `timestamp_color`, etc.).
+               — Regression tests in `test/test_config_graphics.py`.
+
+Last point number: 69

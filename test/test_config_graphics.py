@@ -132,6 +132,45 @@ class TestParseTextProps:
         assert result.font_size == defaults.font_size
         assert result.color == defaults.color
 
+    def test_parse_with_underscore_keys(self):
+        """Regression: legacy underscored keys (timestamp_color,
+        timestamp_font_size) must be accepted alongside the dotted form."""
+
+        class MockSection:
+            def get(self, key, default=None):
+                data = {
+                    'timestamp_font_name': 'Helvetica',
+                    'timestamp_font_size': '10',
+                    'timestamp_color':     'white'
+                }
+                return data.get(key, default)
+
+        section = MockSection()
+        result = _parse_text_props(section, 'timestamp')
+
+        assert result.font_name == 'Helvetica'
+        assert result.font_size == 10
+        assert result.color == 'white'
+
+    def test_dotted_key_takes_precedence_over_underscore(self):
+        """Both forms present: the dotted (canonical) key wins."""
+
+        class MockSection:
+            def get(self, key, default=None):
+                data = {
+                    'timestamp.font_size': '14',
+                    'timestamp_font_size': '10',
+                    'timestamp.color':     'cyan',
+                    'timestamp_color':     'white'
+                }
+                return data.get(key, default)
+
+        section = MockSection()
+        result = _parse_text_props(section, 'timestamp')
+
+        assert result.font_size == 14
+        assert result.color == 'cyan'
+
 
 class TestParseLineProps:
     """Test class for _parse_line_props helper."""
@@ -167,6 +206,23 @@ class TestParseLineProps:
         assert result.color == defaults.color
         assert result.width == defaults.width
 
+    def test_parse_with_underscore_keys(self):
+        """Legacy underscored keys (scalebar_line_color etc.) are accepted."""
+
+        class MockSection:
+            def get(self, key, default=None):
+                data = {
+                    'scalebar_line_color': 'green',
+                    'scalebar_line_width': '3'
+                }
+                return data.get(key, default)
+
+        section = MockSection()
+        result = _parse_line_props(section, 'scalebar')
+
+        assert result.color == 'green'
+        assert result.width == 3.0
+
 
 class TestParseBackgroundProps:
     """Test class for _parse_background_props helper."""
@@ -195,6 +251,19 @@ class TestParseBackgroundProps:
         result = _parse_background_props(section)
 
         assert result.color == BackgroundProperties().color
+
+    def test_parse_with_underscore_key(self):
+        """Legacy underscored key (background_color) is accepted."""
+
+        class MockSection:
+            def get(self, key, default=None):
+                data = {'background_color': 'navy'}
+                return data.get(key, default)
+
+        section = MockSection()
+        result = _parse_background_props(section)
+
+        assert result.color == 'navy'
 
 
 class TestOverlayTextProps:
