@@ -353,7 +353,7 @@ Legend: [OPEN] = pending, [DONE] = fixed
                — Regression tests in `test/test_overlay_utils.py`
                (TestTimestampOverlayWithoutRenderer).
 
-[BUG] 69. `timestamp_color` / `timestamp_font_size` ignored in configs
+  [BUG] 69. `timestamp_color` / `timestamp_font_size` ignored in configs
                 — Panel (`figs/definitions/chx-2003/panel/export_definition.cfg`)
                 sets `timestamp_color = white`, `timestamp_font_size = 10`,
                 but `_parse_text_props(cfg_section, 'timestamp')` only reads
@@ -368,7 +368,7 @@ Legend: [OPEN] = pending, [DONE] = fixed
                 syntaxes work (`timestamp.color` or `timestamp_color`, etc.).
                 — Regression tests in `test/test_config_graphics.py`.
 
-  [BUG] 70. `[DATA] roi` did not crop panel/movie images
+  [DONE] 70. `[DATA] roi` did not crop panel/movie images
                 — `roi = roi_001` (resolved from `[ROI-01]` with
                 `id = roi_001`, `geometry = Square(54,35,100)`) was only ever
                 consumed by the FileOps volume/export path; the panel
@@ -389,7 +389,7 @@ Legend: [OPEN] = pending, [DONE] = fixed
                 in the full-image µm frame, so they stay aligned.
                 — Regression tests in `test/test_pixel_tools.py`.
 
-[BUG] 71. ROIs listed in a panel's `overlays` were not drawn, and
+  [DONE] 71. ROIs listed in a panel's `overlays` were not drawn, and
                 per-channel `histogram = yes` produced no histogram
                 — (a) The panel header reader only matched OVERLAY-section
                 plugins (arrows); `[ROI-01]` sections were parsed but never
