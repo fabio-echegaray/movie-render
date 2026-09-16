@@ -11,7 +11,6 @@ from fileops.plugins import HeaderReaderPlugin
 
 from movierender.config import ConfigMovie
 from movierender.config import _parse_text_props, _parse_line_props, _parse_background_props
-from movierender.overlays import ImagejROI
 
 
 def load_overlay_plugins(cfg_path, root_path=None, **shared):
@@ -25,6 +24,49 @@ def load_overlay_plugins(cfg_path, root_path=None, **shared):
         cinst = clz(cfg_path, root_path=root_path, **shared)
         if cinst.has_valid_header():
             overlays.extend(cinst.process())
+    return overlays
+
+
+def load_roi_overlays(cfg_path, root_path=None, **shared):
+    """Parse all [ROI-xx] sections of the config into ConfigROI instances."""
+    roi_lst = list()
+    for p in fileops.config_type_plugins:
+        if "roi" not in p.name:
+            continue
+        header_reader_name = f"{p.name}_header_reader"
+        for h in fileops.header_reader_plugins:
+            if h.name == header_reader_name:
+                clz = h.load()
+                if not issubclass(clz, HeaderReaderPlugin):
+                    continue
+                # propagate the shared data-section objects to nested plugins
+                cinst = clz(cfg_path, root_path=root_path, **shared)
+                if cinst.has_valid_header():
+                    roi_lst.extend(cinst.process())
+    return roi_lst
+
+
+def roi_overlays_for_ids(cfg, roi_lst, roi_ids, um_per_pix=None):
+    """Build ImagejROI overlay plugins for ROI sections whose section header
+    or ``id`` key is listed in ``roi_ids``."""
+    from movierender.overlays._roi import ImagejROIOverlayPlugin
+
+    overlays = list()
+    for r in roi_lst:
+        r_id = cfg[r.header].get("id", r.header)
+        if r.header not in roi_ids and r_id not in roi_ids:
+            continue
+        geom = r.geometry if isinstance(r.geometry, list) else [r.geometry]
+        kwargs = {"overlay_id": r_id}
+        if um_per_pix is not None:
+            kwargs["um_per_pix"] = um_per_pix
+        if len(geom) == 1:
+            # single ROI: if the section specifies a frame, limit it to that
+            # frame; otherwise clear the roifile default t_position (0) so the
+            # ROI draws on every frame
+            _fr = int(cfg[r.header]["frame"]) if "frame" in cfg[r.header] else None
+            geom[0].t_position = _fr
+        overlays.append(ImagejROIOverlayPlugin(geom, **kwargs))
     return overlays
 
 
@@ -69,24 +111,8 @@ class MovieHeaderReaderPlugin(HeaderReaderPlugin):
         copyright_info = read_config_copyright(self._cfg_path, cfg)
 
         # process ROI sections in configuration file
-        roi_lst = list()
-        for p in fileops.config_type_plugins:
-            if "roi" not in p.name:
-                continue
-            self.log.debug(f"Checking {p.name}")
-            t_name = p.name
-            header_reader_name = f"{t_name}_header_reader"
-            for h in fileops.header_reader_plugins:
-                if h.name == header_reader_name:
-                    self.log.debug(f"Loading {header_reader_name}")
-                    clz = h.load()
-                    if not issubclass(clz, HeaderReaderPlugin):
-                        continue
-                    # propagate the shared data-section objects to nested plugins
-                    cinst = clz(self._cfg_path, root_path=self._root_path,
-                                cfg=cfg, img_file=img_file, param_override=param_override, roi=roi)
-                    if cinst.has_valid_header():
-                        roi_lst.extend(cinst.process())
+        roi_lst = load_roi_overlays(self._cfg_path, root_path=self._root_path,
+                                    cfg=cfg, img_file=img_file, param_override=param_override, roi=roi)
 
         # find OVERLAY parsers from plugins
         overlays = load_overlay_plugins(self._cfg_path, root_path=self._root_path,
@@ -117,7 +143,7 @@ class MovieHeaderReaderPlugin(HeaderReaderPlugin):
                 if roi_txt[0] == "[" and roi_txt[-1] == "]":
                     roi_ids = [s.strip() for s in roi_txt[1:-1].split(",") if len(s) > 0]
                     if len(roi_ids) > 0:
-                        overlays_to_add.extend(ImagejROI(r.geometry) for r in roi_lst if r.header in roi_ids and r.plot)
+                        overlays_to_add.extend(roi_overlays_for_ids(cfg, roi_lst, roi_ids))
 
             # parse graphics properties from dotted keys
             scalebar_text = _parse_text_props(cfg[mov], "scalebar")

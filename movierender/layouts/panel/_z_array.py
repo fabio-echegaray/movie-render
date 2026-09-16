@@ -10,13 +10,15 @@ from movierender.config import ConfigPanel
 from movierender.config import TextProperties, LineProperties
 from movierender.layouts._ch_config import channel_configuration
 from movierender.overlays import PixelTools
+from movierender.overlays.pixel_tools import crop_extent, roi_pixel_box
 
 logger = logging.getLogger(__name__)
 
 
 def plotimg(data, panel: ConfigPanel = None, **kwargs):
     imf = panel.image_file
-    t = PixelTools(imf)
+    roi = panel.roi
+    t = PixelTools(imf, roi=roi)
 
     if data["frame"].unique().size != 1:
         raise ValueError("Z-array layout demands only one frame.")
@@ -89,8 +91,13 @@ def plotimg(data, panel: ConfigPanel = None, **kwargs):
         ax.set_facecolor('blue')
         return
 
-    # img = exposure.rescale_intensity(img, in_range=tuple(np.percentile(img, (0.1, 99.9))))
-    ax.imshow(img, cmap='gray', extent=(.0, w_um, h_um, .0),
+    disp = img
+    ext = (0.0, w_um, h_um, 0.0)
+    if roi is not None:
+        y0, y1, x0, x1 = roi_pixel_box(roi, img.shape)
+        disp = img[y0:y1, x0:x1]
+        ext = crop_extent(ext, roi, img.shape, 'upper')
+    ax.imshow(disp, cmap='gray', extent=ext,
               origin='upper',
               interpolation='none', aspect='equal',  # resample=False,
               zorder=0)
