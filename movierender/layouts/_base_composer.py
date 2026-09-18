@@ -9,6 +9,7 @@ from pathlib import Path
 
 import fileops
 import matplotlib
+import matplotlib.pyplot as plt
 from fileops.logger import get_logger
 
 import movierender
@@ -212,15 +213,22 @@ class BaseLayoutComposer:
     def render(self, parallel=False, test=False):
         signal.signal(signal.SIGTERM, exit_signal_handler)
         self.save_file_path.touch()  # create a file in case another instance is of a renderer is trying to render movies
-        if parallel and not test:
-            self._render_parallel()
-        else:
-            self.log.info(f"Rendering movie into file {self.save_file_path}.")
-            imf = self._movie_configuration_params.image_file
-            s_lock, s_dict, s_list, s_sem = self.shared_tuple
-            imf.init_shared(s_lock, s_dict, s_list, s_sem)
-            self.make_layout()
-            self.renderer.render(filename=self.save_file_path.as_posix(), test=test)
+        try:
+            if parallel and not test:
+                self._render_parallel()
+            else:
+                self.log.info(f"Rendering movie into file {self.save_file_path}.")
+                imf = self._movie_configuration_params.image_file
+                s_lock, s_dict, s_list, s_sem = self.shared_tuple
+                imf.init_shared(s_lock, s_dict, s_list, s_sem)
+                self.make_layout()
+                self.renderer.render(filename=self.save_file_path.as_posix(), test=test)
+        finally:
+            # release the figure from matplotlib's global registry so it does
+            # not accumulate across renders within the same process
+            fig = getattr(self.renderer, 'fig', None) if self.renderer is not None else None
+            if fig is not None:
+                plt.close(fig)
 
 
 def run_job(cmpsr: BaseLayoutComposer, frame, shared_tuple):

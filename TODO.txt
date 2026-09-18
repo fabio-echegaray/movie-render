@@ -88,6 +88,12 @@ Legend: [OPEN] = pending, [DONE] = fixed
                     explicitly closed or garbage-collected; the panel loop
                     never calls `plt.close()`, so figures accumulate for the
                     entire render pass.
+              — Partially addressed: figures are now closed after each panel
+                (`layouts/panel/_main.py`, both multipage and single-page
+                branches) and after each movie composer render
+                (`layouts/_base_composer.py render()`, finally block reuses
+                the pattern from run_job). zcache (a) is only hit for
+                n_zstacks > 1 files and is still open.
                 (c) The `fileops` ImageFile instances (and their cached
                     metadata / processor lists) outlive the render loop
                     because the panel reader holds references via
