@@ -94,7 +94,7 @@ class Timestamp(Overlay):
                                     draw_frame=True,
                                     time_interval=self._renderer.image.time_interval if self._renderer is not None else 10 ** -6,
                                     fontdict=None,
-                                    va='center',
+                                    va='top',
                                     color=None,
                                     alpha=1.0,
                                     zorder=1,

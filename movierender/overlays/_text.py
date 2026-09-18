@@ -21,7 +21,7 @@ class Text(Overlay):
         def_values = get_kwargs([kwargs, self._kwargs],
                                 keys_and_default_values=dict(
                                     fontdict=None,
-                                    va='center',
+                                    va='top',
                                     color='white',
                                     alpha=1.0,
                                     zorder=1,
