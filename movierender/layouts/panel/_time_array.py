@@ -3,6 +3,7 @@ import logging
 import matplotlib.pyplot as plt
 import skimage
 from fileops.image.exceptions import FrameNotFoundError
+from fileops.image.ops import z_projection
 
 import movierender.overlays as ovl
 from movierender import CompositeRGBImage
@@ -55,18 +56,22 @@ def plotimg(data, panel: ConfigPanel = None, **kwargs):
             zstack_projection = 'max'
             if _ch != "merge":
                 ch_par = panel.channel_render_parameters[_ch]
+                ch_name = ch_par["name"]
+                ch_cfg = channel_configuration({_ch: ch_par})
                 crgb = CompositeRGBImage(
                     ax=None,
                     zstack=panel.zstacks,
                     zstack_fn=zstack_projection,
-                    channeldict=channel_configuration({_ch: ch_par})
+                    channeldict=ch_cfg
                 )
+                if ("histogram" in ch_par and str(ch_par["histogram"]).lower() in ["yes", "true", "1"]) or \
+                        ("overlays" in ch_par and "histogram" in ch_par["overlays"]):
+                    # Overlay the histogram on the image plot
+                    imfz = z_projection(imf, _fr, _ch, z_subset=panel.zstacks, projection=zstack_projection)
+                    hst.plot(imfz.image, channel_params=ch_cfg[ch_name])
+
                 img = crgb(panel.image_file, frame=_fr)
                 img = skimage.util.img_as_float(img)
-
-                if "overlays" in ch_par and "histogram" in ch_par["overlays"]:
-                    # Overlay the histogram on the image plot
-                    hst.plot(img)
             elif _ch == "merge":
                 crgb = CompositeRGBImage(
                     ax=None,

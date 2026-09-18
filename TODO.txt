@@ -422,10 +422,16 @@ Legend: [OPEN] = pending, [DONE] = fixed
                 — Regression tests in `test/test_overlays_roi_histogram.py`.
                 — Note: `roifile` gives even a *static* geometry
                 `t_position == 0` by default, which would confine it to the
-                first frame; `roi_overlays_for_ids()` tags single-geometry
-                overlays as `static=True` and `ImagejROI.plot` skips the per-
-                frame filter for them, so an ROI without an explicit frame
-                is drawn on every frame. Regression-tested in
-                `test_static_roi_survives_default_t_position_0`.
+                  first frame; `roi_overlays_for_ids()` now uses `t_position
+                is None` as the "draw on every frame" sentinel (kept away
+                from the value that `roifile` defaults to) and `ImagejROI.
+                plot` filters with `if t_position is not None and
+                t_position != frame`, so an ROI without an explicit `frame`
+                key is drawn on every frame while `[ROI-xx] frame = N`
+                confines it to frame N only (mirroring the arrows' `frame`
+                key in `_arrow_overlay_header_reader.py`). Regression-tested
+                in `test_static_roi_survives_default_t_position_0`,
+                `test_following_roi_positions_are_preserved` and
+                `test_frame_key_limits_static_roi_to_that_frame`.
 
 Last point number: 72
