@@ -241,11 +241,21 @@ class SequentialMovieRenderer:
             ppu = self.image.pix_per_um if self.image.pix_per_um is not None else 1
             ext = (0, self.image.width / ppu, 0, self.image.height / ppu)
             ax = imgp.ax if imgp.ax is not None else self.ax
+            roi = getattr(self._cfg, 'roi', None)
+            if roi is None or not hasattr(roi, 'left'):
+                roi = None
             try:
                 with reading_image_lock:
                     img = imgp()
                 img = skimage.util.img_as_float(img)
-                ax.imshow(img, cmap='gray', extent=ext,
+                disp = img
+                img_ext = ext
+                if roi is not None:
+                    from movierender.overlays.pixel_tools import crop_extent, roi_pixel_box
+                    y0, y1, x0, x1 = roi_pixel_box(roi, img.shape)
+                    disp = img[y0:y1, x0:x1]
+                    img_ext = crop_extent(ext, roi, img.shape, 'upper' if self.inv_y else 'lower')
+                ax.imshow(disp, cmap='gray', extent=img_ext,
                           origin='upper' if self.inv_y else 'lower',
                           interpolation='none', aspect='equal',
                           zorder=0)
