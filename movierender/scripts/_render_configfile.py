@@ -62,6 +62,8 @@ def render_configuration_file(
         if info is _MISSING:
             info = image_file.info
             info_cache[image_file] = info
+        if info is None or len(info) == 0:
+            return
         try:
             log.info(f"file {cfg_path}\r\n{info.squeeze(axis=0)}")
         except Exception as e:

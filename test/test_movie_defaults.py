@@ -95,5 +95,49 @@ class TestMovieDefaults(unittest.TestCase):
         self.assertIsNone(exp.movies[0].copyright)
 
 
+class TestMovieSizeAndCodec(unittest.TestCase):
+
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp())
+        self.img_path = self.tmp / "data.tif"
+        self.img_path.write_bytes(b"stub")
+
+    def _cfg(self, movie_extra=""):
+        path = self.tmp / ("movie_%d.cfg" % len(movie_extra))
+        path.write_text(
+            CFG_TEXT.replace("[MOVIE-1]", "[MOVIE-1]\n" + movie_extra)
+        )
+        return path
+
+    @patch("fileops.export.config_data_section.load_image_file", return_value=_StubImage())
+    def test_defaults_are_current_values(self, mock_load):
+        movie = read_config(self._cfg("")).movies[0]
+        self.assertEqual(movie.max_width, 2880)
+        self.assertEqual(movie.dpi, 326)
+        self.assertEqual(movie.codec, "libx264")
+
+    @patch("fileops.export.config_data_section.load_image_file", return_value=_StubImage())
+    def test_size_and_codec_are_parsed(self, mock_load):
+        movie = read_config(self._cfg(
+            "max_width = 1920\n"
+            "dpi = 150\n"
+            "codec = H.265\n"
+        )).movies[0]
+        self.assertEqual(movie.max_width, 1920)
+        self.assertEqual(movie.dpi, 150)
+        self.assertEqual(movie.codec, "libx265")
+
+    def test_resolve_movie_codec(self):
+        from movierender.plugins.fileops._movie_header_reader import resolve_movie_codec
+        self.assertEqual(resolve_movie_codec(""), "libx264")
+        self.assertEqual(resolve_movie_codec("h264"), "libx264")
+        self.assertEqual(resolve_movie_codec("H.264"), "libx264")
+        self.assertEqual(resolve_movie_codec("libx264"), "libx264")
+        self.assertEqual(resolve_movie_codec("H.265"), "libx265")
+        self.assertEqual(resolve_movie_codec("hevc"), "libx265")
+        self.assertEqual(resolve_movie_codec("libx265"), "libx265")
+        self.assertEqual(resolve_movie_codec("libvpx"), "libvpx")
+
+
 if __name__ == '__main__':
     unittest.main()

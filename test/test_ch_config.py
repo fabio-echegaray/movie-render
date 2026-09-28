@@ -103,11 +103,11 @@ class TestChannelConfiguration:
         result = channel_configuration({})
         assert result == {}
 
-    def test_rescale_and_gamma_mutually_exclusive(self):
-        # rescale key present takes precedence over gamma
+    def test_rescale_and_gamma_coexist(self):
+        # rescale and gamma settings coexist (gamma applied after rescaling)
         params = {
             0: {"name": "ch1", "color": "red", "rescale": "true", "gamma_value": "2.0"}
         }
         result = channel_configuration(params)
-        assert "rescale" in result["ch1"]
-        assert "gamma_value" not in result["ch1"]
+        assert result["ch1"]["rescale"] is True
+        assert result["ch1"]["gamma_value"] == 2.0

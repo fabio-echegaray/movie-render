@@ -56,4 +56,4 @@ class Arrow(Overlay):
         x, y = self._xy
         xb, yb = x + length * np.cos(self._angle_rad), y + length * np.sin(self._angle_rad)
         ax.annotate("", xytext=(xb, yb), xy=(x, y),
-                    arrowprops=dict(arrowstyle="-|>", fc=c, ec=c, shrinkA=0), )
+                    arrowprops=dict(arrowstyle="->", fc=c, ec=c, shrinkA=0), )

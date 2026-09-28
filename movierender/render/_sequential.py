@@ -181,16 +181,18 @@ class SequentialMovieRenderer:
         self.logger.info("Now rendering using ffmpeg.")
         dur = len(rendered_frames) / self.fps
         animation = mpy.VideoClip(make_frame_mpl, duration=dur)
+        # set 'hvc1' tag for HEVC output (libx265) in QuickTime/iOS.
+        hvc1_tag = ['-tag:v', 'hvc1'] if self._cfg.codec.lower() == 'libx265' else []
         animation.write_videofile(filename,
                                   fps=self._cfg.fps,
                                   bitrate=self._cfg.bitrate,
-                                  codec='libx265',
+                                  codec=self._cfg.codec,
                                   # audio_codec='pcm_s32le',
                                   ffmpeg_params=[
                                       '-vf', 'pad=ceil(iw/2)*2:ceil(ih/2)*2',
                                       '-vf', f'scale={self._cfg.max_width}:trunc(ow/a/2)*2',
                                       '-crf', '18',
-                                      '-tag:v', 'hvc1',
+                                      *hvc1_tag,
                                       '-preset', 'medium',
                                       '-tune', 'grain',
                                       '-pix_fmt', 'yuv420p',
@@ -239,11 +241,21 @@ class SequentialMovieRenderer:
             ppu = self.image.pix_per_um if self.image.pix_per_um is not None else 1
             ext = (0, self.image.width / ppu, 0, self.image.height / ppu)
             ax = imgp.ax if imgp.ax is not None else self.ax
+            roi = getattr(self._cfg, 'roi', None)
+            if roi is None or not hasattr(roi, 'left'):
+                roi = None
             try:
                 with reading_image_lock:
                     img = imgp()
                 img = skimage.util.img_as_float(img)
-                ax.imshow(img, cmap='gray', extent=ext,
+                disp = img
+                img_ext = ext
+                if roi is not None:
+                    from movierender.overlays.pixel_tools import crop_extent, roi_pixel_box
+                    y0, y1, x0, x1 = roi_pixel_box(roi, img.shape)
+                    disp = img[y0:y1, x0:x1]
+                    img_ext = crop_extent(ext, roi, img.shape, 'upper' if self.inv_y else 'lower')
+                ax.imshow(disp, cmap='gray', extent=img_ext,
                           origin='upper' if self.inv_y else 'lower',
                           interpolation='none', aspect='equal',
                           zorder=0)

@@ -68,6 +68,41 @@ Legend: [OPEN] = pending, [DONE] = fixed
               current disk path. Available memory can be read via
               `psutil.virtual_memory().available` or `os.sysconf`.
 
+  [OPEN] 72. Apparent memory leak in z-projection for large files
+              — When rendering panels/movies with large OME-TIFFs
+              (many z-slices × frames × channels), RSS grows steadily and
+              is not reclaimed after each subplot. Three likely sources:
+                (a) `_zprj_populate_state()` (`_shared_zproj_state_mixin.py:50`)
+                    eagerly enqueues a z-projection for *every*
+                    frame×channel combination at first access; the background
+                    `_zproject()` thread then materialises full-resolution
+                    MetadataImages (numpy arrays) and keeps up to 20 of them
+                    simultaneously in the shared `_zcache_state` dict (the
+                    `imgs_done ≥ 20` throttle at line 198). Even after the
+                    consumer sets `ckeyelem['image'] = None`, the dict entry
+                    itself (with all its scalar fields) is never evicted.
+                (b) `CompositeRGBImage.__call__` (`_image_pipeline_composite_rgb.py:55`)
+                    allocates a fresh `np.zeros((H, W, 3), dtype=np.float64)`
+                    per subplot (~96 MiB for 2048×2048). Matplotlib retains
+                    the rendered image data in the `Axes` until the figure is
+                    explicitly closed or garbage-collected; the panel loop
+                    never calls `plt.close()`, so figures accumulate for the
+                    entire render pass.
+              — Partially addressed: figures are now closed after each panel
+                (`layouts/panel/_main.py`, both multipage and single-page
+                branches) and after each movie composer render
+                (`layouts/_base_composer.py render()`, finally block reuses
+                the pattern from run_job). zcache (a) is only hit for
+                n_zstacks > 1 files and is still open.
+                (c) The `fileops` ImageFile instances (and their cached
+                    metadata / processor lists) outlive the render loop
+                    because the panel reader holds references via
+                    `ConfigPanel.image_file`.
+              — Explore: (1) evict `_zcache_state` entries once all keys
+              reach `state == 'used'`; (2) close each panel figure after
+              `pdf.savefig()` in `render_static_montage`; (3) profile RSS
+              before/after (b) to quantify the gain before tackling (a)/(c).
+
 
 4. UX
 ──────
@@ -307,4 +342,118 @@ Legend: [OPEN] = pending, [DONE] = fixed
                `TYPE_CHECKING` and uses `from __future__ import annotations`
                so the class-level annotation is not evaluated at runtime.
 
-Last point number: 67
+  [DONE] 68. Panel rendering crashes in `Timestamp.plot()` (AttributeError:
+               'NoneType' object has no attribute 'image')
+               — Panels (time-array/z-array layouts, `_time_array.py` /
+               `_z_array.py`) create the Timestamp overlay without a frame
+               renderer and pass `timestamps`/`frame` explicitly. The overlay's
+               defaults in `plot()` evaluate `self._renderer.image.timestamps`
+               eagerly, so `plot()` crashed with AttributeError even though the
+               caller supplied timestamps (the `time_interval` and `frame`
+               defaults already guarded against a None renderer; `timestamps`
+               did not — reintroduced in commit ba1dea2a, 2026-07-15).
+               — Fix: guard that default too —
+               `timestamps=self._renderer.image.timestamps if self._renderer
+               is not None else None`. When neither a renderer nor explicit
+               timestamps exist, the overlay warns and skips (no crash).
+               — Regression tests in `test/test_overlay_utils.py`
+               (TestTimestampOverlayWithoutRenderer).
+
+  [BUG] 69. `timestamp_color` / `timestamp_font_size` ignored in configs
+                — Panel (`figs/definitions/chx-2003/panel/export_definition.cfg`)
+                sets `timestamp_color = white`, `timestamp_font_size = 10`,
+                but `_parse_text_props(cfg_section, 'timestamp')` only reads
+                the dotted keys `timestamp.color` / `timestamp.font_size`.
+                `timestamp_color`/`timestamp_font_size` are different keys to
+                configparser, so the parser silently returned the defaults
+                (`TextProperties(font_name='Arial', font_size=12, color=None)`)
+                and the rendered timestamp ignored the configured colour/size.
+                — Fix: `_get_prefixed_key()` falls back from the dotted form
+                to the underscore form for `_parse_text_props`,
+                `_parse_line_props` and `_parse_background_props`, so both
+                syntaxes work (`timestamp.color` or `timestamp_color`, etc.).
+                — Regression tests in `test/test_config_graphics.py`.
+
+  [DONE] 70. `[DATA] roi` did not crop panel/movie images
+                — `roi = roi_001` (resolved from `[ROI-01]` with
+                `id = roi_001`, `geometry = Square(54,35,100)`) was only ever
+                consumed by the FileOps volume/export path; the panel
+                (`_time_array.py`/`_z_array.py`) and movie renderer
+                (`_sequential.py`) still imshow'd the full frame, so the
+                choice of crop region had no visible effect.
+                — Fix: `roi_pixel_box()` (clamped pixel crop, image edges
+                truncate an off-image ROI) and `crop_extent()` (converts the
+                full-image imshow extent to the cropped sub-image extent for
+                both `origin` conventions) in
+                `movierender/overlays/pixel_tools.py`; `PixelTools` now
+                accepts a `roi` so `xy_ratio_to_um()`/`xy_ratio_to_pixels()`
+                positions scalebar/timestamp/channel labels inside the
+                cropped view. Applied in the two panel layouts, in
+                `SequentialMovieRenderer.render_frame()` (via
+                `ConfigMovie.roi`), and in the three movie composers.
+                Absolute-µm overlays (arrows, ROIs, scalebar) keep plotting
+                in the full-image µm frame, so they stay aligned.
+                — Regression tests in `test/test_pixel_tools.py`.
+
+  [DONE] 71. ROIs listed in a panel's `overlays` were not drawn, and
+                per-channel `histogram = yes` produced no histogram
+                — (a) The panel header reader only matched OVERLAY-section
+                plugins (arrows); `[ROI-01]` sections were parsed but never
+                turned into ImagejROI overlays, and the reference was by the
+                section `id` (`roi_001`) while matching only knew the header
+                (`ROI-01`). `ImagejROI.plot` also crashed on static ROIs
+                (no `t_position`, no renderer scale) and on single-geometry
+                construction.
+                — (b) `_time_array.py`/`_z_array.py` gated the histogram on
+                `"overlays" in ch_par and "histogram" in ch_par["overlays"]`,
+                but channel configs carry `histogram` as a direct key
+                (`_CHANNEL_ATTRIBUTE_KEYS`), never an `overlays` list — so it
+                never ran; `ImageHistogram.plot()` also expected a
+                MetadataImage while the callers passed the composite ndarray.
+                — Fix: shared `load_roi_overlays()` /
+                `roi_overlays_for_ids()` (matches section header OR `id`,
+                wraps single geometries, carries `um_per_pix` for renderer-less
+                panel use) used by panel and movie readers; `ImagejROI` now
+                plots static ROIs given an explicit `frame`, tolerates missing
+                `t_position`, and normalizes single geometry to a list.
+                Histogram guards now honour `histogram = yes`/`true` (plus the
+                old `overlays`-list form); `ImageHistogram.plot()` accepts an
+                ndarray (RGB → luminance).
+                — Regression tests in `test/test_overlays_roi_histogram.py`.
+                — Note: `roifile` gives even a *static* geometry
+                `t_position == 0` by default, which would confine it to the
+                  first frame; `roi_overlays_for_ids()` now uses `t_position
+                is None` as the "draw on every frame" sentinel (kept away
+                from the value that `roifile` defaults to) and `ImagejROI.
+                plot` filters with `if t_position is not None and
+                t_position != frame`, so an ROI without an explicit `frame`
+                key is drawn on every frame while `[ROI-xx] frame = N`
+                confines it to frame N only (mirroring the arrows' `frame`
+                key in `_arrow_overlay_header_reader.py`). Regression-tested
+                in `test_static_roi_survives_default_t_position_0`,
+                `test_following_roi_positions_are_preserved` and
+                `test_frame_key_limits_static_roi_to_that_frame`.
+
+[DONE] 73. Way to specify figure/movie size as parameters
+               — `max_width` (output width in pixels; height follows the
+               aspect ratio) was already used by the ffmpeg scale filter but
+               was never parsed from the config file, so it always stayed at
+               its 2880 default. It is now read from `[MOVIE]`.
+               — New `[MOVIE] dpi` key (default 326) controls the resolution
+               the figure frames are drawn at (`_base_composer.py`),
+               re-usable to shrink renders for speed/memory or raise them
+               for quality.
+               — Config fields `max_width`, `dpi`, `codec` added to
+               `ConfigMovie`; parsers + tests in `test_movie_defaults.py`;
+               documented in `docs/main.md` MOVIE section.
+
+  [DONE] 74. Select codec when rendering the movie (H.264 default, H.265 option)
+               — New `[MOVIE] codec` key (default `H.264` → `libx264`).
+               `H.265`/`HEVC` map to `libx265`; any other value is treated
+               as a raw ffmpeg encoder name and passed through to
+               moviepy's `write_videofile` (`_sequential.py`).
+               — Mapping helper `resolve_movie_codec()` in
+               `_movie_header_reader.py`, unit-tested; documented in
+               `docs/main.md`.
+
+Last point number: 74
