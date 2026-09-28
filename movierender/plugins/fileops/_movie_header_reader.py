@@ -13,6 +13,23 @@ from movierender.config import ConfigMovie
 from movierender.config import _parse_text_props, _parse_line_props, _parse_background_props
 
 
+def resolve_movie_codec(codec: str) -> str:
+    """Map a user-facing codec name to the ffmpeg encoder string fed to moviepy.
+
+    Undefined or empty -> ``libx264`` (H.264, the default). ``H.265``/``HEVC``
+    -> ``libx265``. Any other value is passed through verbatim so advanced
+    users can select any ffmpeg encoder compiled into their ffmpeg build.
+    """
+    if not codec:
+        return "libx264"
+    c = codec.strip().lower()
+    if c in ("h264", "h.264", "264", "libx264", "avc"):
+        return "libx264"
+    if c in ("h265", "h.265", "265", "hevc", "libx265"):
+        return "libx265"
+    return codec.strip()
+
+
 def load_overlay_plugins(cfg_path, root_path=None, **shared):
     overlays = list()
     for h in fileops.header_reader_plugins:
@@ -152,6 +169,9 @@ class MovieHeaderReaderPlugin(HeaderReaderPlugin):
             channel_label = _parse_text_props(cfg[mov], "channel_label")
             suptitle = _parse_text_props(cfg[mov], "suptitle")
             background = _parse_background_props(cfg[mov])
+            max_width = int(cfg[mov]["max_width"]) if "max_width" in cfg[mov] else 2880
+            dpi = int(cfg[mov]["dpi"]) if "dpi" in cfg[mov] else 326
+            codec = resolve_movie_codec(cfg[mov]["codec"] if "codec" in cfg[mov] else "")
 
             movie_def.append(ConfigMovie(
                 header=mov,
@@ -186,5 +206,8 @@ class MovieHeaderReaderPlugin(HeaderReaderPlugin):
                 channel_label=channel_label,
                 suptitle=suptitle,
                 background=background,
+                max_width=max_width,
+                dpi=dpi,
+                codec=codec,
             ))
         return movie_def

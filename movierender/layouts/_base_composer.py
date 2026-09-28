@@ -41,7 +41,7 @@ class BaseLayoutComposer:
         self._movie_configuration_params = movie
         self.renderer: MovieRenderer | None = None
         self._renderer_params = dict(temp_folder=str(uuid.uuid4()))
-        self.dpi = 326
+        self.dpi = getattr(movie, "dpi", None) or 326
 
         self.fig_title = movie.title
         self.ax_lst = list()

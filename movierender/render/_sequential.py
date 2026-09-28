@@ -181,16 +181,18 @@ class SequentialMovieRenderer:
         self.logger.info("Now rendering using ffmpeg.")
         dur = len(rendered_frames) / self.fps
         animation = mpy.VideoClip(make_frame_mpl, duration=dur)
+        # set 'hvc1' tag for HEVC output (libx265) in QuickTime/iOS.
+        hvc1_tag = ['-tag:v', 'hvc1'] if self._cfg.codec.lower() == 'libx265' else []
         animation.write_videofile(filename,
                                   fps=self._cfg.fps,
                                   bitrate=self._cfg.bitrate,
-                                  codec='libx265',
+                                  codec=self._cfg.codec,
                                   # audio_codec='pcm_s32le',
                                   ffmpeg_params=[
                                       '-vf', 'pad=ceil(iw/2)*2:ceil(ih/2)*2',
                                       '-vf', f'scale={self._cfg.max_width}:trunc(ow/a/2)*2',
                                       '-crf', '18',
-                                      '-tag:v', 'hvc1',
+                                      *hvc1_tag,
                                       '-preset', 'medium',
                                       '-tune', 'grain',
                                       '-pix_fmt', 'yuv420p',

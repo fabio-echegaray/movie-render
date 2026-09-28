@@ -434,4 +434,26 @@ Legend: [OPEN] = pending, [DONE] = fixed
                 `test_following_roi_positions_are_preserved` and
                 `test_frame_key_limits_static_roi_to_that_frame`.
 
-Last point number: 72
+[DONE] 73. Way to specify figure/movie size as parameters
+               — `max_width` (output width in pixels; height follows the
+               aspect ratio) was already used by the ffmpeg scale filter but
+               was never parsed from the config file, so it always stayed at
+               its 2880 default. It is now read from `[MOVIE]`.
+               — New `[MOVIE] dpi` key (default 326) controls the resolution
+               the figure frames are drawn at (`_base_composer.py`),
+               re-usable to shrink renders for speed/memory or raise them
+               for quality.
+               — Config fields `max_width`, `dpi`, `codec` added to
+               `ConfigMovie`; parsers + tests in `test_movie_defaults.py`;
+               documented in `docs/main.md` MOVIE section.
+
+  [DONE] 74. Select codec when rendering the movie (H.264 default, H.265 option)
+               — New `[MOVIE] codec` key (default `H.264` → `libx264`).
+               `H.265`/`HEVC` map to `libx265`; any other value is treated
+               as a raw ffmpeg encoder name and passed through to
+               moviepy's `write_videofile` (`_sequential.py`).
+               — Mapping helper `resolve_movie_codec()` in
+               `_movie_header_reader.py`, unit-tested; documented in
+               `docs/main.md`.
+
+Last point number: 74
