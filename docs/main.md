@@ -105,6 +105,12 @@ The supported parameters to render a movie from a configuration file are as foll
 - `scalebar`: Set the scalebar size to the specified value in micrometers.
   If no number is specified, no scalebar will be rendered.
 - `bitrate`: Set the bitrate of the movie in a format compatible with ffmpeg.
+- `max_width`: maximum width in pixels of the rendered movie. The height follows the image aspect
+  ratio, so this effectively controls the output resolution. Default: `2880`.
+- `dpi`: resolution (pixels per inch) used to draw the figure the individual frames are rendered
+  from. Higher values give sharper output but slower, more memory-hungry renders. Default: `326`.
+- `codec`: video codec of the output movie. `H.264` (default) or `H.265`/`HEVC`; any ffmpeg
+  encoder name (e.g. `libvpx`) is passed through verbatim. Default: `H.264` (`libx264`).
 - `filename`: output name of the movie file.
 - `overlays`: a list of all overlays to be included in the rendered movie.
   The overlays have to be defined using an OVERLAY section, and be posteriorly included in this definition by specifying

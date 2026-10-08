@@ -23,7 +23,7 @@ class LayoutCompositeComposer(BaseLayoutComposer):
             return
 
         movie = self._movie_configuration_params
-        t = PixelTools(movie.image_file)
+        t = PixelTools(movie.image_file, roi=movie.roi if hasattr(movie.roi, 'left') else None)
 
         # Get graphics parameters from config or use defaults
         sbar_text = movie.scalebar_text or TextProperties(font_size=9)

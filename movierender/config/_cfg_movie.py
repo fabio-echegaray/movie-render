@@ -48,3 +48,5 @@ class ConfigMovie(NamedTuple):
     overlays: List['Overlay'] | None = None
     copyright: Union["ConfigCopyright", None] = None
     max_width: int = 2880
+    dpi: int = 326
+    codec: str = 'libx264'

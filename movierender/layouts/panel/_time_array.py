@@ -3,6 +3,7 @@ import logging
 import matplotlib.pyplot as plt
 import skimage
 from fileops.image.exceptions import FrameNotFoundError
+from fileops.image.ops import z_projection
 
 import movierender.overlays as ovl
 from movierender import CompositeRGBImage
@@ -10,23 +11,25 @@ from movierender.config import ConfigPanel
 from movierender.config import TextProperties, LineProperties
 from movierender.layouts._ch_config import channel_configuration
 from movierender.overlays import PixelTools
+from movierender.overlays.pixel_tools import crop_extent, roi_pixel_box
 
 logger = logging.getLogger(__name__)
 
 
 def plotimg(data, panel: ConfigPanel = None, **kwargs):
     imf = panel.image_file
-    t = PixelTools(imf)
+    roi = panel.roi
+    t = PixelTools(imf, roi=roi)
 
     ax = plt.gca()
 
     w_um, h_um = imf.width * imf.um_per_pix, imf.height * imf.um_per_pix
-    
+
     # Get graphics parameters from config or use defaults
     sbar_text = panel.scalebar_text or TextProperties(font_size=12)
     sbar_line = panel.scalebar_line or LineProperties(color='white', width=1)
     tsmp_text = panel.timestamp or TextProperties(font_size=12)
-    
+
     if panel.scalebar is not None and panel.scalebar > 0:
         sbar = ovl.ScaleBar(ax=ax, um=panel.scalebar, lw=panel.scalebar_thickness,
                             show_text=panel.draw_scalebar_text,
@@ -35,15 +38,14 @@ def plotimg(data, panel: ConfigPanel = None, **kwargs):
                             fontdict={'size': sbar_text.font_size})
     else:
         sbar = None
-    
+
     tsmp = ovl.Timestamp(ax=ax, xy=t.xy_ratio_to_um(0.02, 0.1),
                          timestamps=panel.image_file.timestamps,
                          string_format=panel.timestamp_format,
                          time_interval=panel.image_file.time_interval,
                          draw_frame=panel.draw_frame_in_timestamp,
-                         text_props=tsmp_text,
-                         fontdict={'size': tsmp_text.font_size})
-    
+                         text_props=tsmp_text)
+
     hst = ovl.ImageHistogram(ax=ax, bins=50)
 
     if data["z"].unique().size >= 1 and data["frame"].unique().size == 1 and data["channel"].unique().size == 1:
@@ -54,18 +56,22 @@ def plotimg(data, panel: ConfigPanel = None, **kwargs):
             zstack_projection = 'max'
             if _ch != "merge":
                 ch_par = panel.channel_render_parameters[_ch]
+                ch_name = ch_par["name"]
+                ch_cfg = channel_configuration({_ch: ch_par})
                 crgb = CompositeRGBImage(
                     ax=None,
                     zstack=panel.zstacks,
                     zstack_fn=zstack_projection,
-                    channeldict=channel_configuration({_ch: ch_par})
+                    channeldict=ch_cfg
                 )
+                if ("histogram" in ch_par and str(ch_par["histogram"]).lower() in ["yes", "true", "1"]) or \
+                        ("overlays" in ch_par and "histogram" in ch_par["overlays"]):
+                    # Overlay the histogram on the image plot
+                    imfz = z_projection(imf, _fr, _ch, z_subset=panel.zstacks, projection=zstack_projection)
+                    hst.plot(imfz.image, channel_params=ch_cfg[ch_name])
+
                 img = crgb(panel.image_file, frame=_fr)
                 img = skimage.util.img_as_float(img)
-
-                if "overlays" in ch_par and "histogram" in ch_par["overlays"]:
-                    # Overlay the histogram on the image plot
-                    hst.plot(img)
             elif _ch == "merge":
                 crgb = CompositeRGBImage(
                     ax=None,
@@ -79,7 +85,13 @@ def plotimg(data, panel: ConfigPanel = None, **kwargs):
             ax.set_facecolor('blue')
             return
 
-        ax.imshow(img, cmap='gray', extent=(.0, w_um, h_um, .0),
+        disp = img
+        ext = (0.0, w_um, h_um, 0.0)
+        if roi is not None:
+            y0, y1, x0, x1 = roi_pixel_box(roi, img.shape)
+            disp = img[y0:y1, x0:x1]
+            ext = crop_extent(ext, roi, img.shape, 'upper')
+        ax.imshow(disp, cmap='gray', extent=ext,
                   # origin='upper' if self.inv_y else 'lower',
                   origin='upper',
                   interpolation='none', aspect='equal',  # resample=False,

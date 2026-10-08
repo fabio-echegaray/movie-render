@@ -9,7 +9,11 @@ from fileops.plugins import HeaderReaderPlugin
 
 from movierender.config import ConfigPanel
 from movierender.config import _parse_text_props, _parse_line_props, _parse_background_props
-from movierender.plugins.fileops._movie_header_reader import load_overlay_plugins
+from movierender.plugins.fileops._movie_header_reader import (
+    load_overlay_plugins,
+    load_roi_overlays,
+    roi_overlays_for_ids,
+)
 
 _rowcol_dict = {
     "channel":  "channel",
@@ -63,6 +67,10 @@ class PanelHeaderReaderPlugin(HeaderReaderPlugin):
         overlays = load_overlay_plugins(self._cfg_path, root_path=self._root_path,
                                         cfg=cfg, img_file=img_file, param_override=param_override, roi=roi)
 
+        # process ROI sections in configuration file
+        roi_lst = load_roi_overlays(self._cfg_path, root_path=self._root_path,
+                                    cfg=cfg, img_file=img_file, param_override=param_override, roi=roi)
+
         # process PANEL sections
         panel_def = list()
         for pan in self._headers:
@@ -82,6 +90,10 @@ class PanelHeaderReaderPlugin(HeaderReaderPlugin):
                 ovr_txt = cfg[pan]["overlays"]
                 if ovr_txt[0] == "[" and ovr_txt[-1] == "]":
                     ovr_ids = [s.strip() for s in ovr_txt[1:-1].split(",") if len(s) > 0]
+
+            # ROIs listed in the overlays parameter are drawn as ImagejROI boxes
+            overlay_objs = [ovr for ovr in overlays if ovr.overlay_id in ovr_ids]
+            overlay_objs += roi_overlays_for_ids(cfg, roi_lst, ovr_ids, um_per_pix=img_file.um_per_pix)
 
             # parse graphics properties from dotted keys
             scalebar_text = _parse_text_props(cfg[pan], "scalebar")
@@ -123,6 +135,6 @@ class PanelHeaderReaderPlugin(HeaderReaderPlugin):
                 scalebar_line=scalebar_line,
                 timestamp=timestamp,
                 background=background,
-                overlays=[ovr for ovr in overlays if ovr.overlay_id in ovr_ids]
+                overlays=overlay_objs
             ))
         return panel_def
