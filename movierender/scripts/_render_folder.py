@@ -52,7 +52,7 @@ def render_folder_cmd(
     # suppress the "--- Logging error ---" flood Python would otherwise print per line.
     logging.raiseExceptions = False
 
-    if defaults_file is None:
+    if defaults_file is None:  # TODO: why this section is not calling find_default_files()?
         auto = path / DEFAULT_DEFAULTS_FILE
         if auto.exists():
             log.info(f"Found file with default information.")
