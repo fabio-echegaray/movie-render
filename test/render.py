@@ -1,3 +1,4 @@
+import logging
 from unittest import TestCase
 
 import fileops
@@ -13,6 +14,13 @@ class TestRender(TestCase):
 
         # init shared variables used by FileOps
         fileops.init_shared_state()
+
+    def test_quiet_suppresses_debug_logging(self):
+        command_name = "movie"
+
+        args = ["--quiet", command_name, "example_data/test_frames_movie.cfg"]
+        self.runner.invoke(app, args)
+        self.assertEqual(logging.getLogger().level, logging.INFO)
 
     def test_render_movie_different_frames(self):
         command_name = "movie"

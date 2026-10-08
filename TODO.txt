@@ -143,11 +143,6 @@ Legend: [OPEN] = pending, [DONE] = fixed
               for 3.9, 3.10, 3.11; add 3.12, 3.13, and 3.14 so the full
               range of supported versions is declared.
 
-  [OPEN] 57. Make DEBUG level and lower logs optional in terminal commands
-               — Add an option to suppress DEBUG-level (and lower) log output
-               from terminal commands. This will potentially affect FileOps,
-               so include a point in their TODO.txt as well.
-
   [OPEN] 59. Add user documentation for project-level defaults (point 51)
               — Point 51 (project-folder-level configuration via defaults.cfg)
               lacks user-facing docs. Add a section to socs/main.md that
@@ -225,6 +220,11 @@ Legend: [OPEN] = pending, [DONE] = fixed
 
   [DONE] 56. Variable `id` shadows built-in — renamed to `overlay_id` (config
               key `id` unchanged).
+
+  [DONE] 57. Make DEBUG level and lower logs optional in terminal commands —
+              global `--quiet` flag (`render.py` callback calls the shared
+              `fileops.logger.set_log_level("INFO")`); import-time third-party
+              DEBUG silenced in `movierender/__init__.py`; FileOps TODO #50.
 
   [DONE] 58. Color palettes & graphic element parameters — Composable
               Text/Line/BackgroundProperties classes.
