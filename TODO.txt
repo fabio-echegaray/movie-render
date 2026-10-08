@@ -60,7 +60,7 @@ Legend: [OPEN] = pending, [DONE] = fixed
                 (`_base_composer.py:241`), so each worker spawns its own
                 `_zproject()` background thread recomputing the same
                 frame×channel projections against ONE shared `Manager` dict
-                (see FileOps TODO #12 / MovieRender #72).
+                (see FileOps #12 / MovieRender #72).
               Replicate: render any multi-GB (ideally multi-position) movie
               with the current code — `movierender render movie` or
               `render folder` on a real SoRA .nd2 — and watch RSS climb to
@@ -230,7 +230,7 @@ Legend: [OPEN] = pending, [DONE] = fixed
               Text/Line/BackgroundProperties classes.
 
   [OBSOLETE] 60. `zstack = all-max` logs an ERROR instead of a warning — MOVED
-              to FileOps TODO #34 (`process_overrides_of_section`).
+              to FileOps #34 (`process_overrides_of_section`).
 
   [DONE] 62. Auto-detection of `defaults.cfg` searches upstream dirs —
               `find_defaults_files()`; savefig background-color fix.
