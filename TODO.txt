@@ -27,6 +27,63 @@ Legend: [OPEN] = pending, [DONE] = fixed
               If `write_videofile()` raises, the temp dir is orphaned.
               Fix: wrap cleanup in `try/finally`.
 
+  [OPEN] 75. Unmatched panel/movie overlays are dropped silently
+              (`_panel_header_reader.py:95`, `_movie_header_reader.py:155`)
+              — a panel's `overlays = [wall_001]` whose id matches no loaded
+              overlay plugin is removed by the
+              `[ovr for ovr in overlays if ovr.overlay_id in ovr_ids]` filter
+              with no log message and no error — the rendered movie silently
+              misses the requested content.
+              Fix: log a warning (or raise) for every requested id with no
+              matching plugin, in both the panel and movie readers.
+
+  [OPEN] 76. Parallel rendering exhausts memory and freezes the computer
+              (`_base_composer.py:125`, gated from `_render_movie.py:37`)
+              — Movies always hit the parallel path because of bug #1
+              (`parallel | True` in `_render_movie.py:37` forces
+              `_render_parallel()` regardless of the flag). For a large
+              SoRA .nd2 (multi-GB, often 100+ GB with multiple positions)
+              this multiplies memory and thrashes the host:
+                (a) `_render_parallel()` materialises a `composer_array` of
+                `n_workers + 1` full composer copies in the parent
+                (`_base_composer.py:131-177`), each holding a complete
+                fileops `ImageFile` (metadata, processors, cached planes),
+                with `n_workers = os.cpu_count()` — that alone is tens of GB
+                of heap before any frame renders.
+                (b) `futures.ProcessPoolExecutor(max_workers=os.cpu_count(),
+                initializer=...)` (`_base_composer.py:185`) forks one worker
+                per CPU. Each worker faults the .nd2's memory-mapped pages
+                into its OWN RSS as it renders its frames, so total RSS ≈
+                n_workers × file-bytes-touched + the parent copy — a
+                126 GB rab5.nd2-style file on a 24-core machine demands
+                hundreds of GB and swaps/OOMs the system (the "freezes the
+                computer" report).
+                (c) Every `executor.submit(run_job, composer, fr, ...)`
+                (`_base_composer.py:191`) pickles the entire composer +
+                `ConfigMovie` + `ImageFile` on each of the n_frames
+                submissions.
+                (d) The shared z-cache is duplicated across workers:
+                `run_job()` calls `imf.init_shared(...)` per frame
+                (`_base_composer.py:241`), so each worker spawns its own
+                `_zproject()` background thread recomputing the same
+                frame×channel projections against ONE shared `Manager` dict
+                (see FileOps TODO #12 / MovieRender #72).
+              Replicate: render any multi-GB (ideally multi-position) movie
+              with the current code — `movierender render movie` or
+              `render folder` on a real SoRA .nd2 — and watch RSS climb to
+              many times the file size before the render finishes or the
+              machine thrashes.
+              Fix: (1) fix #1 first — pass `parallel=parallel` instead of
+              `parallel | True` so renders stay sequential by default. (2) If
+              the parallel path is kept: stop holding `n_workers+1` composers
+              in the parent (submit cheap per-frame payloads that re-open the
+              image lazily in the worker), cap `n_workers` well below
+              `os.cpu_count()`, start workers with 'spawn' so they do not
+              fork a huge parent, and give each worker its own local (non-
+              shared) z-cache. (3) Add an RSS guard that falls back to the
+              sequential path when the product of file size × `n_workers`
+              exceeds available memory.
+
 
 2. CODE QUALITY — DUPLICATION & ARCHITECTURE
 ────────────────────────────────────────────
@@ -456,4 +513,4 @@ Legend: [OPEN] = pending, [DONE] = fixed
                `_movie_header_reader.py`, unit-tested; documented in
                `docs/main.md`.
 
-Last point number: 74
+Last point number: 76
