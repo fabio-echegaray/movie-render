@@ -189,6 +189,9 @@ Legend: [OPEN] = pending, [DONE] = fixed
                 syntaxes work (`timestamp.color` or `timestamp_color`, etc.).
                 — Regression tests in `test/test_config_graphics.py`.
 
+# TODO: left comment in movierender/scripts/_render_folder.py
+# TODO: render takes a very long time when the merge of defaults and cfg file ends up with both a frame key and a frames key.
+
 
 5. RESOLVED / OBSOLETE (ARCHIVE)
 ────────────────────────────────

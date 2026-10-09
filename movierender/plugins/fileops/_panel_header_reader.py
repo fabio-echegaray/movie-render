@@ -92,7 +92,7 @@ class PanelHeaderReaderPlugin(HeaderReaderPlugin):
                     ovr_ids = [s.strip() for s in ovr_txt[1:-1].split(",") if len(s) > 0]
 
             # ROIs listed in the overlays parameter are drawn as ImagejROI boxes
-            overlay_objs = [ovr for ovr in overlays if ovr.overlay_id in ovr_ids]
+            overlay_objs = [ovr for ovr in overlays if ovr.id in ovr_ids]
             overlay_objs += roi_overlays_for_ids(cfg, roi_lst, ovr_ids, um_per_pix=img_file.um_per_pix)
 
             # parse graphics properties from dotted keys

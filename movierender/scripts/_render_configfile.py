@@ -1,3 +1,4 @@
+from collections.abc import Iterable
 from pathlib import Path
 
 import numpy as np
@@ -36,6 +37,8 @@ def render_configuration_file(
 
     if defaults_file is None:
         defaults_file = find_default_files(cfg_path, None)
+        log.info(
+            f"Found file{'s' if isinstance(defaults_file, Iterable) else ''} with default information: {defaults_file}.")
 
     try:
         log.info(f"Reading configuration file {cfg_path}")
