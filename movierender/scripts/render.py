@@ -1,8 +1,14 @@
 import os
 from pathlib import Path
 
-from fileops.logger import get_logger, silence_loggers
+import typer
+from fileops.logger import get_logger, set_log_level, silence_loggers
 from typer import Typer
+from typing_extensions import Annotated
+
+# silence third-party loggers before they are imported so their DEBUG output
+# is not emitted even during module import
+silence_loggers(loggers=["tifffile", "matplotlib", "PIL"], output_log_file=Path(os.getcwd()) / "silenced.log")
 
 from ._render_configfile import render_configuration_file_cmd
 from ._render_folder import render_folder_cmd
@@ -11,8 +17,17 @@ from ._render_panel import render_panel_cmd
 from ._render_projection import render_projection_cmd
 
 log = get_logger(name='render', debug=False)
-silence_loggers(loggers=["tifffile", "matplotlib", "PIL"], output_log_file=Path(os.getcwd()) / "silenced.log")
 app = Typer()
+
+
+@app.callback()
+def main(
+        quiet: Annotated[
+            bool, typer.Option(help="Suppress DEBUG-level (and lower) log output.")] = False,
+):
+    if quiet:
+        set_log_level("INFO")
+
 
 app.command(name='file')(render_configuration_file_cmd)
 app.command(name='folder')(render_folder_cmd)
