@@ -189,8 +189,15 @@ Legend: [OPEN] = pending, [DONE] = fixed
                 syntaxes work (`timestamp.color` or `timestamp_color`, etc.).
                 — Regression tests in `test/test_config_graphics.py`.
 
-# TODO: left comment in movierender/scripts/_render_folder.py
-# TODO: render takes a very long time when the merge of defaults and cfg file ends up with both a frame key and a frames key.
+  [OPEN] 78. `render folder` ignores upstream auto-detected defaults
+              (`_render_folder.py:55`) — when no `--defaults-file` is given,
+              `render_folder_cmd` only checks `path / defaults.cfg` in the
+              local root, yet imports `find_default_files()` (line 13) and
+              never calls it, even though upstream-dir auto-detection is
+              available since #62 (`_defaults.py`). The source still carries
+              the comment `# TODO: why this section is not calling
+              find_default_files()?`.
+              Fix: replace the local-only check with `find_default_files()`.
 
 
 5. RESOLVED / OBSOLETE (ARCHIVE)
@@ -269,4 +276,4 @@ Legend: [OPEN] = pending, [DONE] = fixed
   [DONE] 77. Section-level gamma_*/rescale_* overrides reach panel/movie pixels —
               configure_rescale_processor() in _main.py & _sequential.py (FileOps #53).
 
-Last point number: 77
+Last point number: 78
