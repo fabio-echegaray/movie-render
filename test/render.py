@@ -15,12 +15,16 @@ class TestRender(TestCase):
         # init shared variables used by FileOps
         fileops.init_shared_state()
 
-    def test_quiet_suppresses_debug_logging(self):
+    def test_debug_logging_optional(self):
         command_name = "movie"
 
-        args = ["--quiet", command_name, "example_data/test_frames_movie.cfg"]
-        self.runner.invoke(app, args)
+        # default: DEBUG suppressed
+        self.runner.invoke(app, [command_name, "example_data/test_frames_movie.cfg"])
         self.assertEqual(logging.getLogger().level, logging.INFO)
+
+        # --verbose opt-in: DEBUG shown
+        self.runner.invoke(app, ["--verbose", command_name, "example_data/test_frames_movie.cfg"])
+        self.assertEqual(logging.getLogger().level, logging.DEBUG)
 
     def test_render_movie_different_frames(self):
         command_name = "movie"

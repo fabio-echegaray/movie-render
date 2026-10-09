@@ -22,11 +22,11 @@ app = Typer()
 
 @app.callback()
 def main(
-        quiet: Annotated[
-            bool, typer.Option(help="Suppress DEBUG-level (and lower) log output.")] = False,
+        verbose: Annotated[
+            bool, typer.Option("--verbose", "-v",
+                               help="Show DEBUG-level log output.")] = False,
 ):
-    if quiet:
-        set_log_level("INFO")
+    set_log_level("DEBUG" if verbose else "INFO")
 
 
 app.command(name='file')(render_configuration_file_cmd)

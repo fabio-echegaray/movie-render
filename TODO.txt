@@ -222,9 +222,10 @@ Legend: [OPEN] = pending, [DONE] = fixed
               key `id` unchanged).
 
   [DONE] 57. Make DEBUG level and lower logs optional in terminal commands —
-              global `--quiet` flag (`render.py` callback calls the shared
-              `fileops.logger.set_log_level("INFO")`); import-time third-party
-              DEBUG silenced in `movierender/__init__.py`; FileOps TODO #50.
+              DEBUG is suppressed by default; global `--verbose`/`-v` flag
+              opts back in (`render.py` callback → shared
+              `fileops.logger.set_log_level()`); third-party DEBUG silenced
+              in `movierender/__init__.py`; FileOps #50.
 
   [DONE] 58. Color palettes & graphic element parameters — Composable
               Text/Line/BackgroundProperties classes.
