@@ -456,4 +456,7 @@ Legend: [OPEN] = pending, [DONE] = fixed
                `_movie_header_reader.py`, unit-tested; documented in
                `docs/main.md`.
 
+# TODO: left comment in movierender/scripts/_render_folder.py
+# TODO: render takes a very long time when the merge of defaults and cfg file ends up with both a frame key and a frames key.
+
 Last point number: 74
