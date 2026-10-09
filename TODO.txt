@@ -263,4 +263,7 @@ Legend: [OPEN] = pending, [DONE] = fixed
   [DONE] 74. Select movie codec — `[MOVIE] codec` key (H.264 default,
               H.265 option).
 
-Last point number: 76
+  [DONE] 77. Section-level gamma_*/rescale_* overrides reach panel/movie pixels —
+              configure_rescale_processor() in _main.py & _sequential.py (FileOps #53).
+
+Last point number: 77
