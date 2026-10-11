@@ -194,86 +194,35 @@ Legend: [OPEN] = pending, [DONE] = fixed
               `render_folder_cmd` only checks `path / defaults.cfg` in the
               local root, yet imports `find_default_files()` (line 13) and
               never calls it, even though upstream-dir auto-detection is
-              available since #62 (`_defaults.py`). The source still carries
-              the comment `# TODO: why this section is not calling
-              find_default_files()?`.
+              available since #62 (`_defaults.py`).
               Fix: replace the local-only check with `find_default_files()`.
 
 
 5. RESOLVED / OBSOLETE (ARCHIVE)
 ────────────────────────────────
 
-  [DONE] 47. Graceful early termination on Ctrl-C in `render_folder_cmd`
-              (`_render_folder.py:34`) — two-phase SIGINT handler finishes the
-              current movie then stops the folder loop.
-
-  [DONE] 47b. Z-projection hang on Ctrl-C (`_base_composer.py:212`) —
-                `__STOP_REQUESTED`/`__THREAD_STOP_REQUESTED` two-event approach.
-
-  [DONE] 48. Align dependencies between FileOps and MovieRender — imageio/
-              roifile/tifffile/typing_extensions pinned, numpy bounds aligned.
-
-  [DONE] 49. Upgrade numpy to >=2.0.0 across both projects — breaking changes
-              (isscalar/isreal/NaN) fixed.
-
-  [DONE] 51. Project-folder-level configuration via `defaults.cfg` —
-              `[DEFAULT]` section, section-level overrides win.
-
-  [DONE] 52. Render commands access media files excessively — now exactly one
-              media-file load per config file.
-
-  [DONE] 53. FrameNotFoundError silently swallowed (`_sequential.py:166`) —
-              now logs a warning.
-
-  [DONE] 55. Missing re-exports in overlays/plugins `__init__.py` — re-exports
-              added, circular import fixed.
-
-  [DONE] 56. Variable `id` shadows built-in — renamed to `overlay_id` (config
-              key `id` unchanged).
-
-  [DONE] 57. Make DEBUG level and lower logs optional in terminal commands —
-              DEBUG is suppressed by default; global `--verbose`/`-v` flag
-              opts back in (`render.py` callback → shared
-              `fileops.logger.set_log_level()`); third-party DEBUG silenced
-              in `movierender/__init__.py`; FileOps #50.
-
-  [DONE] 58. Color palettes & graphic element parameters — Composable
-              Text/Line/BackgroundProperties classes.
-
-  [OBSOLETE] 60. `zstack = all-max` logs an ERROR instead of a warning — MOVED
-              to FileOps #34 (`process_overrides_of_section`).
-
-  [DONE] 62. Auto-detection of `defaults.cfg` searches upstream dirs —
-              `find_defaults_files()`; savefig background-color fix.
-
-  [DONE] 63. `fontdict`+`fontsize` alias conflict crashed rendering — merged
-              props via `setdefault`.
-
-  [DONE] 65. Default text color white — invisible on white backgrounds — auto-
-              pick via `contrast_color()`.
-
-  [DONE] 66. Font weight for text elements — `font_weight` in
-              TextProperties/parsers/overlays/layouts.
-
-  [DONE] 67. Circular import between plugins.overlay and overlays —
-              TYPE_CHECKING + `from __future__ import annotations`.
-
-  [DONE] 68. Panel rendering crashed in `Timestamp.plot()` (AttributeError) —
-              guarded timestamps default against None renderer.
-
-  [DONE] 70. `[DATA] roi` did not crop panel/movie images — `roi_pixel_box()`/
-              `crop_extent()` in overlays/pixel_tools.py.
-
-  [DONE] 71. ROIs in `overlays` not drawn; per-channel `histogram = yes` dead —
-              `load_roi_overlays()`, histogram guards.
-
-  [DONE] 73. Figure/movie size as parameters — `[MOVIE] max_width` parsed, new
-              `[MOVIE] dpi` key.
-
-  [DONE] 74. Select movie codec — `[MOVIE] codec` key (H.264 default,
-              H.265 option).
-
-  [DONE] 77. Section-level gamma_*/rescale_* overrides reach panel/movie pixels —
-              configure_rescale_processor() in _main.py & _sequential.py (FileOps #53).
+  [DONE] 47. Graceful early termination on Ctrl-C in `render_folder_cmd` — two-phase SIGINT handler.
+  [DONE] 47b. Z-projection hang on Ctrl-C — `__STOP_REQUESTED`/`__THREAD_STOP_REQUESTED` events.
+  [DONE] 48. Align FileOps↔MovieRender deps — imageio/roifile/tifffile/typing_extensions pinned.
+  [DONE] 49. Upgrade numpy to >=2.0.0 both projects — breaking changes (isscalar/isreal/NaN) fixed.
+  [DONE] 51. Project-folder-level config via `defaults.cfg` — `[DEFAULT]` section, section overrides win.
+  [DONE] 52. Render commands access media files excessively — now exactly one media-file load per config.
+  [DONE] 53. FrameNotFoundError silently swallowed (`_sequential.py:166`) — now logs a warning.
+  [DONE] 55. Missing re-exports in overlays/plugins `__init__.py` — added; circular import fixed.
+  [DONE] 56. Variable `id` shadowed built-in — renamed `overlay_id` (config key unchanged).
+  [DONE] 57. DEBUG logs optional in terminal commands — hidden by default; `--verbose`/`-v` opts back in (FileOps #50).
+  [DONE] 58. Color palettes & graphic element parameters — Composable Text/Line/BackgroundProperties classes.
+  [OBSOLETE] 60. `zstack = all-max` logs ERROR instead of warning — moved to FileOps #34.
+  [DONE] 62. Auto-detect `defaults.cfg` in upstream dirs — `find_defaults_files()`; savefig bg-color fix.
+  [DONE] 63. `fontdict`+`fontsize` alias conflict crashed rendering — props merged via `setdefault`.
+  [DONE] 65. Default text color white invisible on white — auto-pick via `contrast_color()`.
+  [DONE] 66. Font weight for text elements — `font_weight` in TextProperties/parsers/overlays/layouts.
+  [DONE] 67. Circular import plugins.overlay ↔ overlays — TYPE_CHECKING + future annotations.
+  [DONE] 68. Panel rendering crashed in `Timestamp.plot()` (AttributeError) — guarded renderer default.
+  [DONE] 70. `[DATA] roi` did not crop panel/movie images — `roi_pixel_box()`/`crop_extent()`.
+  [DONE] 71. ROIs in `overlays` not drawn; per-channel `histogram = yes` dead — `load_roi_overlays()`, guards.
+  [DONE] 73. Figure/movie size as parameters — `[MOVIE] max_width`, new `[MOVIE] dpi` key.
+  [DONE] 74. Select movie codec — `[MOVIE] codec` key (H.264 default, H.265 option).
+  [DONE] 77. Section-level gamma_*/rescale_* overrides reach pixels — configure_rescale_processor() (FileOps #53).
 
 Last point number: 78
