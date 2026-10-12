@@ -145,29 +145,6 @@ Legend: [OPEN] = pending, [DONE] = fixed
               channel color. Configurable parameters: position, point size (for
               both font and square), font name, and font properties.
 
-  [BUG] 69. `timestamp_color` / `timestamp_font_size` ignored in configs
-                — Panel (`figs/definitions/chx-2003/panel/export_definition.cfg`)
-                sets `timestamp_color = white`, `timestamp_font_size = 10`,
-                but `_parse_text_props(cfg_section, 'timestamp')` only reads
-                the dotted keys `timestamp.color` / `timestamp.font_size`.
-                `timestamp_color`/`timestamp_font_size` are different keys to
-                configparser, so the parser silently returned the defaults
-                (`TextProperties(font_name='Arial', font_size=12, color=None)`)
-                and the rendered timestamp ignored the configured colour/size.
-                — Fix: `_get_prefixed_key()` falls back from the dotted form
-                to the underscore form for `_parse_text_props`,
-                `_parse_line_props` and `_parse_background_props`, so both
-                syntaxes work (`timestamp.color` or `timestamp_color`, etc.).
-                — Regression tests in `test/test_config_graphics.py`.
-
-  [OPEN] 78. `render folder` ignores upstream auto-detected defaults
-              (`_render_folder.py:55`) — when no `--defaults-file` is given,
-              `render_folder_cmd` only checks `path / defaults.cfg` in the
-              local root, yet imports `find_default_files()` (line 13) and
-              never calls it, even though upstream-dir auto-detection is
-              available since #62 (`_defaults.py`).
-              Fix: replace the local-only check with `find_default_files()`.
-
 
 5. RESOLVED / OBSOLETE (ARCHIVE)
 ────────────────────────────────
