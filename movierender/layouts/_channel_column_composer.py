@@ -5,7 +5,8 @@ from collections import deque
 from fileops.logger import get_logger
 
 import movierender.overlays as ovl
-from movierender import MovieRenderer, CompositeRGBImage, plt, gridspec
+from movierender import MovieRenderer, CompositeRGBImage, ZProjectionImage, plt, gridspec
+from movierender.colorize import is_depth_projection
 from movierender.config import ConfigMovie
 from movierender.config import TextProperties, LineProperties
 from movierender.config._cfg_graphics import resolve_text_color
@@ -81,12 +82,26 @@ class LayoutChannelColumnComposer(BaseLayoutComposer):
                                               ax=ax)
             self.renderer += ovl.Timestamp(xy=t.xy_ratio_to_um(0.02, 0.95), va='center',
                                            text_props=tsmp_text, ax=ax)
-            self.renderer += CompositeRGBImage(
-                ax=ax,
-                zstack=movie.zstack,
-                zstack_fn=movie.zstack_fn,
-                channeldict={ch_cfg["name"]: agg_ch_config[ch_cfg["name"]]}
-            )
+            # Each grid cell shows one channel only.  A normal projection is
+            # rendered as a tinted grayscale image (CompositeRGBImage); a
+            # depth-coded projection must instead be rendered one channel at a
+            # time by ZProjectionImage, because its colours already encode the
+            # z-depth and must not be re-tinted or merged.
+            if is_depth_projection(movie.zstack_fn):
+                self.renderer += ZProjectionImage(
+                    ax=ax,
+                    channel=ch_cfg["id"],
+                    zstack=movie.zstack,
+                    zstack_fn=movie.zstack_fn,
+                    zstack_cmap=movie.zstack_cmap
+                )
+            else:
+                self.renderer += CompositeRGBImage(
+                    ax=ax,
+                    zstack=movie.zstack,
+                    zstack_fn=movie.zstack_fn,
+                    channeldict={ch_cfg["name"]: agg_ch_config[ch_cfg["name"]]}
+                )
             # Use per-channel font properties if available, otherwise use global channel_label
             ch_label_props = ch_text
             if 'font_name' in ch_cfg or 'font_size' in ch_cfg or 'font_color' in ch_cfg or 'font_weight' in ch_cfg:

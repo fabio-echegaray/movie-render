@@ -8,9 +8,26 @@ from typing_extensions import Annotated
 
 from fileops.export.config import read_config, ConfigProjection
 from fileops.logger import get_logger
+from movierender.colorize import is_depth_projection, z_depth_rgb
 from movierender.scripts._defaults import find_default_files
 
 log = get_logger(name='render-projection')
+
+
+def projection_memmap_plan(prj: ConfigProjection, imf, source_dtype_char: str) -> tuple:
+    """Shape/dtype of the output TIFF memmap of a projection.
+
+    Depth-coded projections are RGB images (colours encode z-position), so
+    the memmap gets a trailing colour axis and a float32 dtype; regular
+    projections keep the source dtype (native byte order) and no colour axis.
+    """
+    if is_depth_projection(prj.zstack_fn):
+        out_shape = (len(prj.frames), len(prj.channels), imf.width, imf.height, 3)
+        out_dtype = '=f4'
+    else:
+        out_shape = (len(prj.frames), len(prj.channels), imf.width, imf.height)
+        out_dtype = '=' + source_dtype_char
+    return out_shape, out_dtype
 
 
 def render_projection(prj: ConfigProjection, overwrite=False):
@@ -22,6 +39,8 @@ def render_projection(prj: ConfigProjection, overwrite=False):
         imf = prj.image_file
         fst_mdi = imf.image(imf.ix_at(0, 0, 0))
         dtype = fst_mdi.image.dtype
+        is_depth = is_depth_projection(prj.zstack_fn)
+        out_shape, out_dtype = projection_memmap_plan(prj, imf, dtype.char)
         if isinstance(imf, TifffileOMEImageFile):
             tif = imf._tif
             page = tif.series[0].keyframe
@@ -37,8 +56,8 @@ def render_projection(prj: ConfigProjection, overwrite=False):
                 }
             metadata.update({'axes': 'TCYX'})
             memmap = tifffile.memmap((prj.configfile.parent / (prj.filename + ".tiff")).absolute(),
-                                     shape=(len(prj.frames), len(prj.channels), imf.width, imf.height),
-                                     dtype='=' + dtype.char,  # force native byte-order
+                                     shape=out_shape,
+                                     dtype=out_dtype,
                                      imagej=True,
                                      metadata=metadata,
                                      photometric=page.photometric,
@@ -48,16 +67,24 @@ def render_projection(prj: ConfigProjection, overwrite=False):
                                      )
         else:
             memmap = tifffile.memmap(prj.filename + ".tiff",
-                                     shape=(len(prj.frames), len(prj.channels), imf.width, imf.height),
-                                     dtype='=' + dtype.char,  # force native byte-order
+                                     shape=out_shape,
+                                     dtype=out_dtype,
                                      imagej=True,
                                      )
 
         # iterate through ImageFile and save projected images as TIFF
         for kf, fr in enumerate(prj.frames):
             for kc, ch in enumerate(prj.channels):
-                imz = imf.z_projection(fr, ch, projection=prj.zstack_fn, z_subset=prj.zstacks, as_8bit=False)
-                memmap[kf, kc, :, :] = imz.image
+                if is_depth:
+                    # colourising the depth data (colormap) is a presentation
+                    # concern handled in movierender.colorize; z_depth_rgb
+                    # reads the z-stack volume once and derives brightness
+                    # from it
+                    imz_image = z_depth_rgb(imf, fr, ch, z_subset=prj.zstacks)
+                else:
+                    imz_image = imf.z_projection(fr, ch, projection=prj.zstack_fn,
+                                                 z_subset=prj.zstacks, as_8bit=False).image
+                memmap[kf, kc, ...] = imz_image
         memmap.flush()
 
 

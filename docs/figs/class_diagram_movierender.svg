@@ -78,9 +78,9 @@
   <text x="130" y="405" font-size="9" fill="#555">+xy_ratio_to_um(x, y)</text>
 
   <!-- ============ RENDER MODULE (Center) ============ -->
-  <rect x="420" y="50" width="320" height="260" rx="8" fill="#e8f8e8" stroke="#27ae60" stroke-width="2"/>
-  <text x="580" y="72" text-anchor="middle" font-weight="bold" font-size="13" fill="#2c3e50">Render Module</text>
-  <line x1="420" y1="78" x2="740" y2="78" stroke="#27ae60" stroke-width="1"/>
+  <rect x="420" y="50" width="350" height="260" rx="8" fill="#e8f8e8" stroke="#27ae60" stroke-width="2"/>
+  <text x="595" y="72" text-anchor="middle" font-weight="bold" font-size="13" fill="#2c3e50">Render Module</text>
+  <line x1="420" y1="78" x2="770" y2="78" stroke="#27ae60" stroke-width="1"/>
 
   <!-- MovieRenderer -->
   <rect x="450" y="90" width="260" height="85" rx="5" fill="#fff" stroke="#333" stroke-width="1.5"/>
@@ -99,20 +99,25 @@
   <text x="470" y="249" font-size="9">+zstack, zstack_fn</text>
 
   <!-- Pipeline subclasses -->
-  <rect x="430" y="280" width="100" height="30" rx="3" fill="#fff" stroke="#333" stroke-width="1"/>
-  <text x="480" y="300" text-anchor="middle" font-size="9">SingleImage</text>
-  <line x1="480" y1="310" x2="480" y2="255" stroke="#333" stroke-width="1"/>
-  <line x1="480" y1="255" x2="530" y2="255" stroke="#333" stroke-width="1" marker-end="url(#triangle)"/>
+  <rect x="426" y="280" width="64" height="30" rx="3" fill="#fff" stroke="#333" stroke-width="1"/>
+  <text x="458" y="300" text-anchor="middle" font-size="9">SingleImage</text>
+  <line x1="458" y1="310" x2="458" y2="255" stroke="#333" stroke-width="1"/>
+  <line x1="458" y1="255" x2="530" y2="255" stroke="#333" stroke-width="1" marker-end="url(#triangle)"/>
 
-  <rect x="540" y="280" width="130" height="30" rx="3" fill="#fff" stroke="#333" stroke-width="1"/>
-  <text x="605" y="300" text-anchor="middle" font-size="9">CompositeRGBImage</text>
-  <line x1="605" y1="310" x2="605" y2="255" stroke="#333" stroke-width="1"/>
-  <line x1="605" y1="255" x2="530" y2="255" stroke="#333" stroke-width="1" marker-end="url(#triangle)"/>
+  <rect x="494" y="280" width="104" height="30" rx="3" fill="#fff" stroke="#333" stroke-width="1"/>
+  <text x="546" y="300" text-anchor="middle" font-size="9">CompositeRGBImage</text>
+  <line x1="546" y1="310" x2="546" y2="255" stroke="#333" stroke-width="1"/>
+  <line x1="546" y1="255" x2="530" y2="255" stroke="#333" stroke-width="1" marker-end="url(#triangle)"/>
 
-  <rect x="680" y="280" width="70" height="30" rx="3" fill="#fff" stroke="#333" stroke-width="1"/>
-  <text x="715" y="300" text-anchor="middle" font-size="9">NullImage</text>
-  <line x1="715" y1="310" x2="715" y2="255" stroke="#333" stroke-width="1"/>
-  <line x1="715" y1="255" x2="530" y2="255" stroke="#333" stroke-width="1" marker-end="url(#triangle)"/>
+  <rect x="602" y="280" width="98" height="30" rx="3" fill="#fff" stroke="#333" stroke-width="1"/>
+  <text x="651" y="300" text-anchor="middle" font-size="9">ZProjectionImage</text>
+  <line x1="651" y1="310" x2="651" y2="255" stroke="#333" stroke-width="1"/>
+  <line x1="651" y1="255" x2="530" y2="255" stroke="#333" stroke-width="1" marker-end="url(#triangle)"/>
+
+  <rect x="704" y="280" width="54" height="30" rx="3" fill="#fff" stroke="#333" stroke-width="1"/>
+  <text x="731" y="300" text-anchor="middle" font-size="9">NullImage</text>
+  <line x1="731" y1="310" x2="731" y2="255" stroke="#333" stroke-width="1"/>
+  <line x1="731" y1="255" x2="530" y2="255" stroke="#333" stroke-width="1" marker-end="url(#triangle)"/>
 
   <!-- PipelineException -->
   <rect x="620" y="200" width="120" height="35" rx="4" fill="#fde8e8" stroke="#c0392b" stroke-width="1"/>
@@ -120,6 +125,15 @@
   <!-- Arrow from ImagePipeline to PipelineException (ImagePipeline throws it) -->
   <path d="M 600 215 L 620 215" stroke="#c0392b" stroke-width="1" fill="none" stroke-dasharray="3" marker-end="url(#arrow)"/>
   <text x="608" y="208" font-size="7" fill="#c0392b">throws</text>
+
+  <!-- ============ COLORIZE MODULE (presentation, above Config) ============ -->
+  <rect x="790" y="195" width="210" height="70" rx="6" fill="#e8f8e8" stroke="#27ae60" stroke-width="1.5"/>
+  <text x="895" y="213" text-anchor="middle" font-weight="bold" font-size="10" fill="#27ae60">colorize (depth coding)</text>
+  <line x1="790" y1="218" x2="1000" y2="218" stroke="#27ae60" stroke-width="1"/>
+  <text x="800" y="234" font-size="8">is_depth_projection()</text>
+  <text x="800" y="246" font-size="8">depth_cmap(), z_depth_rgb()</text>
+  <!-- colorize maps the depth field produced via ZProjectionImage to RGB -->
+  <path d="M 790 245 L 651 245 L 651 280" stroke="#27ae60" stroke-width="1" fill="none" stroke-dasharray="4" marker-end="url(#arrow)"/>
 
   <!-- ============ LAYOUTS MODULE (Center-bottom) ============ -->
   <rect x="420" y="370" width="320" height="210" rx="8" fill="#f3e8f8" stroke="#8e44ad" stroke-width="2"/>

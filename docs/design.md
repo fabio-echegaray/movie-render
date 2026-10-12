@@ -63,8 +63,8 @@ Contains two `NamedTuple` classes that hold all parameters needed for rendering:
 
 | Class         | Purpose                    | Key Fields                                                                                        |
 | ------------- | -------------------------- | ------------------------------------------------------------------------------------------------- |
-| `ConfigMovie` | Movie rendering parameters | `image_file`, `fps`, `bitrate`, `layout`, `zstack`, `zstack_fn`, `overlays`, `channels`, `frames` |
-| `ConfigPanel` | Panel rendering parameters | `image_file`, `layout`, `max_columns`, `width`, `height`, `multipage`, `fontsize`, `overlays`     |
+| `ConfigMovie` | Movie rendering parameters | `image_file`, `fps`, `bitrate`, `layout`, `zstack`, `zstack_fn`, `zstack_cmap`, `overlays`, `channels`, `frames` |
+| `ConfigPanel` | Panel rendering parameters | `image_file`, `layout`, `max_columns`, `width`, `height`, `multipage`, `fontsize`, `zstack_fn`, `zstack_cmap`, `overlays` |
 
 These are produced by the FileOps plugin system when parsing `.cfg` files.
 
@@ -130,6 +130,7 @@ The core rendering engine.
 | `ImagePipeline` (base)                                 | Abstract base for image processing pipelines. Uses `__radd__` to compose with `MovieRenderer` via the `+=` operator. See [Algebraic Composition](#algebraic-composition) below. |
 | `SingleImage`                                          | Pipeline that retrieves and displays a single channel from the image file.                                                                                                                            |
 | `CompositeRGBImage`                                    | Pipeline that composites multiple channels into an RGB image with configurable colors and intensity scaling.                                                                                          |
+| `ZProjectionImage`                                     | Pipeline that renders a z-projection of a *single* channel, including depth-coded projections (`colorize.z_depth_rgb`). Depth-coded colours encode the z-position of peak intensity — they must not be tinted or merged, so this is the only place depth-coding is produced. |
 | `NullImage`                                            | Placeholder pipeline that renders a blank (1x1 black) image. Used for empty grid cells.                                                                                                               |
 | `PipelineException`                                    | Custom exception for pipeline errors.                                                                                                                                                                 |
 
@@ -154,6 +155,23 @@ The mechanism works as follows:
 - **`Overlay.__radd__`**: When `renderer += overlay` is evaluated, Python calls `overlay.__radd__(renderer)`. If the left operand is a `MovieRenderer`, the overlay's layers are appended to `renderer.layers` and the renderer is returned. This also works for chaining overlays: `overlay_a + overlay_b` merges their layer lists.
 - **`ImagePipeline.__radd__`**: When `renderer += pipeline` is evaluated, Python calls `pipeline.__radd__(renderer)`. If the left operand is a `MovieRenderer`, the pipeline is appended to `renderer.image_pipeline` and the renderer is returned. Only one pipeline without an explicit `ax` is allowed per renderer; additional pipelines must specify their own axes.
 - **Validation**: `ImagePipeline.__radd__` enforces that at most one "root" pipeline (without `ax`) exists. If a second root pipeline is added, a `PipelineException` is raised. This prevents ambiguous image source assignments.
+
+---
+
+### Colorize Module
+
+**Location:** `movierender/colorize.py`
+
+Presentation layer for depth-coded z-projections, deliberately kept out of FileOps. FileOps' `z_volume`/`depth_field` produce the *data* (the per-pixel z-position of peak intensity); this module maps that data to colours, scaled by the pixel's normalised brightness so dark regions stay black. This mirrors Fiji's "Temporal-Color Code" macro.
+
+| Function                                               | Purpose                                                                                                             |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------- |
+| `is_depth_projection(proj)`                            | Whether a configured projection requests depth-coding (`depth`/`code`, optionally `all-` prefixed).                  |
+| `normalized_intensity(im_max)`                         | Normalise a max-intensity map to `[0, 1]`.                                                                            |
+| `depth_cmap(depth_field, intensity, cmap_name)`        | Colour a depth field through a matplotlib colormap, scaled by brightness → `(H, W, 3)` RGB floats.                    |
+| `z_depth_rgb(imf, frame, channel, z_subset, cmap_name)`| Full depth projection of one channel: assemble the volume, derive depth + brightness, colourise.                      |
+
+`DEFAULT_DEPTH_CMAP = 'plasma'` (perceptually uniform; `jet` is discouraged). Consumed by `ZProjectionImage` and by `movierender projection` for TIFF output.
 
 ---
 
@@ -322,7 +340,7 @@ arrow_overlay_header_reader = 'movierender.plugins.fileops:ArrowOverlayHeaderRea
 
 | FileOps Module                                  | Used By                                                           | Purpose                                             |
 | ----------------------------------------------- | ----------------------------------------------------------------- | --------------------------------------------------- |
-| `fileops.image.ImageFile`                       | `MovieRenderer`, `SingleImage`, `CompositeRGBImage`, `PixelTools` | Image file abstraction (frames, channels, z-stacks) |
+| `fileops.image.ImageFile`                       | `MovieRenderer`, `SingleImage`, `CompositeRGBImage`, `ZProjectionImage`, `PixelTools` | Image file abstraction (frames, channels, z-stacks) |
 | `fileops.image.MetadataImage`                   | `SingleImage`, `ImageHistogram`                                   | Single image with metadata                          |
 | `fileops.image.ops.ZProjection`                 | `ImagePipeline`                                                   | Z-projection enumeration                            |
 | `fileops.image.exceptions.FrameNotFoundError`   | `MovieRenderer`, panel layouts                                    | Exception for missing frames                        |

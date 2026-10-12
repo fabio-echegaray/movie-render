@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, Union, List, Set, Iterable
 import numpy as np
 from fileops.image.ops import ZProjection
 
+from movierender.colorize import DEFAULT_DEPTH_CMAP
 from movierender.render.pipelines import PipelineException
 
 if TYPE_CHECKING:
@@ -11,9 +12,33 @@ if TYPE_CHECKING:
 
 
 class ImagePipeline:
+    """Base class for all image-rendering pipelines.
+
+    A pipeline turns one image into the array that will be displayed on a
+    matplotlib :class:`~matplotlib.axes.Axes`.  Concrete subclasses implement
+    :meth:`__call__`; examples are :class:`SingleImage` (a single z-plane),
+    :class:`ZProjectionImage` (a z-projection of one channel, including
+    depth-coding) and :class:`CompositeRGBImage` (merging several channels
+    into one RGB image).
+
+    ``zstack`` semantics (regexp to :class:`fileops.image.ops.ZProjection`):
+        * a non-negative ``int``  → a single z-plane
+        * a ``list``/``set``/iterable → the (sub)set of z-planes to use
+        * ``'all'`` or ``'all-<fn>'`` → the whole stack, projected with ``<fn>``
+          (``max``, ``min``, ``mean``, ...)
+
+    ``zstack_fn`` selects how the z-planes are combined (``'max'`` by default).
+    ``'depth'``/``'code'`` are *not* projection types (reducers over z); they
+    are a rendering convention that requests depth-coding, which is handled by
+    :class:`ZProjectionImage` alone (see :mod:`movierender.colorize`).
+    ``zstack_cmap`` is the colormap used for that depth-coding and is only
+    consumed by depth-capable pipelines.
+    """
+
     def __init__(self, *args, ax=None,
                  zstack: Union[int, List, Set, Iterable, str] = "all",
                  zstack_fn: str | None = None,
+                 zstack_cmap: str = DEFAULT_DEPTH_CMAP,
                  **kwargs):
         self._kwargs = kwargs
         self.ax = ax
@@ -21,6 +46,7 @@ class ImagePipeline:
             zstack = int(zstack)
         self.zstack = zstack if isinstance(zstack, int) and zstack >= 0 \
             else zstack if isinstance(zstack, (set, list, Iterable)) else "all"
+        self.zstack_cmap = zstack_cmap
         self.zstack_fn = zstack_fn if zstack_fn is not None \
             else None if zstack_fn is None and isinstance(zstack, int) \
             else ZProjection(zstack).name if isinstance(zstack, int) and zstack < 0 \

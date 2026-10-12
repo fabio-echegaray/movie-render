@@ -145,23 +145,28 @@ Legend: [OPEN] = pending, [DONE] = fixed
               channel color. Configurable parameters: position, point size (for
               both font and square), font name, and font properties.
 
-  [OPEN] 64. Depth-coded z-projection for PANELs and MOVIEs
-              — Add a new z-projection mode that maps each z-slice to a
-              color along a colormap (e.g. blue→red, jet, etc.), producing
-              a 2D image where pixel color encodes the z-position of peak
-              intensity. This is Fiji's "Temporal-Color Code" macro:
-              https://github.com/fiji/fiji/blob/master/plugins/Scripts/
-              Image/Hyperstacks/Temporal-Color_Code.ijm
-              Reference: https://github.com/napari/napari/issues/4300
-              — Configurable parameters: colormap name (default: hsv or
-                jet), z-range (full or subset), intensity threshold.
-              — Should work for both individual MOVIE sections and PANEL
-                layouts, and compose with existing overlays.
-              — Implementation: new z-project mode in fileops (or a
-                MovieRender plugin) that assigns each z-slice an index,
-                maps index to a colormap color, and composites the
-                result per-pixel by taking the color at each position's
-                maximum-intensity z.
+  [BUG] 69. `timestamp_color` / `timestamp_font_size` ignored in configs
+                — Panel (`figs/definitions/chx-2003/panel/export_definition.cfg`)
+                sets `timestamp_color = white`, `timestamp_font_size = 10`,
+                but `_parse_text_props(cfg_section, 'timestamp')` only reads
+                the dotted keys `timestamp.color` / `timestamp.font_size`.
+                `timestamp_color`/`timestamp_font_size` are different keys to
+                configparser, so the parser silently returned the defaults
+                (`TextProperties(font_name='Arial', font_size=12, color=None)`)
+                and the rendered timestamp ignored the configured colour/size.
+                — Fix: `_get_prefixed_key()` falls back from the dotted form
+                to the underscore form for `_parse_text_props`,
+                `_parse_line_props` and `_parse_background_props`, so both
+                syntaxes work (`timestamp.color` or `timestamp_color`, etc.).
+                — Regression tests in `test/test_config_graphics.py`.
+
+  [OPEN] 78. `render folder` ignores upstream auto-detected defaults
+              (`_render_folder.py:55`) — when no `--defaults-file` is given,
+              `render_folder_cmd` only checks `path / defaults.cfg` in the
+              local root, yet imports `find_default_files()` (line 13) and
+              never calls it, even though upstream-dir auto-detection is
+              available since #62 (`_defaults.py`).
+              Fix: replace the local-only check with `find_default_files()`.
 
 
 5. RESOLVED / OBSOLETE (ARCHIVE)
@@ -181,6 +186,7 @@ Legend: [OPEN] = pending, [DONE] = fixed
   [OBSOLETE] 60. `zstack = all-max` logs ERROR instead of warning — moved to FileOps #34.
   [DONE] 62. Auto-detect `defaults.cfg` in upstream dirs — `find_defaults_files()`; savefig bg-color fix.
   [DONE] 63. `fontdict`+`fontsize` alias conflict crashed rendering — props merged via `setdefault`.
+  [DONE] 64. Depth-coded z-projection — implemented in `[MOVIE]/[PANEL]`; forbid depth-merge as composite RGB.
   [DONE] 65. Default text color white invisible on white — auto-pick via `contrast_color()`.
   [DONE] 66. Font weight for text elements — `font_weight` in TextProperties/parsers/overlays/layouts.
   [DONE] 67. Circular import plugins.overlay ↔ overlays — TYPE_CHECKING + future annotations.

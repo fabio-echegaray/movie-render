@@ -7,6 +7,8 @@ from typing import List, Dict, Union, TYPE_CHECKING, NamedTuple
 from fileops.image import ImageFile
 from roifile import ImagejRoi
 
+from movierender.colorize import DEFAULT_DEPTH_CMAP
+
 if TYPE_CHECKING:
     from movierender.overlays import Overlay
     from fileops.export.config import ConfigCopyright
@@ -39,6 +41,7 @@ class ConfigMovie(NamedTuple):
     layout: str
     include_tracks: Union[str, bool]
     # Graphics parameters
+    zstack_cmap: str = DEFAULT_DEPTH_CMAP
     scalebar_text: Union['TextProperties', None] = None
     scalebar_line: Union['LineProperties', None] = None
     timestamp: Union['TextProperties', None] = None
