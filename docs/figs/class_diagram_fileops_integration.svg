@@ -192,8 +192,8 @@
   <rect x="600" y="430" width="170" height="60" rx="5" fill="#fff" stroke="#16a085" stroke-width="1.5"/>
   <text x="685" y="450" text-anchor="middle" font-weight="bold" font-size="9" fill="#16a085">ImagePipeline</text>
   <line x1="600" y1="455" x2="770" y2="455" stroke="#16a085" stroke-width="1"/>
-  <text x="610" y="470" font-size="8">SingleImage, CompositeRGBImage</text>
-  <text x="610" y="482" font-size="8">NullImage</text>
+  <text x="610" y="470" font-size="8">SingleImage, CompositeRGBImage,</text>
+  <text x="610" y="482" font-size="8">ZProjectionImage, NullImage</text>
 
   <!-- Overlay hierarchy -->
   <rect x="790" y="430" width="170" height="60" rx="5" fill="#fff" stroke="#f39c12" stroke-width="1.5"/>
