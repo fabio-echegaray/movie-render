@@ -6,9 +6,12 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 from fileops.export.config import ConfigCopyright
+from fileops.image.ops.rescale_proc import configure_rescale_processor
 from matplotlib.backends.backend_pdf import PdfPages
 
 from movierender.config import ConfigPanel
+
+import fileops
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +24,13 @@ def grouper(iterable, n, fillvalue=None):
 
 
 def render_static_montage(panel: ConfigPanel, copyright_info: ConfigCopyright = None) -> Path:
+    fileops.reset_shared_state()
     logger.debug("Making montage of image.")
+
+    # Section-level gamma_*/rescale_* overrides only live in the section's
+    # channel_render_parameters; reconfigure the shared RescaleProcessor so
+    # the panel's planes are rendered with this panel's settings.
+    configure_rescale_processor(panel.image_file, panel.channel_render_parameters)
 
     # create dataframe of images that will be plotted
     img_lst = [
@@ -91,6 +100,7 @@ def render_static_montage(panel: ConfigPanel, copyright_info: ConfigCopyright = 
                     g.figure.suptitle(f"{panel.title} ({panel.rows} {page_lbl})")
                     plt.subplots_adjust(**gs_kwargs)  # Manually adjust subplot positions
                     pdf.savefig(transparent=True)
+                    plt.close(g.figure)
     else:
         g = sns.FacetGrid(im_df,
                           row=rows,
@@ -101,7 +111,6 @@ def render_static_montage(panel: ConfigPanel, copyright_info: ConfigCopyright = 
         g.map_dataframe(plotimg, panel=panel)
         g.set_titles(col_template="{col_name}", row_template="{row_name}")
 
-
         # Remove unused axes
         for ax in g.axes.flat:
             if not ax.has_data():  # Check if the axis has data
@@ -111,5 +120,6 @@ def render_static_montage(panel: ConfigPanel, copyright_info: ConfigCopyright = 
         plt.subplots_adjust(**gs_kwargs)  # Manually adjust subplot positions
 
         g.savefig(filepath, metadata=metadata, transparent=True)
+        plt.close(g.figure)
 
     return filepath

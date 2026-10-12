@@ -1,17 +1,23 @@
 import matplotlib.pyplot as plt
 
 from movierender.overlays.overlay import Overlay
+from movierender.config import TextProperties
 
 
 class Treatment(Overlay):
+    def __init__(self, text_props=None, **kwargs):
+        self._text_props = text_props if text_props is not None else TextProperties()
+        super().__init__(**kwargs)
+
     def plot(self, ax=None, xy=(0, 0), lw=1, fontdict=None, expdict=None, **kwargs):
         if ax is None:
             ax = self.ax
-        assert ax is not None, "No axes found to plot overlay."
-        assert expdict is not None, "Experiment label parameters needed to apply this overlay."
+        if ax is None:
+            raise RuntimeError("No axes found to plot overlay.")
+        if expdict is None:
+            raise ValueError("Experiment label parameters needed to apply this overlay.")
 
         x0, y0 = xy
-        r = self._renderer.fig.canvas.get_renderer()
 
         # get dimensions of the dot
         dot = plt.scatter(x0, y0, s=fontdict['size'] ** 2, c=None, lw=0)
@@ -30,6 +36,9 @@ class Treatment(Overlay):
                          xytext=(_x, 0),  # distance from text to points (x,y)
                          ha='left',  # horizontal alignment can be left, right or center
                          va='center_baseline',  # vertical can be center, top, bottom, baseline, center_baseline
-                         c='white')
+                         color=self._text_props.color,
+                         fontname=self._text_props.font_name,
+                         fontsize=self._text_props.font_size,
+                         fontweight=self._text_props.font_weight)
 
             y0 -= 1.5 * bb.height / self._renderer.pix_per_um

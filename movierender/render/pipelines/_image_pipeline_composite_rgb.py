@@ -2,11 +2,12 @@ from typing import Iterable
 
 import matplotlib.colors as mcolors
 import numpy as np
+import skimage
 from fileops.image import ImageFile
+from fileops.image.ops import normalize_to_dtype, rescale
 from skimage import color
 
 from movierender.render.pipelines._image_pipeline_base import ImagePipeline
-from movierender.render.pipelines._image_rescale import rescale
 
 
 class CompositeRGBImage(ImagePipeline):
@@ -60,20 +61,12 @@ class CompositeRGBImage(ImagePipeline):
             if dtype is None:
                 dtype = _img.dtype
 
-            # Contrast enhancing by stretching the histogram
-            _img = rescale(_img, settings)
-
             rgb_vector_color = mcolors.to_rgb(settings['color'])
-            assert isinstance(rgb_vector_color, tuple)
+            if not isinstance(rgb_vector_color, tuple):
+                raise TypeError("color must be convertible to RGB tuple.")
 
+            _img = skimage.util.img_as_float(_img)
             _img = color.gray2rgb(_img)
             background += _img * rgb_vector_color * settings['intensity']
 
-        if dtype is not None:
-            if np.issubdtype(dtype, np.integer):
-                background = background / background.max() * np.iinfo(dtype).max  # normalizes data in range 0 - max
-            elif np.issubdtype(dtype, np.floating):
-                background = background / background.max() * np.finfo(dtype).max  # normalizes data in range 0 - max
-            return background.astype(dtype)
-        else:
-            return background
+        return normalize_to_dtype(background, dtype) if dtype is not None else background

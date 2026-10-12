@@ -3,13 +3,111 @@ from pathlib import Path
 from typing import List, Dict
 
 import fileops
+from fileops.export.config import read_config_copyright
 from fileops.export.config_channel_section import update_channel_config_with_section_overrides
 from fileops.export.config_sections import process_overrides_of_section
 from fileops.logger import get_logger
 from fileops.plugins import HeaderReaderPlugin
 
 from movierender.config import ConfigMovie
-from movierender.overlays import ImagejROI
+from movierender.config import _parse_text_props, _parse_line_props, _parse_background_props
+
+
+def resolve_movie_codec(codec: str) -> str:
+    """Map a user-facing codec name to the ffmpeg encoder string fed to moviepy.
+
+    Undefined or empty -> ``libx264`` (H.264, the default). ``H.265``/``HEVC``
+    -> ``libx265``. Any other value is passed through verbatim so advanced
+    users can select any ffmpeg encoder compiled into their ffmpeg build.
+    """
+    if not codec:
+        return "libx264"
+    c = codec.strip().lower()
+    if c in ("h264", "h.264", "264", "libx264", "avc"):
+        return "libx264"
+    if c in ("h265", "h.265", "265", "hevc", "libx265"):
+        return "libx265"
+    return codec.strip()
+
+
+def load_overlay_plugins(cfg_path, root_path=None, **shared):
+    overlays = list()
+    for h in fileops.header_reader_plugins:
+        if "overlay" not in h.name:
+            continue
+        clz = h.load()
+        if not issubclass(clz, HeaderReaderPlugin):
+            continue
+        cinst = clz(cfg_path, root_path=root_path, **shared)
+        if cinst.has_valid_header():
+            overlays.extend(cinst.process())
+    return overlays
+
+
+def load_roi_overlays(cfg_path, root_path=None, **shared):
+    """Parse all [ROI-xx] sections of the config into ConfigROI instances."""
+    roi_lst = list()
+    for p in fileops.config_type_plugins:
+        if "roi" not in p.name:
+            continue
+        header_reader_name = f"{p.name}_header_reader"
+        for h in fileops.header_reader_plugins:
+            if h.name == header_reader_name:
+                clz = h.load()
+                if not issubclass(clz, HeaderReaderPlugin):
+                    continue
+                # propagate the shared data-section objects to nested plugins
+                cinst = clz(cfg_path, root_path=root_path, **shared)
+                if cinst.has_valid_header():
+                    roi_lst.extend(cinst.process())
+    return roi_lst
+
+
+def roi_overlays_for_ids(cfg, roi_lst, roi_ids, um_per_pix=None):
+    """Build ImagejROI overlay plugins for ROI sections whose section header
+    or ``id`` key is listed in ``roi_ids``."""
+    from movierender.overlays._roi import ImagejROIOverlayPlugin
+
+    overlays = list()
+    for r in roi_lst:
+        r_id = cfg[r.header].get("id", r.header)
+        if r.header not in roi_ids and r_id not in roi_ids:
+            continue
+        geom = r.geometry if isinstance(r.geometry, list) else [r.geometry]
+        kwargs = {"overlay_id": r_id}
+        if um_per_pix is not None:
+            kwargs["um_per_pix"] = um_per_pix
+        if len(geom) == 1:
+            # single ROI: if the section specifies a frame, limit it to that
+            # frame; otherwise clear the roifile default t_position (0) so the
+            # ROI draws on every frame
+            _fr = int(cfg[r.header]["frame"]) if "frame" in cfg[r.header] else None
+            geom[0].t_position = _fr
+        overlays.append(ImagejROIOverlayPlugin(geom, **kwargs))
+    return overlays
+
+
+def overlay_id(ovr):
+    """Id of a resolved overlay plugin instance (``overlay_id``, falling back to ``id``)."""
+    oid = getattr(ovr, "overlay_id", None)
+    return oid if oid is not None else getattr(ovr, "id", None)
+
+
+def warn_missing_overlays(requested_ids, provided_ids, section, log):
+    """Log a warning for every requested overlay id that no provider satisfies.
+
+    ``requested_ids`` are the ids a MOVIE/PANEL section listed; ``provided_ids``
+    are the ids the resolved overlay plugins (and ROIs) actually offer. A
+    requested id with no match means a typo or a missing plugin, which would
+    otherwise silently drop content from the render.
+    """
+    provided = set(provided_ids)
+    for oid in requested_ids:
+        if oid not in provided:
+            log.warning(
+                f"Requested overlay '{oid}' in section '{section}' does not match any "
+                f"overlay plugin or ROI; it will be skipped."
+            )
 
 
 class MovieHeaderReaderPlugin(HeaderReaderPlugin):
@@ -48,36 +146,17 @@ class MovieHeaderReaderPlugin(HeaderReaderPlugin):
 
         cfg, param_override, img_file, roi = self._cfg, self._param_override, self._img_file, self._roi
 
+        # read copyright from the merged configuration (defaults + config file) so
+        # a project-level defaults COPYRIGHT section is honoured by movies too
+        copyright_info = read_config_copyright(self._cfg_path, cfg)
+
         # process ROI sections in configuration file
-        roi_lst = list()
-        for p in fileops.config_type_plugins:
-            if "roi" not in p.name:
-                continue
-            self.log.debug(f"Checking {p.name}")
-            t_name = p.name
-            header_reader_name = f"{t_name}_header_reader"
-            for h in fileops.header_reader_plugins:
-                if h.name == header_reader_name:
-                    self.log.debug(f"Loading {header_reader_name}")
-                    clz = h.load()
-                    if not issubclass(clz, HeaderReaderPlugin):
-                        continue
-                    cinst = clz(self._cfg_path, root_path=self._root_path)
-                    if cinst.has_valid_header():
-                        roi_lst.extend(cinst.process())
+        roi_lst = load_roi_overlays(self._cfg_path, root_path=self._root_path,
+                                    cfg=cfg, img_file=img_file, param_override=param_override, roi=roi)
 
         # find OVERLAY parsers from plugins
-        overlays = list()
-        for h in fileops.header_reader_plugins:
-            if "overlay" not in h.name:
-                continue
-            self.log.debug(f"Loading {h.name}")
-            clz = h.load()
-            if not issubclass(clz, HeaderReaderPlugin):
-                continue
-            cinst = clz(self._cfg_path, root_path=self._root_path)
-            if cinst.has_valid_header():
-                overlays.extend(cinst.process())
+        overlays = load_overlay_plugins(self._cfg_path, root_path=self._root_path,
+                                        cfg=cfg, img_file=img_file, param_override=param_override, roi=roi)
 
         # process MOVIE sections
         movie_def = list()
@@ -95,8 +174,10 @@ class MovieHeaderReaderPlugin(HeaderReaderPlugin):
             if "overlays" in cfg[mov]:
                 ovr_txt = cfg[mov]["overlays"]
                 if ovr_txt[0] == "[" and ovr_txt[-1] == "]":
-                    ovr_ids = [s.strip() for s in ovr_txt[1:-1].split(",")]
-                    overlays_to_add.extend([ovr for ovr in overlays if ovr.id in ovr_ids])
+                    ovr_ids = [s.strip() for s in ovr_txt[1:-1].split(",") if len(s) > 0]
+                    matched = [ovr for ovr in overlays if overlay_id(ovr) in set(ovr_ids)]
+                    warn_missing_overlays(ovr_ids, [overlay_id(ovr) for ovr in matched], mov, self.log)
+                    overlays_to_add.extend(matched)
 
             # find ROI IDs and append them to list of ROIs
             if "roi" in cfg[mov]:
@@ -104,7 +185,18 @@ class MovieHeaderReaderPlugin(HeaderReaderPlugin):
                 if roi_txt[0] == "[" and roi_txt[-1] == "]":
                     roi_ids = [s.strip() for s in roi_txt[1:-1].split(",") if len(s) > 0]
                     if len(roi_ids) > 0:
-                        overlays_to_add.extend(ImagejROI(r.geometry) for r in roi_lst if r.header in roi_ids and r.plot)
+                        overlays_to_add.extend(roi_overlays_for_ids(cfg, roi_lst, roi_ids))
+
+            # parse graphics properties from dotted keys
+            scalebar_text = _parse_text_props(cfg[mov], "scalebar")
+            scalebar_line = _parse_line_props(cfg[mov], "scalebar")
+            timestamp = _parse_text_props(cfg[mov], "timestamp")
+            channel_label = _parse_text_props(cfg[mov], "channel_label")
+            suptitle = _parse_text_props(cfg[mov], "suptitle")
+            background = _parse_background_props(cfg[mov])
+            max_width = int(cfg[mov]["max_width"]) if "max_width" in cfg[mov] else 2880
+            dpi = int(cfg[mov]["dpi"]) if "dpi" in cfg[mov] else 326
+            codec = resolve_movie_codec(cfg[mov]["codec"] if "codec" in cfg[mov] else "")
 
             movie_def.append(ConfigMovie(
                 header=mov,
@@ -127,10 +219,20 @@ class MovieHeaderReaderPlugin(HeaderReaderPlugin):
                 movie_filename=movie_filename,
                 layout=cfg[mov]["layout"] if "layout" in cfg[mov] else "twoch-comp",
                 include_tracks=(
-                    include_tracks if type(include_tracks) is bool
-                    else include_tracks == "yes" if type(include_tracks) is str
+                    include_tracks if isinstance(include_tracks, bool)
+                    else include_tracks == "yes" if isinstance(include_tracks, str)
                     else False
-                ),
-                overlays=overlays_to_add
+                    ),
+                overlays=overlays_to_add,
+                copyright=copyright_info,
+                scalebar_text=scalebar_text,
+                scalebar_line=scalebar_line,
+                timestamp=timestamp,
+                channel_label=channel_label,
+                suptitle=suptitle,
+                background=background,
+                max_width=max_width,
+                dpi=dpi,
+                codec=codec,
             ))
         return movie_def

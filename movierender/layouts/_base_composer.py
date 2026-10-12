@@ -1,6 +1,5 @@
 import concurrent
 import importlib
-import multiprocessing
 import os
 import signal
 import uuid
@@ -10,6 +9,7 @@ from pathlib import Path
 
 import fileops
 import matplotlib
+import matplotlib.pyplot as plt
 from fileops.logger import get_logger
 
 import movierender
@@ -18,14 +18,15 @@ from movierender.overlays import Overlay
 from movierender.plugins.overlay import OverlayPlugin
 from movierender.render import MovieRenderer
 
-manager = multiprocessing.Manager()
-s_lock, s_dict, s_list, s_sem = manager.Lock(), manager.dict(), manager.list(), manager.Semaphore(os.cpu_count())
-
 
 def exit_signal_handler(signum, frame):
-    if hasattr(fileops, "__IS_EXITING"):
-        is_exiting = getattr(fileops, "__IS_EXITING")
+    if hasattr(fileops, "__THREAD_STOP_REQUESTED"):
+        is_exiting = getattr(fileops, "__THREAD_STOP_REQUESTED")
         is_exiting.set()
+
+
+def _init_worker_process():
+    signal.signal(signal.SIGINT, signal.SIG_IGN)
 
 
 class BaseLayoutComposer:
@@ -40,7 +41,7 @@ class BaseLayoutComposer:
         self._movie_configuration_params = movie
         self.renderer: MovieRenderer | None = None
         self._renderer_params = dict(temp_folder=str(uuid.uuid4()))
-        self.dpi = 326
+        self.dpi = getattr(movie, "dpi", None) or 326
 
         self.fig_title = movie.title
         self.ax_lst = list()
@@ -51,9 +52,13 @@ class BaseLayoutComposer:
 
         im = movie.image_file
 
-        self.shared_tuple = (s_lock, s_dict, s_list, s_sem)
+        self.shared_tuple = fileops.get_shared_state()
 
-        fname = movie.movie_filename if len(movie.movie_filename) > 0 else im.image_path.name
+        fname = (
+            movie.movie_filename
+            if len(movie.movie_filename) > 0
+            else im.image_path.name
+        )
         self.filename = prefix + fname
         if len(suffix) > 0:
             self.filename += "." + suffix
@@ -92,9 +97,21 @@ class BaseLayoutComposer:
 
     @configuration.setter
     def configuration(self, cfg):
-        assert type(cfg) is dict
+        if not isinstance(cfg, dict):
+            raise TypeError("configuration must be a dict.")
         for key, val in cfg.items():
             self.__setattr__(key, val)
+
+    def _apply_overlays(self, ax, key, value):
+        for ovrl in self._pending_overlays:
+            if isinstance(ovrl, OverlayPlugin):
+                ovrl = ovrl.overlay
+                ovrl.ax = ax
+            if hasattr(ovrl, key):
+                if getattr(ovrl, key) == value:
+                    self.renderer += ovrl
+            else:
+                self.renderer += ovrl
 
     def make_layout(self):
         # include to the renderer any overlays that were added before the making of the layout
@@ -114,9 +131,12 @@ class BaseLayoutComposer:
         composer_array = [self, ]
         cfg = self.configuration
         cfg["renderer"].update({"overwrite": True})
+        mov = self._movie_configuration_params
         lcls = self.__class__
         for i in range(n_workers):
-            composer_instance = lcls(self._movie_configuration_params, **cfg["renderer"])
+            composer_instance = lcls(
+                mov, **cfg["renderer"]
+            )
             composer_instance._renderer_params = self._renderer_params
 
             # obtain overlay layers that are not coming from make_layout
@@ -162,7 +182,9 @@ class BaseLayoutComposer:
         mov = self._movie_configuration_params
 
         future_to_mapping = dict()
-        with futures.ProcessPoolExecutor(max_workers=n_workers) as executor:
+        executor = futures.ProcessPoolExecutor(max_workers=n_workers, initializer=_init_worker_process)
+        interrupted = False
+        try:
             for k, fr in enumerate(mov.frames):
                 composer = composer_array[k % len(composer_array)]
 
@@ -176,7 +198,14 @@ class BaseLayoutComposer:
                     self.log.debug(f"finished ix {k}; file {future.result()}.")
             except KeyboardInterrupt:
                 self.log.warning('Caught KeyboardInterrupt.')
-                fileops.__IS_EXITING.set()
+                fileops.__THREAD_STOP_REQUESTED.set()
+                interrupted = True
+        finally:
+            executor.shutdown(wait=not interrupted, cancel_futures=interrupted)
+
+        if interrupted:
+            self.log.warning("Movie render stopped, skipping video generation.")
+            return
 
         self.make_layout()
         self.renderer.render(filename=str(self.save_file_path), test=False)
@@ -184,25 +213,26 @@ class BaseLayoutComposer:
     def render(self, parallel=False, test=False):
         signal.signal(signal.SIGTERM, exit_signal_handler)
         self.save_file_path.touch()  # create a file in case another instance is of a renderer is trying to render movies
-        if parallel and not test:
-            self._render_parallel()
-        else:
-            try:
+        try:
+            if parallel and not test:
+                self._render_parallel()
+            else:
                 self.log.info(f"Rendering movie into file {self.save_file_path}.")
                 imf = self._movie_configuration_params.image_file
-                s_lock, s_dict, s_list = self.shared_tuple
-                imf.init_shared(s_lock, s_dict, s_list)
+                s_lock, s_dict, s_list, s_sem = self.shared_tuple
+                imf.init_shared(s_lock, s_dict, s_list, s_sem)
                 self.make_layout()
                 self.renderer.render(filename=self.save_file_path.as_posix(), test=test)
-            except KeyboardInterrupt:
-                self.log.warning('Caught KeyboardInterrupt.')
-                if hasattr(fileops, "__IS_EXITING"):
-                    is_exiting = getattr(fileops, "__IS_EXITING")
-                    is_exiting.set()
+        finally:
+            # release the figure from matplotlib's global registry so it does
+            # not accumulate across renders within the same process
+            fig = getattr(self.renderer, 'fig', None) if self.renderer is not None else None
+            if fig is not None:
+                plt.close(fig)
 
 
 def run_job(cmpsr: BaseLayoutComposer, frame, shared_tuple):
-    if fileops.__IS_EXITING.is_set():
+    if fileops.__THREAD_STOP_REQUESTED.is_set():
         return None
 
     s_lock, s_dict, s_list, s_sem = shared_tuple

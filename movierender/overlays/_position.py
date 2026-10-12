@@ -8,16 +8,16 @@ from .overlay import Overlay
 
 class Position(Overlay):
     def __init__(self, df: pd.DataFrame, x="x", y="y", frame="frame", style_dict=None, **kwargs):
-        assert all([it in df.columns for it in [x, y, frame]]), "Data point columns not found in DataFrame."
-        self._x = x
-        self._y = y
-        self._f = frame
+        if not all([it in df.columns for it in [x, y, frame]]):
+            raise ValueError("Data point columns not found in DataFrame.")
+        self._x = 'x'
+        self._y = 'y'
+        self._f = 'frame'
         self._style = style_dict
         # Rename columns if parameters were given
         self.df = (df
-                   .rename(columns={frame: 'frame'})
-                   .sort_values(by='frame')
-                   .assign(x=df[x], y=df[y]))
+                   .rename(columns={frame: 'frame', x: 'x', y: 'y'})
+                   .sort_values(by='frame'))
 
         # if self._renderer.inv_y:
         #     self.df["y"]=
@@ -27,7 +27,8 @@ class Position(Overlay):
     def plot(self, ax=None, legend=False, lw=2, tail_length=10, **kwargs):
         if ax is None:
             ax = self.ax
-        assert ax is not None, "No axes found to plot overlay."
+        if ax is None:
+            raise RuntimeError("No axes found to plot overlay.")
         # assert timestamps is not None, "Need timestamps to render on axis."
 
         # xmin, xmax = self.df[self._x].min(), self.df[self._x].max()

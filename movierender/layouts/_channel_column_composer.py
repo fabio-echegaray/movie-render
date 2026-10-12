@@ -7,8 +7,9 @@ from fileops.logger import get_logger
 import movierender.overlays as ovl
 from movierender import MovieRenderer, CompositeRGBImage, plt, gridspec
 from movierender.config import ConfigMovie
+from movierender.config import TextProperties, LineProperties
+from movierender.config._cfg_graphics import resolve_text_color
 from movierender.overlays.pixel_tools import PixelTools
-from movierender.plugins.overlay import OverlayPlugin
 from ._base_composer import BaseLayoutComposer
 from ._ch_config import channel_configuration
 
@@ -29,7 +30,13 @@ class LayoutChannelColumnComposer(BaseLayoutComposer):
             return
 
         movie = self._movie_configuration_params
-        t = PixelTools(movie.image_file)
+        t = PixelTools(movie.image_file, roi=movie.roi if hasattr(movie.roi, 'left') else None)
+
+        # Get graphics parameters from config or use defaults
+        sbar_text = movie.scalebar_text or TextProperties(font_size=9)
+        sbar_line = movie.scalebar_line or LineProperties(width=3)
+        tsmp_text = movie.timestamp or TextProperties()
+        ch_text = movie.channel_label or TextProperties(font_size=7)
 
         if len(movie.channels) > 1:
             fig = plt.figure(figsize=(16, 9), dpi=self.dpi)
@@ -45,7 +52,18 @@ class LayoutChannelColumnComposer(BaseLayoutComposer):
             fig = plt.figure(figsize=(5.5, 5.5), dpi=self.dpi)
             self.ax_lst.append(fig.gca())
 
-        fig.suptitle(self.fig_title)
+        # Apply suptitle styling from config
+        suptitle_props = movie.suptitle or TextProperties()
+        bg_color = movie.background.color if movie.background is not None else 'black'
+        fig.suptitle(self.fig_title, fontname=suptitle_props.font_name,
+                     fontsize=suptitle_props.font_size,
+                     fontweight=suptitle_props.font_weight,
+                     color=resolve_text_color(suptitle_props.color, bg_color))
+
+        # Apply background color from config
+        bg_props = movie.background
+        if bg_props is not None:
+            fig.patch.set_facecolor(bg_props.color)
 
         self.renderer = MovieRenderer(fig=fig,
                                       config=movie,
@@ -55,31 +73,41 @@ class LayoutChannelColumnComposer(BaseLayoutComposer):
         agg_ch_config = channel_configuration(movie.channel_render_parameters)
         for ax, ch_cfg_ix in zip(self.ax_lst, movie.channel_render_parameters):
             ch_cfg = movie.channel_render_parameters[ch_cfg_ix]
-            self.renderer += ovl.ScaleBar(um=movie.scalebar, lw=3,
-                                          xy=t.xy_ratio_to_um(0.80, 0.05),
-                                          fontdict={'size': 9},
-                                          ax=ax)
-            self.renderer += ovl.Timestamp(xy=t.xy_ratio_to_um(0.02, 0.95), va='center', ax=ax)
+            if movie.scalebar is not None and movie.scalebar > 0:
+                self.renderer += ovl.ScaleBar(um=movie.scalebar, lw=sbar_line.width,
+                                              xy=t.xy_ratio_to_um(0.80, 0.05),
+                                              text_props=sbar_text, line_props=sbar_line,
+                                              fontdict={'size': sbar_text.font_size},
+                                              ax=ax)
+            self.renderer += ovl.Timestamp(xy=t.xy_ratio_to_um(0.02, 0.95), va='center',
+                                           text_props=tsmp_text, ax=ax)
             self.renderer += CompositeRGBImage(
                 ax=ax,
                 zstack=movie.zstack,
                 zstack_fn=movie.zstack_fn,
                 channeldict={ch_cfg["name"]: agg_ch_config[ch_cfg["name"]]}
             )
+            # Use per-channel font properties if available, otherwise use global channel_label
+            ch_label_props = ch_text
+            if 'font_name' in ch_cfg or 'font_size' in ch_cfg or 'font_color' in ch_cfg or 'font_weight' in ch_cfg:
+                from movierender.config import TextProperties
+                ch_label_props = TextProperties(
+                    font_name=ch_cfg.get('font_name', ch_text.font_name),
+                    font_size=int(ch_cfg.get('font_size', ch_text.font_size)),
+                    font_weight=ch_cfg.get('font_weight', ch_text.font_weight),
+                    color=ch_cfg.get('font_color', ch_text.color)
+                )
+            ch_label_color = resolve_text_color(ch_label_props.color, bg_color)
+            ch_fontdict = {'size': ch_label_props.font_size, 'color': ch_label_color}
+            if ch_label_props.font_weight:
+                ch_fontdict['weight'] = ch_label_props.font_weight
             self.renderer += ovl.Text(f'{ch_cfg["name"]}',
                                       xy=t.xy_ratio_to_um(0.70, 0.95),
-                                      fontdict={'size': 7, 'color': 'white'}, ax=ax)
+                                      text_props=ch_label_props,
+                                      fontdict=ch_fontdict,
+                                      ax=ax)
 
-            # consume overlays previously added
-            for ovrl in self._pending_overlays:
-                if isinstance(ovrl, OverlayPlugin):
-                    ovrl = ovrl.overlay
-                    ovrl.ax = ax
-                if hasattr(ovrl, "channel"):
-                    if getattr(ovrl, "channel") == ch_cfg_ix:
-                        self.renderer += ovrl
-                else:
-                    self.renderer += ovrl
+            self._apply_overlays(ax, "channel", ch_cfg_ix)
 
         self._pending_overlays = deque()
         self._layout_done = True

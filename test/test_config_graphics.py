@@ -1,0 +1,307 @@
+"""Test graphics configuration with property classes (Point 58).
+
+This test demonstrates how to use the graphics property classes in configuration files.
+The property classes (TextProperties, LineProperties, BackgroundProperties) allow
+configuring overlay appearance parameters like font size, colors for timestamps,
+text labels, scalebars, and histograms.
+"""
+
+from movierender.config import TextProperties, LineProperties, BackgroundProperties
+
+from movierender.config._cfg_graphics import _parse_text_props, _parse_line_props, _parse_background_props
+
+
+class TestTextProperties:
+    """Test class for TextProperties."""
+
+    def test_default_values(self):
+        """Test that TextProperties has sensible defaults."""
+        tp = TextProperties()
+        assert tp.font_name == 'Arial'
+        assert tp.font_size == 12
+        assert tp.color is None  # None means auto-pick contrast color
+
+    def test_custom_values(self):
+        """Test that TextProperties accepts custom values."""
+        tp = TextProperties(font_name='Helvetica', font_size=14, color='red')
+        assert tp.font_name == 'Helvetica'
+        assert tp.font_size == 14
+        assert tp.color == 'red'
+
+    def test_named_tuple_behavior(self):
+        """Test that TextProperties behaves as a NamedTuple."""
+        tp = TextProperties(font_size=10)
+        assert tp[1] == 10  # font_size is index 1
+        assert tp.font_size == 10
+
+
+class TestLineProperties:
+    """Test class for LineProperties."""
+
+    def test_default_values(self):
+        """Test that LineProperties has sensible defaults."""
+        lp = LineProperties()
+        assert lp.color == 'white'
+        assert lp.width == 1.0
+
+    def test_custom_values(self):
+        """Test that LineProperties accepts custom values."""
+        lp = LineProperties(color='yellow', width=3.0)
+        assert lp.color == 'yellow'
+        assert lp.width == 3.0
+
+
+class TestBackgroundProperties:
+    """Test class for BackgroundProperties."""
+
+    def test_default_values(self):
+        """Test that BackgroundProperties has sensible defaults."""
+        bp = BackgroundProperties()
+        assert bp.color == 'black'
+
+    def test_custom_values(self):
+        """Test that BackgroundProperties accepts custom values."""
+        bp = BackgroundProperties(color='darkgray')
+        assert bp.color == 'darkgray'
+
+
+class TestConfigMovieGraphics:
+    """Test class for ConfigMovie graphics fields."""
+
+    def test_config_movie_has_graphics_fields(self):
+        """Test that ConfigMovie has graphics property fields."""
+        from movierender.config._cfg_movie import ConfigMovie
+
+        assert hasattr(ConfigMovie, '_fields'), "ConfigMovie should be a NamedTuple"
+        assert 'scalebar_text' in ConfigMovie._fields, "ConfigMovie should have scalebar_text"
+        assert 'scalebar_line' in ConfigMovie._fields, "ConfigMovie should have scalebar_line"
+        assert 'timestamp' in ConfigMovie._fields, "ConfigMovie should have timestamp"
+        assert 'channel_label' in ConfigMovie._fields, "ConfigMovie should have channel_label"
+        assert 'suptitle' in ConfigMovie._fields, "ConfigMovie should have suptitle"
+        assert 'background' in ConfigMovie._fields, "ConfigMovie should have background"
+
+
+class TestConfigPanelGraphics:
+    """Test class for ConfigPanel graphics fields."""
+
+    def test_config_panel_has_graphics_fields(self):
+        """Test that ConfigPanel has graphics property fields."""
+        from movierender.config._cfg_panel import ConfigPanel
+
+        assert hasattr(ConfigPanel, '_fields'), "ConfigPanel should be a NamedTuple"
+        assert 'scalebar_text' in ConfigPanel._fields, "ConfigPanel should have scalebar_text"
+        assert 'scalebar_line' in ConfigPanel._fields, "ConfigPanel should have scalebar_line"
+        assert 'timestamp' in ConfigPanel._fields, "ConfigPanel should have timestamp"
+        assert 'background' in ConfigPanel._fields, "ConfigPanel should have background"
+
+
+class TestParseTextProps:
+    """Test class for _parse_text_props helper."""
+
+    def test_parse_with_all_keys(self):
+        """Test parsing with all keys present."""
+
+        class MockSection:
+            def get(self, key, default=None):
+                data = {
+                    'scalebar.font_name': 'Courier',
+                    'scalebar.font_size': '10',
+                    'scalebar.color':     'yellow'
+                }
+                return data.get(key, default)
+
+        section = MockSection()
+        result = _parse_text_props(section, 'scalebar')
+
+        assert result.font_name == 'Courier'
+        assert result.font_size == 10
+        assert result.color == 'yellow'
+
+    def test_parse_with_defaults(self):
+        """Test parsing with no keys present (uses defaults)."""
+
+        class MockSection:
+            def get(self, key, default=None):
+                return default
+
+        section = MockSection()
+        result = _parse_text_props(section, 'scalebar')
+
+        defaults = TextProperties()
+        assert result.font_name == defaults.font_name
+        assert result.font_size == defaults.font_size
+        assert result.color == defaults.color
+
+    def test_parse_with_underscore_keys(self):
+        """Regression: legacy underscored keys (timestamp_color,
+        timestamp_font_size) must be accepted alongside the dotted form."""
+
+        class MockSection:
+            def get(self, key, default=None):
+                data = {
+                    'timestamp_font_name': 'Helvetica',
+                    'timestamp_font_size': '10',
+                    'timestamp_color':     'white'
+                }
+                return data.get(key, default)
+
+        section = MockSection()
+        result = _parse_text_props(section, 'timestamp')
+
+        assert result.font_name == 'Helvetica'
+        assert result.font_size == 10
+        assert result.color == 'white'
+
+    def test_dotted_key_takes_precedence_over_underscore(self):
+        """Both forms present: the dotted (canonical) key wins."""
+
+        class MockSection:
+            def get(self, key, default=None):
+                data = {
+                    'timestamp.font_size': '14',
+                    'timestamp_font_size': '10',
+                    'timestamp.color':     'cyan',
+                    'timestamp_color':     'white'
+                }
+                return data.get(key, default)
+
+        section = MockSection()
+        result = _parse_text_props(section, 'timestamp')
+
+        assert result.font_size == 14
+        assert result.color == 'cyan'
+
+    def test_parse_underscore_keys_from_real_configparser(self):
+        """Regression (point 69): the exact keys used by real config files
+        (`timestamp_color`, `timestamp_font_size`) must be honoured through a
+        ``configparser`` section proxy, not only through a mocked ``.get``."""
+
+        import configparser
+        cfg = configparser.ConfigParser()
+        cfg['PANEL'] = {
+            'timestamp_color':     'white',
+            'timestamp_font_size': '10',
+        }
+
+        result = _parse_text_props(cfg['PANEL'], 'timestamp')
+
+        assert result.color == 'white'
+        assert result.font_size == 10
+
+
+class TestParseLineProps:
+    """Test class for _parse_line_props helper."""
+
+    def test_parse_with_all_keys(self):
+        """Test parsing with all keys present."""
+
+        class MockSection:
+            def get(self, key, default=None):
+                data = {
+                    'scalebar.line_color': 'red',
+                    'scalebar.line_width': '5'
+                }
+                return data.get(key, default)
+
+        section = MockSection()
+        result = _parse_line_props(section, 'scalebar')
+
+        assert result.color == 'red'
+        assert result.width == 5.0
+
+    def test_parse_with_defaults(self):
+        """Test parsing with no keys present (uses defaults)."""
+
+        class MockSection:
+            def get(self, key, default=None):
+                return default
+
+        section = MockSection()
+        result = _parse_line_props(section, 'scalebar')
+
+        defaults = LineProperties()
+        assert result.color == defaults.color
+        assert result.width == defaults.width
+
+    def test_parse_with_underscore_keys(self):
+        """Legacy underscored keys (scalebar_line_color etc.) are accepted."""
+
+        class MockSection:
+            def get(self, key, default=None):
+                data = {
+                    'scalebar_line_color': 'green',
+                    'scalebar_line_width': '3'
+                }
+                return data.get(key, default)
+
+        section = MockSection()
+        result = _parse_line_props(section, 'scalebar')
+
+        assert result.color == 'green'
+        assert result.width == 3.0
+
+
+class TestParseBackgroundProps:
+    """Test class for _parse_background_props helper."""
+
+    def test_parse_with_key(self):
+        """Test parsing with key present."""
+
+        class MockSection:
+            def get(self, key, default=None):
+                data = {'background.color': 'navy'}
+                return data.get(key, default)
+
+        section = MockSection()
+        result = _parse_background_props(section)
+
+        assert result.color == 'navy'
+
+    def test_parse_with_default(self):
+        """Test parsing with no key present (uses default)."""
+
+        class MockSection:
+            def get(self, key, default=None):
+                return default
+
+        section = MockSection()
+        result = _parse_background_props(section)
+
+        assert result.color == BackgroundProperties().color
+
+    def test_parse_with_underscore_key(self):
+        """Legacy underscored key (background_color) is accepted."""
+
+        class MockSection:
+            def get(self, key, default=None):
+                data = {'background_color': 'navy'}
+                return data.get(key, default)
+
+        section = MockSection()
+        result = _parse_background_props(section)
+
+        assert result.color == 'navy'
+
+
+class TestOverlayTextProps:
+    """Test class for _parse_overlay_text_props helper."""
+
+    def test_parse_with_all_keys(self):
+        """Test parsing with all keys present."""
+
+        class MockSection:
+            def get(self, key, default=None):
+                data = {
+                    'font_name':  'Courier',
+                    'font_size':  '16',
+                    'font_color': 'cyan'
+                }
+                return data.get(key, default)
+
+        section = MockSection()
+        from movierender.config import _parse_overlay_text_props
+        result = _parse_overlay_text_props(section)
+
+        assert result.font_name == 'Courier'
+        assert result.font_size == 16
+        assert result.color == 'cyan'

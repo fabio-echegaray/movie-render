@@ -1,5 +1,16 @@
 # Movie Render
-This package renders movies from configuration files referencing microscopy data.
+**MovieRender** is a Python package for rendering microscopy data into movies (MP4) and static panels (PDF) using declarative configuration files. It reads microscopy image files via the sister project [FileOps](https://github.com/fabio-echegaray/fileops), applies various layouts and overlays (scale bars, timestamps, ROIs, arrows, etc.), and produces publication-ready video and image outputs.
+
+**Key features:**
+
+- Render movies from `.ome.tif` and other microscopy formats.
+- Render static multi-page PDF panels with z-stack or time arrays.
+- Apply overlays: scale bars, timestamps, text, ROIs, arrows, particle positions, time series, histograms.
+- Composite multiple channels into RGB images with configurable colors and intensities.
+- Export stack images into volumetric file data formats.
+- Parallel frame rendering for faster output.
+- Plugin-based architecture extensible via Python entry points.
+
 
 ## Table of contents
 * [Documentation](#documentation)

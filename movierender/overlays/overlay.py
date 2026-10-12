@@ -20,7 +20,7 @@ def iterable_elems_eq(l1: Iterable, l2: Iterable) -> bool:
             if not v1_in_l2:
                 return False
         elif type(v1) is list:
-            v1_in_l2 = np.any([dict_elems_eq(v1, v2) for v2 in l2])
+            v1_in_l2 = np.any([iterable_elems_eq(v1, v2) for v2 in l2])
             if not v1_in_l2:
                 return False
         else:
@@ -35,7 +35,7 @@ def dict_elems_eq(d1: dict, d2: dict) -> bool:
     for k1, v1 in d1.items():
         if k1 not in d2:
             return False
-        if type(v1) in [int, float, bool, str] or np.isscalar(v1) or v1 is None:
+        if type(v1) in [int, float, bool, str] or np.ndim(v1) == 0 or v1 is None:
             if v1 != d2[k1]:
                 return False
         elif type(v1) is dict:
@@ -75,7 +75,7 @@ def get_kwargs(kwargs: List[dict], keys_and_default_values: Dict) -> List[Any]:
 class Overlay(object):
     def __init__(self, ax=None, **kwargs):
         self.layers = [self]
-        self._kwargs = kwargs
+        self._kwargs: dict = kwargs if kwargs else {}
         self._renderer: MovieRenderer | None = None
         self.ax = ax
 
@@ -108,8 +108,7 @@ class Overlay(object):
     @property
     def configuration(self):
         cfg = dict()
-        if hasattr(self, "_kwargs"):
-            cfg.update(**self._kwargs)
+        cfg.update(**self._kwargs)
         for d in self.__dict__:
             if d not in ['uuid', 'ax', 'layers', '_renderer', '_kwargs']:
                 cfg.update({d: self.__dict__[d]})
@@ -131,7 +130,8 @@ class Overlay(object):
 
     @configuration.setter
     def configuration(self, cfg):
-        assert type(cfg) is dict
+        if not isinstance(cfg, dict):
+            raise TypeError("configuration must be a dict.")
         if cfg["ax_on_grid"]:
             n_rows, n_cols, start, stop = cfg["gridspec"]
         for key, val in cfg.items():

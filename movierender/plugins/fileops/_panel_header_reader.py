@@ -2,13 +2,20 @@ import copy
 from pathlib import Path
 from typing import List, Dict
 
-import fileops
 from fileops.export.config_channel_section import update_channel_config_with_section_overrides
 from fileops.export.config_sections import process_overrides_of_section
 from fileops.logger import get_logger
 from fileops.plugins import HeaderReaderPlugin
 
 from movierender.config import ConfigPanel
+from movierender.config import _parse_text_props, _parse_line_props, _parse_background_props
+from movierender.plugins.fileops._movie_header_reader import (
+    load_overlay_plugins,
+    load_roi_overlays,
+    overlay_id,
+    roi_overlays_for_ids,
+    warn_missing_overlays,
+)
 
 _rowcol_dict = {
     "channel":  "channel",
@@ -59,17 +66,12 @@ class PanelHeaderReaderPlugin(HeaderReaderPlugin):
         cfg, param_override, img_file, roi = self._cfg, self._param_override, self._img_file, self._roi
 
         # find OVERLAY parsers from plugins
-        overlays = list()
-        for h in fileops.header_reader_plugins:
-            if "overlay" not in h.name:
-                continue
-            self.log.debug(f"Loading {h.name}")
-            clz = h.load()
-            if not issubclass(clz, HeaderReaderPlugin):
-                continue
-            cinst = clz(self._cfg_path, root_path=self._root_path)
-            if cinst.has_valid_header():
-                overlays.extend(cinst.process())
+        overlays = load_overlay_plugins(self._cfg_path, root_path=self._root_path,
+                                        cfg=cfg, img_file=img_file, param_override=param_override, roi=roi)
+
+        # process ROI sections in configuration file
+        roi_lst = load_roi_overlays(self._cfg_path, root_path=self._root_path,
+                                    cfg=cfg, img_file=img_file, param_override=param_override, roi=roi)
 
         # process PANEL sections
         panel_def = list()
@@ -90,6 +92,24 @@ class PanelHeaderReaderPlugin(HeaderReaderPlugin):
                 ovr_txt = cfg[pan]["overlays"]
                 if ovr_txt[0] == "[" and ovr_txt[-1] == "]":
                     ovr_ids = [s.strip() for s in ovr_txt[1:-1].split(",") if len(s) > 0]
+
+            # ROIs listed in the overlays parameter are drawn as ImagejROI boxes
+            plugin_objs = [ovr for ovr in overlays if overlay_id(ovr) in set(ovr_ids)]
+            roi_objs = roi_overlays_for_ids(cfg, roi_lst, ovr_ids, um_per_pix=img_file.um_per_pix)
+            # a requested id is satisfied by a plugin overlay id or by a ROI section
+            # matched through its header or its `id` key
+            provided_ids = [overlay_id(ovr) for ovr in plugin_objs]
+            for r in roi_lst:
+                r_id = cfg[r.header].get("id", r.header)
+                provided_ids += [alias for alias in (r.header, r_id) if alias in ovr_ids]
+            warn_missing_overlays(ovr_ids, provided_ids, pan, self.log)
+            overlay_objs = plugin_objs + roi_objs
+
+            # parse graphics properties from dotted keys
+            scalebar_text = _parse_text_props(cfg[pan], "scalebar")
+            scalebar_line = _parse_line_props(cfg[pan], "scalebar")
+            timestamp = _parse_text_props(cfg[pan], "timestamp")
+            background = _parse_background_props(cfg[pan])
 
             panel_def.append(ConfigPanel(
                 header=pan,
@@ -121,7 +141,10 @@ class PanelHeaderReaderPlugin(HeaderReaderPlugin):
                 multipage=cfg[pan]["multipage"].lower() in ["true", "yes"] if "multipage" in cfg[pan] else False,
                 filename=filename,
                 layout=cfg[pan]["layout"] if "layout" in cfg[pan] else "time-array",
-                fontsize=cfg[pan]["fontsize"] if "fontsize" in cfg[pan] else 7,
-                overlays=[ovr for ovr in overlays if ovr.id in ovr_ids]
+                scalebar_text=scalebar_text,
+                scalebar_line=scalebar_line,
+                timestamp=timestamp,
+                background=background,
+                overlays=overlay_objs
             ))
         return panel_def

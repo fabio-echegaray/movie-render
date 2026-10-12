@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import configparser
+import copy
 import logging
 import os
 import shutil
@@ -14,9 +14,9 @@ import imageio.v3 as iio
 import moviepy.editor as mpy
 import numpy as np
 import skimage
-from fileops.export.config import read_config_copyright
 from fileops.image import ImageFile
 from fileops.image.exceptions import FrameNotFoundError
+from fileops.image.ops.rescale_proc import configure_rescale_processor
 from fileops.pathutils import ensure_dir
 from matplotlib.figure import Figure
 
@@ -27,6 +27,15 @@ if TYPE_CHECKING:
     from movierender.overlays import Overlay
 
 reading_image_lock = threading.Lock()
+
+
+def _hide_axis(ax):
+    ax.set_xticklabels([])
+    ax.set_yticklabels([])
+    ax.set_xticks([])
+    ax.set_yticks([])
+    for spine in ax.spines.values():
+        spine.set_visible(False)
 
 
 class SequentialMovieRenderer:
@@ -59,6 +68,10 @@ class SequentialMovieRenderer:
         self._cfg = config
         self.image_pipeline: List[ImagePipeline] = []
         self.image = imf
+        # Section-level gamma_*/rescale_* overrides are merged into this section's
+        # channel_render_parameters but never reach the [DATA]-level RescaleProcessor;
+        # reconfigure the shared processor with this section's settings before pulling frames.
+        configure_rescale_processor(imf, config.channel_render_parameters)
         self.inv_y = invert_y
         self._last_f = imf.frames[-1]
         self._max_frame = max(self._cfg.frames)
@@ -74,16 +87,17 @@ class SequentialMovieRenderer:
         return self
 
     def __next__(self):
-        if self.image_pipeline is not None:
-            imp = self.image_pipeline
+        if len(self.image_pipeline) > 0:
+            for imgp in self.image_pipeline:
+                imgp()
         else:
-            imp = SingleImage(self)
+            SingleImage(self)()
         self.time = (self.time + 1) % self._max_frame
-
-        return imp(invert_y=self.inv_y)
+        return self._render
 
     def _load_image(self):
-        assert len(self.image.frames) > 1, "More than one frame needed to make a movie."
+        if len(self.image.frames) <= 1:
+            raise ValueError("More than one frame needed to make a movie.")
         self.logger.info(f"Loaded {self.image.image_path}. WxH({self.image.width},{self.image.height}), "
                          f"channels: {len(self.image.channels)}, "
                          f"frames: {len(self.image.frames)}, stacks: {len(self.image.zstacks)}")
@@ -114,7 +128,7 @@ class SequentialMovieRenderer:
             if img_path.exists():
                 new_path = self._cfg.movie_filename + ".test.png"
                 img_path.rename(new_path)
-                self.logger.info(f"Successfully rendered test image to {new_path}.")
+                self.logger.debug(f"Successfully rendered test image to {new_path}.")
             return
 
         def make_frame_mpl(t):
@@ -145,20 +159,20 @@ class SequentialMovieRenderer:
         # Start of method
         # --------------------------------------------------------------------------------------------------------------
         if filename is None:
-            _, filename = os.path.split(self._file)
+            _, filename = os.path.split(self.image.image_path)
             filename += ".mp4"
         rendered_frames = list()
         for fr in sorted(self._cfg.frames):
             try:
                 self.render_frame(fr)
                 rendered_frames.append(fr)
-            except FrameNotFoundError:
+            except FrameNotFoundError as e:
+                self.logger.warning(f"frame {fr} not found, skipping (will be omitted from the movie): {e}")
                 continue
 
-        # obtain copyright metadata
-        cfg = configparser.ConfigParser()
-        cfg.read(self._cfg.configfile)
-        copyr = read_config_copyright(self._cfg.configfile, cfg)
+        # obtain copyright metadata from the ConfigMovie (read once from the
+        # merged configuration, which honours a defaults COPYRIGHT section)
+        copyr = self._cfg.copyright
         if copyr is not None:
             cpr_lst = [
                 '-metadata', f'artist={copyr.author}',
@@ -172,15 +186,18 @@ class SequentialMovieRenderer:
         self.logger.info("Now rendering using ffmpeg.")
         dur = len(rendered_frames) / self.fps
         animation = mpy.VideoClip(make_frame_mpl, duration=dur)
+        # set 'hvc1' tag for HEVC output (libx265) in QuickTime/iOS.
+        hvc1_tag = ['-tag:v', 'hvc1'] if self._cfg.codec.lower() == 'libx265' else []
         animation.write_videofile(filename,
                                   fps=self._cfg.fps,
                                   bitrate=self._cfg.bitrate,
-                                  codec='libx265',
+                                  codec=self._cfg.codec,
                                   # audio_codec='pcm_s32le',
                                   ffmpeg_params=[
                                       '-vf', 'pad=ceil(iw/2)*2:ceil(ih/2)*2',
+                                      '-vf', f'scale={self._cfg.max_width}:trunc(ow/a/2)*2',
                                       '-crf', '18',
-                                      '-tag:v', 'hvc1',
+                                      *hvc1_tag,
                                       '-preset', 'medium',
                                       '-tune', 'grain',
                                       '-pix_fmt', 'yuv420p',
@@ -198,14 +215,14 @@ class SequentialMovieRenderer:
         return f"<MovieRender object (sequential) at {hex(id(self))}> with {len(self._kwargs)} arguments."
 
     def render_frame(self, frame):
-        self.logger.info(f"rendering frame {frame}")
+        self.logger.debug(f"rendering frame {frame}")
         self.frame = frame
         # calculate time given frame
         self.time = (frame - self._frame_offset) / self.fps
 
         img_path = self._tmp.joinpath(f"f{frame:05d}.png")
         if os.path.exists(img_path):
-            self.logger.warning(f'File {img_path.name} already exists in folder {img_path.parent.name}.')
+            self.logger.debug(f'File {img_path.name} already exists in folder {img_path.parent.name}.')
             return
 
         # clear axes of all objects
@@ -217,25 +234,11 @@ class SequentialMovieRenderer:
             if imgp.ax is not None:
                 imgp.ax.cla()
             if not self.show_axis and imgp.ax is not None:
-                imgp.ax.set_xticklabels([])
-                imgp.ax.set_yticklabels([])
-                imgp.ax.set_xticks([])
-                imgp.ax.set_yticks([])
-                imgp.ax.spines['top'].set_visible(False)
-                imgp.ax.spines['right'].set_visible(False)
-                imgp.ax.spines['bottom'].set_visible(False)
-                imgp.ax.spines['left'].set_visible(False)
+                _hide_axis(imgp.ax)
 
         for ovrl in self.layers:
             if not ovrl.show_axis and ovrl.ax is not None:
-                ovrl.ax.set_xticklabels([])
-                ovrl.ax.set_yticklabels([])
-                ovrl.ax.set_xticks([])
-                ovrl.ax.set_yticks([])
-                ovrl.ax.spines['top'].set_visible(False)
-                ovrl.ax.spines['right'].set_visible(False)
-                ovrl.ax.spines['bottom'].set_visible(False)
-                ovrl.ax.spines['left'].set_visible(False)
+                _hide_axis(ovrl.ax)
 
         for imgp in self.image_pipeline:
             if type(imgp) == NullImage:
@@ -243,11 +246,21 @@ class SequentialMovieRenderer:
             ppu = self.image.pix_per_um if self.image.pix_per_um is not None else 1
             ext = (0, self.image.width / ppu, 0, self.image.height / ppu)
             ax = imgp.ax if imgp.ax is not None else self.ax
+            roi = getattr(self._cfg, 'roi', None)
+            if roi is None or not hasattr(roi, 'left'):
+                roi = None
             try:
                 with reading_image_lock:
                     img = imgp()
                 img = skimage.util.img_as_float(img)
-                ax.imshow(img, cmap='gray', extent=ext,
+                disp = img
+                img_ext = ext
+                if roi is not None:
+                    from movierender.overlays.pixel_tools import crop_extent, roi_pixel_box
+                    y0, y1, x0, x1 = roi_pixel_box(roi, img.shape)
+                    disp = img[y0:y1, x0:x1]
+                    img_ext = crop_extent(ext, roi, img.shape, 'upper' if self.inv_y else 'lower')
+                ax.imshow(disp, cmap='gray', extent=img_ext,
                           origin='upper' if self.inv_y else 'lower',
                           interpolation='none', aspect='equal',
                           zorder=0)
@@ -258,12 +271,13 @@ class SequentialMovieRenderer:
                 self.logger.error(e)
                 return f"failed to render frame {frame}"
             for ovrl in self.layers:
-                kwargs = self._kwargs.copy()
+                kwargs = copy.deepcopy(self._kwargs)
                 kwargs.update(show_axis=self.show_axis)
                 kwargs.update(**ovrl._kwargs)
                 kwargs.pop("timestamps")
                 ovrl.plot(ax=self.ax if ovrl.ax is None else None, **kwargs)
 
         ensure_dir(self._tmp)
-        self.fig.savefig(img_path, facecolor='white', transparent=False)
+        bg_color = self._cfg.background.color if self._cfg.background is not None else 'white'
+        self.fig.savefig(img_path, facecolor=bg_color, transparent=False)
         return img_path
