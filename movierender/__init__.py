@@ -10,7 +10,7 @@ import matplotlib
 
 matplotlib.use("Agg")
 
-from .render import MovieRenderer, ImagePipeline, SingleImage, CompositeRGBImage, NullImage  # noqa
+from .render import MovieRenderer, ImagePipeline, SingleImage, CompositeRGBImage, NullImage, ZProjectionImage  # noqa
 
 import matplotlib.pyplot as plt  # noqa
 from matplotlib import gridspec  # noqa

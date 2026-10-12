@@ -101,6 +101,15 @@ The supported parameters to render a movie from a configuration file are as foll
     - `all-std`: uses standard deviation of the images.
     - `all-mean`,`all-avg`, : uses average of all images.
     - `all-median`, : uses std projection.
+    - `all-depth` (alias `all-code`): depth-coded projection. Each pixel is
+      coloured, through the `zstack_cmap` colormap, according to the z-position
+      of its peak intensity (bottom→top) and scaled by the pixel's normalised
+      brightness, so the colour encodes depth. Because the colours themselves
+      encode depth, depth-coding is only meaningful for a single channel; the
+      layouts render it one channel at a time and it cannot be merged into a
+      composite RGB image.
+- `zstack_cmap`: colormap used by a depth-coded projection (`zstack_fn = all-depth`).
+  Any matplotlib colormap name; `plasma` (default), `viridis`, `turbo`, etc.
 - `roi`: Specifies the file of ROIs that the processing will use.
 - `scalebar`: Set the scalebar size to the specified value in micrometers.
   If no number is specified, no scalebar will be rendered.
@@ -151,6 +160,10 @@ The supported parameters to render a panel are:
   Possible options are to select one image from the z-stack or to project a subset of them into a single image when used
   im combination with `zstack_fn`.
   To select a single z-stack, just specify the number of the slice (starting from zero).
+- `zstack_fn`: projection applied to the subset selected by `zstack`. See the
+  MOVIE section above for the available values, including the depth-coded
+  `all-depth`/`all-code` mode.
+- `zstack_cmap`: colormap used by a depth-coded projection (default `plasma`).
 - `multipage`: if true, the definition of rows in the plot (e.g., the different channels of the render) will
   become different pages of the pdf instead.
   When multipage is on, the constraint on maximum column number has no effect.

@@ -7,6 +7,7 @@ from fileops.export.config_sections import process_overrides_of_section
 from fileops.logger import get_logger
 from fileops.plugins import HeaderReaderPlugin
 
+from movierender.colorize import DEFAULT_DEPTH_CMAP
 from movierender.config import ConfigPanel
 from movierender.config import _parse_text_props, _parse_line_props, _parse_background_props
 from movierender.plugins.fileops._movie_header_reader import (
@@ -111,6 +112,7 @@ class PanelHeaderReaderPlugin(HeaderReaderPlugin):
                 channel_render_parameters=sec_param_override.channel_info,
                 zstacks=sec_param_override.zstacks,
                 zstack_fn=cfg[pan]["zstack_fn"] if "zstack_fn" in cfg[pan] else None,
+                zstack_cmap=cfg[pan]["zstack_cmap"] if "zstack_cmap" in cfg[pan] else DEFAULT_DEPTH_CMAP,
                 scalebar=int(cfg[pan]["scalebar"]) if "scalebar" in cfg[pan] else None,
                 scalebar_thickness=float(cfg[pan]["scalebar_thickness"]) if "scalebar_thickness" in cfg[pan] else 1,
                 draw_scalebar_text=cfg[pan]["draw_scalebar_text"].lower() in ["true", "yes"]

@@ -156,24 +156,6 @@ Legend: [OPEN] = pending, [DONE] = fixed
               channel color. Configurable parameters: position, point size (for
               both font and square), font name, and font properties.
 
-  [OPEN] 64. Depth-coded z-projection for PANELs and MOVIEs
-              — Add a new z-projection mode that maps each z-slice to a
-              color along a colormap (e.g. blue→red, jet, etc.), producing
-              a 2D image where pixel color encodes the z-position of peak
-              intensity. This is Fiji's "Temporal-Color Code" macro:
-              https://github.com/fiji/fiji/blob/master/plugins/Scripts/
-              Image/Hyperstacks/Temporal-Color_Code.ijm
-              Reference: https://github.com/napari/napari/issues/4300
-              — Configurable parameters: colormap name (default: hsv or
-                jet), z-range (full or subset), intensity threshold.
-              — Should work for both individual MOVIE sections and PANEL
-                layouts, and compose with existing overlays.
-              — Implementation: new z-project mode in fileops (or a
-                MovieRender plugin) that assigns each z-slice an index,
-                maps index to a colormap color, and composites the
-                result per-pixel by taking the color at each position's
-                maximum-intensity z.
-
   [BUG] 69. `timestamp_color` / `timestamp_font_size` ignored in configs
                 — Panel (`figs/definitions/chx-2003/panel/export_definition.cfg`)
                 sets `timestamp_color = white`, `timestamp_font_size = 10`,
@@ -215,6 +197,7 @@ Legend: [OPEN] = pending, [DONE] = fixed
   [OBSOLETE] 60. `zstack = all-max` logs ERROR instead of warning — moved to FileOps #34.
   [DONE] 62. Auto-detect `defaults.cfg` in upstream dirs — `find_defaults_files()`; savefig bg-color fix.
   [DONE] 63. `fontdict`+`fontsize` alias conflict crashed rendering — props merged via `setdefault`.
+  [DONE] 64. Depth-coded z-projection — implemented in `[MOVIE]/[PANEL]`; forbid depth-merge as composite RGB.
   [DONE] 65. Default text color white invisible on white — auto-pick via `contrast_color()`.
   [DONE] 66. Font weight for text elements — `font_weight` in TextProperties/parsers/overlays/layouts.
   [DONE] 67. Circular import plugins.overlay ↔ overlays — TYPE_CHECKING + future annotations.
