@@ -76,7 +76,6 @@ Legend: [OPEN] = pending, [DONE] = fixed
               `@dataclass` with `field(default=...)` and `__post_init__`
               validation would eliminate defensive code in header readers.
 
-
 3. PERFORMANCE
 ──────────────
 
