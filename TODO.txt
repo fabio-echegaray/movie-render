@@ -163,14 +163,6 @@ Legend: [OPEN] = pending, [DONE] = fixed
                 result per-pixel by taking the color at each position's
                 maximum-intensity z.
 
-  [OPEN] 78. `render folder` ignores upstream auto-detected defaults
-              (`_render_folder.py:55`) — when no `--defaults-file` is given,
-              `render_folder_cmd` only checks `path / defaults.cfg` in the
-              local root, yet imports `find_default_files()` (line 13) and
-              never calls it, even though upstream-dir auto-detection is
-              available since #62 (`_defaults.py`).
-              Fix: replace the local-only check with `find_default_files()`.
-
 
 5. RESOLVED / OBSOLETE (ARCHIVE)
 ────────────────────────────────
@@ -200,5 +192,6 @@ Legend: [OPEN] = pending, [DONE] = fixed
   [DONE] 74. Select movie codec — `[MOVIE] codec` key (H.264 default, H.265 option).
   [DONE] 75. Unmatched panel/movie overlays dropped silently — warning logged naming each requested id with no plugin/ROI match.
   [DONE] 77. Section-level gamma_*/rescale_* overrides reach pixels — configure_rescale_processor() (FileOps #53).
+  [DONE] 78. `render folder` ignored upstream auto-detected defaults — `render_folder_cmd` now calls `find_default_files()` per config.
 
 Last point number: 78
