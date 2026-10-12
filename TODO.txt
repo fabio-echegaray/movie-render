@@ -20,16 +20,6 @@ Legend: [OPEN] = pending, [DONE] = fixed
               If `write_videofile()` raises, the temp dir is orphaned.
               Fix: wrap cleanup in `try/finally`.
 
-  [OPEN] 75. Unmatched panel/movie overlays are dropped silently
-              (`_panel_header_reader.py:95`, `_movie_header_reader.py:155`)
-              — a panel's `overlays = [wall_001]` whose id matches no loaded
-              overlay plugin is removed by the
-              `[ovr for ovr in overlays if ovr.overlay_id in ovr_ids]` filter
-              with no log message and no error — the rendered movie silently
-              misses the requested content.
-              Fix: log a warning (or raise) for every requested id with no
-              matching plugin, in both the panel and movie readers.
-
   [OPEN] 76. Parallel rendering exhausts memory and freezes the computer
               (`_base_composer.py:125`, gated from `_render_movie.py:37`)
               — Movies always hit the parallel path because of bug #1
@@ -223,6 +213,7 @@ Legend: [OPEN] = pending, [DONE] = fixed
   [DONE] 71. ROIs in `overlays` not drawn; per-channel `histogram = yes` dead — `load_roi_overlays()`, guards.
   [DONE] 73. Figure/movie size as parameters — `[MOVIE] max_width`, new `[MOVIE] dpi` key.
   [DONE] 74. Select movie codec — `[MOVIE] codec` key (H.264 default, H.265 option).
+  [DONE] 75. Unmatched panel/movie overlays dropped silently — warning logged naming each requested id with no plugin/ROI match.
   [DONE] 77. Section-level gamma_*/rescale_* overrides reach pixels — configure_rescale_processor() (FileOps #53).
 
 Last point number: 78

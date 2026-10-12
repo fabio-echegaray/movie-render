@@ -66,3 +66,46 @@ def test_overlay_without_matching_plugin_is_reported(tmp_path, caplog):
     assert len(panels[0].overlays) == 0
     assert any("wall_001" in r.getMessage() for r in caplog.records), \
         "overlay 'wall_001' was requested by the panel but silently dropped"
+
+
+CFG_MATCHED = """
+[DATA]
+image = data.tif
+
+[ROI-01]
+id = wall_001
+geometry = Square(54,35,100)
+
+[OVERLAY-01]
+id = arr_1
+type = arrow
+xy = (0, 0)
+length = 1
+angle = 0
+color = yellow
+
+[PANEL-1]
+title = t
+filename = out.pdf
+overlays = [arr_1, wall_001]
+"""
+
+
+def test_matching_overlays_are_resolved_without_warning(tmp_path, caplog):
+    """Requested ids that *do* match an overlay plugin or a ROI must be resolved and not warned about.
+
+    Guards the id-matching itself: plugin overlays expose ``overlay_id`` (not ``id``), and a panel id may
+    name a ROI section through its header or its ``id`` key.
+    """
+    cfg = configparser.ConfigParser()
+    cfg.read_string(CFG_MATCHED)
+    img = _StubImage()
+    plugin = PanelHeaderReaderPlugin(tmp_path / "cfg.cfg", cfg=cfg, img_file=img,
+                                     param_override=ParameterOverride(img), roi=None, defaults_file=None)
+    assert plugin.has_valid_header()
+
+    with caplog.at_level(logging.WARNING):
+        panels = plugin.process()
+    assert [o.overlay_id for o in panels[0].overlays] == ["arr_1", "wall_001"]
+    assert not any("does not match any" in r.getMessage() for r in caplog.records), \
+        "resolved overlays must not be reported as unmatched"

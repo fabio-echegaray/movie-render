@@ -12,7 +12,9 @@ from movierender.config import _parse_text_props, _parse_line_props, _parse_back
 from movierender.plugins.fileops._movie_header_reader import (
     load_overlay_plugins,
     load_roi_overlays,
+    overlay_id,
     roi_overlays_for_ids,
+    warn_missing_overlays,
 )
 
 _rowcol_dict = {
@@ -92,8 +94,16 @@ class PanelHeaderReaderPlugin(HeaderReaderPlugin):
                     ovr_ids = [s.strip() for s in ovr_txt[1:-1].split(",") if len(s) > 0]
 
             # ROIs listed in the overlays parameter are drawn as ImagejROI boxes
-            overlay_objs = [ovr for ovr in overlays if ovr.id in ovr_ids]
-            overlay_objs += roi_overlays_for_ids(cfg, roi_lst, ovr_ids, um_per_pix=img_file.um_per_pix)
+            plugin_objs = [ovr for ovr in overlays if overlay_id(ovr) in set(ovr_ids)]
+            roi_objs = roi_overlays_for_ids(cfg, roi_lst, ovr_ids, um_per_pix=img_file.um_per_pix)
+            # a requested id is satisfied by a plugin overlay id or by a ROI section
+            # matched through its header or its `id` key
+            provided_ids = [overlay_id(ovr) for ovr in plugin_objs]
+            for r in roi_lst:
+                r_id = cfg[r.header].get("id", r.header)
+                provided_ids += [alias for alias in (r.header, r_id) if alias in ovr_ids]
+            warn_missing_overlays(ovr_ids, provided_ids, pan, self.log)
+            overlay_objs = plugin_objs + roi_objs
 
             # parse graphics properties from dotted keys
             scalebar_text = _parse_text_props(cfg[pan], "scalebar")
