@@ -57,7 +57,7 @@ def render_static_montage(panel: ConfigPanel, copyright_info: ConfigCopyright = 
         from movierender.layouts.panel._time_array import plotimg
         # label each row with the channel name instead of its number
         im_df["channel_name"] = im_df["channel"].map(
-            lambda ch: ch if ch == "merge" else panel.channel_render_parameters[ch].get("name", ch))
+            lambda ch: "Merge" if ch == "merge" else panel.channel_render_parameters[ch].get("name", ch))
         rows = "channel_name"
         cols = "frame"
         row_order = list(dict.fromkeys(im_df["channel_name"]))  # keep channel order, "merge" last
