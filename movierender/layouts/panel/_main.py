@@ -52,10 +52,15 @@ def render_static_montage(panel: ConfigPanel, copyright_info: ConfigCopyright = 
         from movierender.layouts.panel._z_array import plotimg
         rows = "z"
         cols = "channel"
+        row_order = None
     elif panel.layout == "time-array":
         from movierender.layouts.panel._time_array import plotimg
-        rows = "channel"
+        # label each row with the channel name instead of its number
+        im_df["channel_name"] = im_df["channel"].map(
+            lambda ch: ch if ch == "merge" else panel.channel_render_parameters[ch].get("name", ch))
+        rows = "channel_name"
         cols = "frame"
+        row_order = list(dict.fromkeys(im_df["channel_name"]))  # keep channel order, "merge" last
     else:
         raise ValueError(f"Wrong layout specification (got {panel.layout}).")
 
@@ -84,6 +89,7 @@ def render_static_montage(panel: ConfigPanel, copyright_info: ConfigCopyright = 
                 for col_g in grouper(g_df[panel.columns].unique(), panel.max_plots_per_page):
                     g = sns.FacetGrid(g_df,
                                       row=rows,
+                                      row_order=row_order,
                                       col=cols,
                                       col_wrap=panel.max_columns,
                                       col_order=col_g,
@@ -104,6 +110,7 @@ def render_static_montage(panel: ConfigPanel, copyright_info: ConfigCopyright = 
     else:
         g = sns.FacetGrid(im_df,
                           row=rows,
+                          row_order=row_order,
                           col=cols,
                           aspect=1,
                           height=panel.height,

@@ -176,5 +176,6 @@ Legend: [OPEN] = pending, [DONE] = fixed
   [DONE] 75. Unmatched panel/movie overlays dropped silently — warning logged naming each requested id with no plugin/ROI match.
   [DONE] 77. Section-level gamma_*/rescale_* overrides reach pixels — configure_rescale_processor() (FileOps #53).
   [DONE] 78. `render folder` ignored upstream auto-detected defaults — `render_folder_cmd` now calls `find_default_files()` per config.
+  [DONE] 79. Time-array panel rows labelled by channel number — now show the channel name (`_main.py`).
 
-Last point number: 78
+Last point number: 79
