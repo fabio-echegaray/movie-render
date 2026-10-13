@@ -132,13 +132,6 @@ Legend: [OPEN] = pending, [DONE] = fixed
               for 3.9, 3.10, 3.11; add 3.12, 3.13, and 3.14 so the full
               range of supported versions is declared.
 
-  [OPEN] 59. Add user documentation for project-level defaults (point 51)
-              — Point 51 (project-folder-level configuration via defaults.cfg)
-              lacks user-facing docs. Add a section to socs/main.md that
-              explains placing defaults.cfg in a render folder, the
-              `[DEFAULT]`, `[COPYRIGHT]`, and `[CHANNEL-N]` override precedence,
-               and how an explicit `--defaults-file` path overrides autodetection.
-
   [OPEN] 61. Channel name overlay with color indicator
               — Add an overlay that displays the channel name preceded by a
               small colored square (the size of a character) representing the
@@ -183,6 +176,7 @@ Legend: [OPEN] = pending, [DONE] = fixed
   [DONE] 56. Variable `id` shadowed built-in — renamed `overlay_id` (config key unchanged).
   [DONE] 57. DEBUG logs optional in terminal commands — hidden by default; `--verbose`/`-v` opts back in (FileOps #50).
   [DONE] 58. Color palettes & graphic element parameters — Composable Text/Line/BackgroundProperties classes.
+  [DONE] 59. User documentation for project-level defaults — new "Project-level defaults" section in docs/main.md.
   [OBSOLETE] 60. `zstack = all-max` logs ERROR instead of warning — moved to FileOps #34.
   [DONE] 62. Auto-detect `defaults.cfg` in upstream dirs — `find_defaults_files()`; savefig bg-color fix.
   [DONE] 63. `fontdict`+`fontsize` alias conflict crashed rendering — props merged via `setdefault`.
@@ -199,5 +193,6 @@ Legend: [OPEN] = pending, [DONE] = fixed
   [DONE] 75. Unmatched panel/movie overlays dropped silently — warning logged naming each requested id with no plugin/ROI match.
   [DONE] 77. Section-level gamma_*/rescale_* overrides reach pixels — configure_rescale_processor() (FileOps #53).
   [DONE] 78. `render folder` ignored upstream auto-detected defaults — `render_folder_cmd` now calls `find_default_files()` per config.
+  [DONE] 79. `find_default_files` deduplicated into FileOps — local `movierender/scripts/_defaults.py` removed; now imported from `fileops.export.config` (canonical superset signature).
 
-Last point number: 78
+Last point number: 79
