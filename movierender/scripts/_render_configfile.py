@@ -11,9 +11,8 @@ import fileops
 from movierender.layouts import render_static_montage
 from movierender.scripts._render_movie import render_movie
 from movierender.scripts._render_projection import render_projection
-from movierender.scripts._defaults import find_default_files
 
-from fileops.export.config import read_config, check_if_output_files_are_created
+from fileops.export.config import read_config, check_if_output_files_are_created, find_default_files
 from fileops.logger import get_logger
 
 log = get_logger(name='render-movie')

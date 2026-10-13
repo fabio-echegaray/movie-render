@@ -2,6 +2,7 @@
 
 * [Basic usage (quick start)](#quick-start)
 * [Configuration options](#configuration-options)
+    * [Project-level defaults](#project-level-defaults)
     * [Render movie](#render-movie)
     * [Render panel](#render-panel)
     * [Overlays](#overlays)
@@ -65,6 +66,96 @@ the [FileOps](https://github.com/fabio-echegaray/fileops) package.
 package.
 Movie-render depends on [FileOps](https://github.com/fabio-echegaray/fileops) package.
 ![dependencies.svg](figs%2Fdependencies.svg)
+
+## Project-level defaults
+
+Shared settings can be kept out of every configuration file and defined once in a
+file named `defaults.cfg`. A configuration file then states only what is specific
+to it and inherits the rest — useful when many configuration files in a project
+share the same copyright, channel styling, or processing flags.
+
+### Finding a defaults file
+
+The single-configuration commands (`render movie`, `render panel`,
+`render projection`, `render file`) autodetect defaults files. Starting from the
+configuration file's own folder, MovieRender walks up the directory tree to the
+current working directory (and beyond it) and collects every `defaults.cfg` it
+finds; files closest to the configuration file take precedence over files further
+up. Pass `--defaults-file PATH` to skip autodetection and load exactly one
+defaults file; an explicit path is used instead of the autodetected ones.
+
+`render folder` applies the same per-configuration autodetection to every
+configuration file in the folder. In addition, a `defaults.cfg` placed directly
+in the rendered folder (or the file passed with `--defaults-file`) acts as the
+project root default with the lowest priority, so a `defaults.cfg` closer to a
+configuration file still overrides it. The defaults file itself is never rendered
+as a configuration file.
+
+### Precedence
+
+Defaults are merged into the configuration file on a per-key basis. The closest
+definition wins, in this order (highest first):
+
+1. the configuration file itself;
+2. the `defaults.cfg` closest to the configuration file;
+3. `defaults.cfg` files further up the directory tree (up to and above the
+   working directory);
+4. the project-root `defaults.cfg` used by `render folder`.
+
+The `[DEFAULT]` section is special: as in any INI file it applies to every other
+section, so a key such as `rescale = yes` defined there reaches every section.
+For `[CHANNEL-N]` sections only genuine channel attributes are inherited
+(`name`, `color`, `histogram`, `intensity`, `rescale`, `rescale_min`,
+`rescale_max`, `gamma_value`, `gamma_gain`, `reference_frame`, and `font_*`);
+other image-level `[DEFAULT]` flags are ignored there so they cannot leak into a
+channel definition.
+
+A `[CHANNEL-N]` section in a defaults file provides per-channel defaults (colour,
+name, rescale bounds, gamma, font). The configuration file's own `[CHANNEL-N]`
+section overrides them key by key: keys it does not mention keep their default
+value.
+
+A `[COPYRIGHT]` section in a defaults file supplies the copyright metadata
+embedded in rendered movies and panels whenever the configuration file does not
+define its own `[COPYRIGHT]`.
+
+### Example
+
+`defaults.cfg`, in the project (or render) folder:
+
+```ini
+[DEFAULT]
+rescale = yes
+
+[COPYRIGHT]
+author = Jane Doe
+license = MIT
+
+[CHANNEL-1]
+name = 60x GFP
+color = green
+gamma_value = 1.5
+```
+
+`experiment.cfg`, in a sub-folder:
+
+```ini
+[DATA]
+image = experiment.ome.tif
+frame = all
+
+[CHANNEL-1]
+name = cell-specific        ; overrides the default name
+
+[MOVIE-1]
+title = Experiment
+fps = 10
+filename = experiment.mp4
+```
+
+Rendering `experiment.cfg` keeps `rescale = yes`, `color = green`,
+`gamma_value = 1.5` and the MIT copyright from `defaults.cfg`, while the channel
+name is `cell-specific` because the configuration file overrides it.
 
 ## Render movie plugin
 
@@ -196,7 +287,7 @@ The relevant parameters for this section are:
 MovieRender supports composable graphics parameters for both MOVIE and PANEL sections.
 These parameters can be defined at:
 
-* Project level: in defaults.cfg (auto-detected or via --defaults-file flag - point #71)
+* Project level: in `defaults.cfg` (see [Project-level defaults](#project-level-defaults))
 * Individual section: each configuration file has its own values
 
 ## Property Classes

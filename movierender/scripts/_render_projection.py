@@ -6,10 +6,9 @@ from fileops.image import TifffileOMEImageFile
 from tifffile import tifffile
 from typing_extensions import Annotated
 
-from fileops.export.config import read_config, ConfigProjection
+from fileops.export.config import read_config, ConfigProjection, find_default_files
 from fileops.logger import get_logger
 from movierender.colorize import is_depth_projection, z_depth_rgb
-from movierender.scripts._defaults import find_default_files
 
 log = get_logger(name='render-projection')
 

@@ -4,13 +4,12 @@ from pathlib import Path
 
 import typer
 import fileops
-from fileops.export.config import search_config_files
+from fileops.export.config import search_config_files, find_default_files, DEFAULT_DEFAULTS_FILE
 from fileops.image.exceptions import FrameNotFoundError
 from fileops.logger import get_logger
 from typing_extensions import Annotated
 
 from movierender.scripts._render_configfile import render_configuration_file
-from movierender.scripts._defaults import find_default_files, DEFAULT_DEFAULTS_FILE
 
 log = get_logger(name='render-folder')
 
