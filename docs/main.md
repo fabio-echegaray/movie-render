@@ -292,6 +292,15 @@ timestamp.font_size = 12          # Font size in points (default: 12)
 timestamp.color = white           # Timestamp text color (default: white)
 ```
 
+### Channel Label Parameters
+Control the text of the row and column titles of the grid (channel names, frames, z-slices).
+The legacy `fontsize` key of the section is used as `channel_label.font_size` when the latter is not given.
+```ini
+channel_label.font_name = Arial   # Font for the titles (default: Arial)
+channel_label.font_size = 12      # Font size in points (default: 12)
+channel_label.color = black       # Title text color (default: matplotlib's, black)
+```
+
 ### Background Parameters
 ```ini
 background.color = white          # Figure background color (default: black)

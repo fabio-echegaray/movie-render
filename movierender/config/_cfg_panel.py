@@ -46,5 +46,6 @@ class ConfigPanel(NamedTuple):
     scalebar_text: Union['TextProperties', None] = None
     scalebar_line: Union['LineProperties', None] = None
     timestamp: Union['TextProperties', None] = None
+    channel_label: Union['TextProperties', None] = None
     background: Union['BackgroundProperties', None] = None
     overlays: List['OverlayPlugin'] | None = None

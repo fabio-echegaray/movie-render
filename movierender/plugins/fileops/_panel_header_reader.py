@@ -110,6 +110,12 @@ class PanelHeaderReaderPlugin(HeaderReaderPlugin):
             scalebar_text = _parse_text_props(cfg[pan], "scalebar")
             scalebar_line = _parse_line_props(cfg[pan], "scalebar")
             timestamp = _parse_text_props(cfg[pan], "timestamp")
+            # text of the row/column titles of the grid (channel names, frames, z); the
+            # `fontsize` key of the section is accepted as a fallback for its size
+            channel_label = _parse_text_props(cfg[pan], "channel_label")
+            if "fontsize" in cfg[pan] and not (cfg[pan].get("channel_label.font_size")
+                                              or cfg[pan].get("channel_label_font_size")):
+                channel_label = channel_label._replace(font_size=int(cfg[pan]["fontsize"]))
             background = _parse_background_props(cfg[pan])
 
             panel_def.append(ConfigPanel(
@@ -146,6 +152,7 @@ class PanelHeaderReaderPlugin(HeaderReaderPlugin):
                 scalebar_text=scalebar_text,
                 scalebar_line=scalebar_line,
                 timestamp=timestamp,
+                channel_label=channel_label,
                 background=background,
                 overlays=overlay_objs
             ))

@@ -9,7 +9,7 @@ from fileops.export.config import ConfigCopyright
 from fileops.image.ops.rescale_proc import configure_rescale_processor
 from matplotlib.backends.backend_pdf import PdfPages
 
-from movierender.config import ConfigPanel
+from movierender.config import ConfigPanel, TextProperties
 
 import fileops
 
@@ -64,6 +64,14 @@ def render_static_montage(panel: ConfigPanel, copyright_info: ConfigCopyright = 
     else:
         raise ValueError(f"Wrong layout specification (got {panel.layout}).")
 
+    # font of the row/column titles of the grid
+    lbl = panel.channel_label or TextProperties()
+    title_kwargs = dict(family=lbl.font_name, size=lbl.font_size)
+    if lbl.font_weight is not None:
+        title_kwargs["weight"] = lbl.font_weight
+    if lbl.color is not None:
+        title_kwargs["color"] = lbl.color
+
     # ------------------------------------------------------------------------------------------------------------------
     # save a multipage pdf and associated metadata
     # ------------------------------------------------------------------------------------------------------------------
@@ -96,7 +104,7 @@ def render_static_montage(panel: ConfigPanel, copyright_info: ConfigCopyright = 
                                       aspect=1,
                                       height=panel.height)
                     g.map_dataframe(plotimg, panel=panel)
-                    g.set_titles(col_template="{col_name}", row_template="{row_name}")
+                    g.set_titles(col_template="{col_name}", row_template="{row_name}", **title_kwargs)
 
                     # Remove unused axes
                     for ax in g.axes.flatten():
@@ -116,7 +124,7 @@ def render_static_montage(panel: ConfigPanel, copyright_info: ConfigCopyright = 
                           height=panel.height,
                           margin_titles=True)
         g.map_dataframe(plotimg, panel=panel)
-        g.set_titles(col_template="{col_name}", row_template="{row_name}")
+        g.set_titles(col_template="{col_name}", row_template="{row_name}", **title_kwargs)
 
         # Remove unused axes
         for ax in g.axes.flat:

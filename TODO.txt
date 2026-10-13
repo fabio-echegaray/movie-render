@@ -178,5 +178,6 @@ Legend: [OPEN] = pending, [DONE] = fixed
   [DONE] 78. `render folder` ignored upstream auto-detected defaults — `render_folder_cmd` now calls `find_default_files()` per config.
   [DONE] 79. Time-array panel rows labelled by channel number — now show the channel name (`_main.py`).
   [DONE] 80. DEBUG lines from `mmpycorex.launcher` still leaked without `-v` (follow-up to #57) — `mmpycorex` added to `silence_loggers()` in `render.py` and `__init__.py`.
+  [DONE] 81. PANEL row/column titles ignored font size — new `channel_label.font_name/font_size/font_weight/color` (and `fontsize` fallback) applied in `_main.py`.
 
-Last point number: 80
+Last point number: 81
