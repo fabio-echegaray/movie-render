@@ -4,7 +4,7 @@ from fileops.logger import get_logger, silence_loggers
 
 # silence third-party loggers before importing them so their DEBUG output is
 # not emitted even during module import
-silence_loggers(loggers=["tifffile", "matplotlib", "PIL"])
+silence_loggers(loggers=["tifffile", "matplotlib", "PIL", "mmpycorex"])
 
 import matplotlib
 

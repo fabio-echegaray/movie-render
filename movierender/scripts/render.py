@@ -8,7 +8,7 @@ from typing_extensions import Annotated
 
 # silence third-party loggers before they are imported so their DEBUG output
 # is not emitted even during module import
-silence_loggers(loggers=["tifffile", "matplotlib", "PIL"], output_log_file=Path(os.getcwd()) / "silenced.log")
+silence_loggers(loggers=["tifffile", "matplotlib", "PIL", "mmpycorex"], output_log_file=Path(os.getcwd()) / "silenced.log")
 
 from ._render_configfile import render_configuration_file_cmd
 from ._render_folder import render_folder_cmd
