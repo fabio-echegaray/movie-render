@@ -7,6 +7,7 @@ from fileops.image.ops import z_projection
 
 import movierender.overlays as ovl
 from movierender import CompositeRGBImage
+from movierender.colorize import is_depth_projection
 from movierender.config import ConfigPanel
 from movierender.config import TextProperties, LineProperties
 from movierender.layouts._ch_config import channel_configuration
@@ -14,6 +15,22 @@ from movierender.overlays import PixelTools
 from movierender.overlays.pixel_tools import crop_extent, roi_pixel_box
 
 logger = logging.getLogger(__name__)
+
+
+def assert_supported_merge_projection(zstack_fn):
+    """Merge of several channels must never be depth-coded.
+
+    Depth-coding produces colours that already encode the z-position of peak
+    intensity; merging several such channels cannot be attributed to a single
+    fluorophore and would be strongly misleading.
+    """
+    if is_depth_projection(zstack_fn):
+        raise ValueError(
+            "Depth-coded z-projection cannot be rendered as a 'merge' of "
+            "multiple channels: its colours already encode the z-position "
+            "of peak intensity for a single channel and the result would "
+            "be misleading. Set zstack_fn to a non-depth projection for "
+            "the merge, or display the channels individually.")
 
 
 def plotimg(data, panel: ConfigPanel = None, **kwargs):
@@ -53,7 +70,7 @@ def plotimg(data, panel: ConfigPanel = None, **kwargs):
         _ch = data["channel"].iloc[0]
 
         try:
-            zstack_projection = 'max'
+            zstack_projection = panel.zstack_fn if getattr(panel, 'zstack_fn', None) is not None else 'max'
             if _ch != "merge":
                 ch_par = panel.channel_render_parameters[_ch]
                 ch_name = ch_par["name"]
@@ -73,6 +90,9 @@ def plotimg(data, panel: ConfigPanel = None, **kwargs):
                 img = crgb(panel.image_file, frame=_fr)
                 img = skimage.util.img_as_float(img)
             elif _ch == "merge":
+                # merging several channels into one image: depth-coding is not
+                # allowed because its colours already encode z-depth per channel
+                assert_supported_merge_projection(zstack_projection)
                 crgb = CompositeRGBImage(
                     ax=None,
                     zstack=panel.zstacks,

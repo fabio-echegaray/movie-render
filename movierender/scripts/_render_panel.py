@@ -5,9 +5,8 @@ import typer
 from typing_extensions import Annotated
 
 from movierender.layouts import render_static_montage
-from movierender.scripts._defaults import find_default_files
 
-from fileops.export.config import read_config
+from fileops.export.config import read_config, find_default_files
 from fileops.logger import get_logger
 
 log = get_logger(name='render-panel')

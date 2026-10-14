@@ -5,6 +5,8 @@ from typing import NamedTuple
 from fileops.image import ImageFile
 from roifile import ImagejRoi
 
+from movierender.colorize import DEFAULT_DEPTH_CMAP
+
 if TYPE_CHECKING:
     from movierender.overlays import OverlayPlugin
     from movierender.config import (
@@ -20,8 +22,8 @@ class ConfigPanel(NamedTuple):
     channels: List[int]
     channel_render_parameters: Dict
     zstacks: List[int]
-    zstack_fn: str
-    scalebar: float
+    zstack_fn: Union[str, None]
+    scalebar: Union[float, None]
     scalebar_thickness: float
     draw_scalebar_text: bool
     override_dt: Union[float, None]
@@ -40,8 +42,10 @@ class ConfigPanel(NamedTuple):
     filename: str
     layout: str
     # Graphics parameters
+    zstack_cmap: str = DEFAULT_DEPTH_CMAP
     scalebar_text: Union['TextProperties', None] = None
     scalebar_line: Union['LineProperties', None] = None
     timestamp: Union['TextProperties', None] = None
+    channel_label: Union['TextProperties', None] = None
     background: Union['BackgroundProperties', None] = None
     overlays: List['OverlayPlugin'] | None = None

@@ -8,7 +8,7 @@ from typing_extensions import Annotated
 
 # silence third-party loggers before they are imported so their DEBUG output
 # is not emitted even during module import
-silence_loggers(loggers=["tifffile", "matplotlib", "PIL"], output_log_file=Path(os.getcwd()) / "silenced.log")
+silence_loggers(loggers=["tifffile", "matplotlib", "PIL", "mmpycorex"], output_log_file=Path(os.getcwd()) / "silenced.log")
 
 from ._render_configfile import render_configuration_file_cmd
 from ._render_folder import render_folder_cmd
@@ -22,11 +22,11 @@ app = Typer()
 
 @app.callback()
 def main(
-        quiet: Annotated[
-            bool, typer.Option(help="Suppress DEBUG-level (and lower) log output.")] = False,
+        verbose: Annotated[
+            bool, typer.Option("--verbose", "-v",
+                               help="Show DEBUG-level log output.")] = False,
 ):
-    if quiet:
-        set_log_level("INFO")
+    set_log_level("DEBUG" if verbose else "INFO")
 
 
 app.command(name='file')(render_configuration_file_cmd)

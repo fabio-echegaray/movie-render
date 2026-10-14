@@ -7,12 +7,15 @@ from fileops.export.config_sections import process_overrides_of_section
 from fileops.logger import get_logger
 from fileops.plugins import HeaderReaderPlugin
 
+from movierender.colorize import DEFAULT_DEPTH_CMAP
 from movierender.config import ConfigPanel
 from movierender.config import _parse_text_props, _parse_line_props, _parse_background_props
 from movierender.plugins.fileops._movie_header_reader import (
     load_overlay_plugins,
     load_roi_overlays,
+    overlay_id,
     roi_overlays_for_ids,
+    warn_missing_overlays,
 )
 
 _rowcol_dict = {
@@ -92,13 +95,27 @@ class PanelHeaderReaderPlugin(HeaderReaderPlugin):
                     ovr_ids = [s.strip() for s in ovr_txt[1:-1].split(",") if len(s) > 0]
 
             # ROIs listed in the overlays parameter are drawn as ImagejROI boxes
-            overlay_objs = [ovr for ovr in overlays if ovr.id in ovr_ids]
-            overlay_objs += roi_overlays_for_ids(cfg, roi_lst, ovr_ids, um_per_pix=img_file.um_per_pix)
+            plugin_objs = [ovr for ovr in overlays if overlay_id(ovr) in set(ovr_ids)]
+            roi_objs = roi_overlays_for_ids(cfg, roi_lst, ovr_ids, um_per_pix=img_file.um_per_pix)
+            # a requested id is satisfied by a plugin overlay id or by a ROI section
+            # matched through its header or its `id` key
+            provided_ids = [overlay_id(ovr) for ovr in plugin_objs]
+            for r in roi_lst:
+                r_id = cfg[r.header].get("id", r.header)
+                provided_ids += [alias for alias in (r.header, r_id) if alias in ovr_ids]
+            warn_missing_overlays(ovr_ids, provided_ids, pan, self.log)
+            overlay_objs = plugin_objs + roi_objs
 
             # parse graphics properties from dotted keys
             scalebar_text = _parse_text_props(cfg[pan], "scalebar")
             scalebar_line = _parse_line_props(cfg[pan], "scalebar")
             timestamp = _parse_text_props(cfg[pan], "timestamp")
+            # text of the row/column titles of the grid (channel names, frames, z); the
+            # `fontsize` key of the section is accepted as a fallback for its size
+            channel_label = _parse_text_props(cfg[pan], "channel_label")
+            if "fontsize" in cfg[pan] and not (cfg[pan].get("channel_label.font_size")
+                                              or cfg[pan].get("channel_label_font_size")):
+                channel_label = channel_label._replace(font_size=int(cfg[pan]["fontsize"]))
             background = _parse_background_props(cfg[pan])
 
             panel_def.append(ConfigPanel(
@@ -111,6 +128,7 @@ class PanelHeaderReaderPlugin(HeaderReaderPlugin):
                 channel_render_parameters=sec_param_override.channel_info,
                 zstacks=sec_param_override.zstacks,
                 zstack_fn=cfg[pan]["zstack_fn"] if "zstack_fn" in cfg[pan] else None,
+                zstack_cmap=cfg[pan]["zstack_cmap"] if "zstack_cmap" in cfg[pan] else DEFAULT_DEPTH_CMAP,
                 scalebar=int(cfg[pan]["scalebar"]) if "scalebar" in cfg[pan] else None,
                 scalebar_thickness=float(cfg[pan]["scalebar_thickness"]) if "scalebar_thickness" in cfg[pan] else 1,
                 draw_scalebar_text=cfg[pan]["draw_scalebar_text"].lower() in ["true", "yes"]
@@ -134,6 +152,7 @@ class PanelHeaderReaderPlugin(HeaderReaderPlugin):
                 scalebar_text=scalebar_text,
                 scalebar_line=scalebar_line,
                 timestamp=timestamp,
+                channel_label=channel_label,
                 background=background,
                 overlays=overlay_objs
             ))

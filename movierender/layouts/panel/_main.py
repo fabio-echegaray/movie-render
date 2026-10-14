@@ -6,9 +6,10 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 from fileops.export.config import ConfigCopyright
+from fileops.image.ops.rescale_proc import configure_rescale_processor
 from matplotlib.backends.backend_pdf import PdfPages
 
-from movierender.config import ConfigPanel
+from movierender.config import ConfigPanel, TextProperties
 
 import fileops
 
@@ -25,6 +26,11 @@ def grouper(iterable, n, fillvalue=None):
 def render_static_montage(panel: ConfigPanel, copyright_info: ConfigCopyright = None) -> Path:
     fileops.reset_shared_state()
     logger.debug("Making montage of image.")
+
+    # Section-level gamma_*/rescale_* overrides only live in the section's
+    # channel_render_parameters; reconfigure the shared RescaleProcessor so
+    # the panel's planes are rendered with this panel's settings.
+    configure_rescale_processor(panel.image_file, panel.channel_render_parameters)
 
     # create dataframe of images that will be plotted
     img_lst = [
@@ -46,12 +52,25 @@ def render_static_montage(panel: ConfigPanel, copyright_info: ConfigCopyright = 
         from movierender.layouts.panel._z_array import plotimg
         rows = "z"
         cols = "channel"
+        row_order = None
     elif panel.layout == "time-array":
         from movierender.layouts.panel._time_array import plotimg
-        rows = "channel"
+        # label each row with the channel name instead of its number
+        im_df["channel_name"] = im_df["channel"].map(
+            lambda ch: "Merge" if ch == "merge" else panel.channel_render_parameters[ch].get("name", ch))
+        rows = "channel_name"
         cols = "frame"
+        row_order = list(dict.fromkeys(im_df["channel_name"]))  # keep channel order, "merge" last
     else:
         raise ValueError(f"Wrong layout specification (got {panel.layout}).")
+
+    # font of the row/column titles of the grid
+    lbl = panel.channel_label or TextProperties()
+    title_kwargs = dict(family=lbl.font_name, size=lbl.font_size)
+    if lbl.font_weight is not None:
+        title_kwargs["weight"] = lbl.font_weight
+    if lbl.color is not None:
+        title_kwargs["color"] = lbl.color
 
     # ------------------------------------------------------------------------------------------------------------------
     # save a multipage pdf and associated metadata
@@ -78,13 +97,14 @@ def render_static_montage(panel: ConfigPanel, copyright_info: ConfigCopyright = 
                 for col_g in grouper(g_df[panel.columns].unique(), panel.max_plots_per_page):
                     g = sns.FacetGrid(g_df,
                                       row=rows,
+                                      row_order=row_order,
                                       col=cols,
                                       col_wrap=panel.max_columns,
                                       col_order=col_g,
                                       aspect=1,
                                       height=panel.height)
                     g.map_dataframe(plotimg, panel=panel)
-                    g.set_titles(col_template="{col_name}", row_template="{row_name}")
+                    g.set_titles(col_template="{col_name}", row_template="{row_name}", **title_kwargs)
 
                     # Remove unused axes
                     for ax in g.axes.flatten():
@@ -98,12 +118,13 @@ def render_static_montage(panel: ConfigPanel, copyright_info: ConfigCopyright = 
     else:
         g = sns.FacetGrid(im_df,
                           row=rows,
+                          row_order=row_order,
                           col=cols,
                           aspect=1,
                           height=panel.height,
                           margin_titles=True)
         g.map_dataframe(plotimg, panel=panel)
-        g.set_titles(col_template="{col_name}", row_template="{row_name}")
+        g.set_titles(col_template="{col_name}", row_template="{row_name}", **title_kwargs)
 
         # Remove unused axes
         for ax in g.axes.flat:

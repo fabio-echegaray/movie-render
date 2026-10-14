@@ -9,6 +9,7 @@ from fileops.export.config_sections import process_overrides_of_section
 from fileops.logger import get_logger
 from fileops.plugins import HeaderReaderPlugin
 
+from movierender.colorize import DEFAULT_DEPTH_CMAP
 from movierender.config import ConfigMovie
 from movierender.config import _parse_text_props, _parse_line_props, _parse_background_props
 
@@ -87,6 +88,29 @@ def roi_overlays_for_ids(cfg, roi_lst, roi_ids, um_per_pix=None):
     return overlays
 
 
+def overlay_id(ovr):
+    """Id of a resolved overlay plugin instance (``overlay_id``, falling back to ``id``)."""
+    oid = getattr(ovr, "overlay_id", None)
+    return oid if oid is not None else getattr(ovr, "id", None)
+
+
+def warn_missing_overlays(requested_ids, provided_ids, section, log):
+    """Log a warning for every requested overlay id that no provider satisfies.
+
+    ``requested_ids`` are the ids a MOVIE/PANEL section listed; ``provided_ids``
+    are the ids the resolved overlay plugins (and ROIs) actually offer. A
+    requested id with no match means a typo or a missing plugin, which would
+    otherwise silently drop content from the render.
+    """
+    provided = set(provided_ids)
+    for oid in requested_ids:
+        if oid not in provided:
+            log.warning(
+                f"Requested overlay '{oid}' in section '{section}' does not match any "
+                f"overlay plugin or ROI; it will be skipped."
+            )
+
+
 class MovieHeaderReaderPlugin(HeaderReaderPlugin):
     log = get_logger(name='MovieHeaderReaderPlugin')
 
@@ -151,8 +175,10 @@ class MovieHeaderReaderPlugin(HeaderReaderPlugin):
             if "overlays" in cfg[mov]:
                 ovr_txt = cfg[mov]["overlays"]
                 if ovr_txt[0] == "[" and ovr_txt[-1] == "]":
-                    ovr_ids = [s.strip() for s in ovr_txt[1:-1].split(",")]
-                    overlays_to_add.extend([ovr for ovr in overlays if ovr.overlay_id in ovr_ids])
+                    ovr_ids = [s.strip() for s in ovr_txt[1:-1].split(",") if len(s) > 0]
+                    matched = [ovr for ovr in overlays if overlay_id(ovr) in set(ovr_ids)]
+                    warn_missing_overlays(ovr_ids, [overlay_id(ovr) for ovr in matched], mov, self.log)
+                    overlays_to_add.extend(matched)
 
             # find ROI IDs and append them to list of ROIs
             if "roi" in cfg[mov]:
@@ -185,6 +211,7 @@ class MovieHeaderReaderPlugin(HeaderReaderPlugin):
                 image_file=img_file,
                 zstack=sec_param_override.zstacks,
                 zstack_fn=cfg[mov]["zstack_fn"] if "zstack_fn" in cfg[mov] else "all-max",
+                zstack_cmap=cfg[mov]["zstack_cmap"] if "zstack_cmap" in cfg[mov] else DEFAULT_DEPTH_CMAP,
                 um_per_z=float(cfg["DATA"]["um_per_z"]) if "um_per_z" in cfg["DATA"] else img_file.um_per_z,
                 roi=roi,
                 title=title,

@@ -171,6 +171,23 @@ class TestParseTextProps:
         assert result.font_size == 14
         assert result.color == 'cyan'
 
+    def test_parse_underscore_keys_from_real_configparser(self):
+        """Regression (point 69): the exact keys used by real config files
+        (`timestamp_color`, `timestamp_font_size`) must be honoured through a
+        ``configparser`` section proxy, not only through a mocked ``.get``."""
+
+        import configparser
+        cfg = configparser.ConfigParser()
+        cfg['PANEL'] = {
+            'timestamp_color':     'white',
+            'timestamp_font_size': '10',
+        }
+
+        result = _parse_text_props(cfg['PANEL'], 'timestamp')
+
+        assert result.color == 'white'
+        assert result.font_size == 10
+
 
 class TestParseLineProps:
     """Test class for _parse_line_props helper."""

@@ -16,6 +16,7 @@ import numpy as np
 import skimage
 from fileops.image import ImageFile
 from fileops.image.exceptions import FrameNotFoundError
+from fileops.image.ops.rescale_proc import configure_rescale_processor
 from fileops.pathutils import ensure_dir
 from matplotlib.figure import Figure
 
@@ -67,6 +68,10 @@ class SequentialMovieRenderer:
         self._cfg = config
         self.image_pipeline: List[ImagePipeline] = []
         self.image = imf
+        # Section-level gamma_*/rescale_* overrides are merged into this section's
+        # channel_render_parameters but never reach the [DATA]-level RescaleProcessor;
+        # reconfigure the shared processor with this section's settings before pulling frames.
+        configure_rescale_processor(imf, config.channel_render_parameters)
         self.inv_y = invert_y
         self._last_f = imf.frames[-1]
         self._max_frame = max(self._cfg.frames)

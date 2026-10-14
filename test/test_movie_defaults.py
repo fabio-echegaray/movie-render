@@ -94,6 +94,22 @@ class TestMovieDefaults(unittest.TestCase):
         self.assertIsNone(exp.copyright)
         self.assertIsNone(exp.movies[0].copyright)
 
+    def test_zstack_cmap_default_is_perceptually_uniform(self):
+        cfg_path = self.tmp / "default_cmap.cfg"
+        cfg_path.write_text(CFG_TEXT)
+        with patch("fileops.export.config_data_section.load_image_file", return_value=_StubImage()) as mock_load:
+            exp = read_config(cfg_path)
+            self.assertEqual(exp.movies[0].zstack_cmap, "plasma")
+
+    def test_zstack_cmap_read_from_cfg(self):
+        cfg_path = self.tmp / "custom_cmap.cfg"
+        cfg_path.write_text(CFG_TEXT.replace(
+            "[MOVIE-1]\ntitle = Test Movie",
+            "[MOVIE-1]\ntitle = Test Movie\nzstack_cmap = viridis"))
+        with patch("fileops.export.config_data_section.load_image_file", return_value=_StubImage()) as mock_load:
+            exp = read_config(cfg_path)
+            self.assertEqual(exp.movies[0].zstack_cmap, "viridis")
+
 
 class TestMovieSizeAndCodec(unittest.TestCase):
 

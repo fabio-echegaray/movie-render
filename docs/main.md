@@ -2,6 +2,7 @@
 
 * [Basic usage (quick start)](#quick-start)
 * [Configuration options](#configuration-options)
+    * [Project-level defaults](#project-level-defaults)
     * [Render movie](#render-movie)
     * [Render panel](#render-panel)
     * [Overlays](#overlays)
@@ -66,6 +67,96 @@ package.
 Movie-render depends on [FileOps](https://github.com/fabio-echegaray/fileops) package.
 ![dependencies.svg](figs%2Fdependencies.svg)
 
+## Project-level defaults
+
+Shared settings can be kept out of every configuration file and defined once in a
+file named `defaults.cfg`. A configuration file then states only what is specific
+to it and inherits the rest — useful when many configuration files in a project
+share the same copyright, channel styling, or processing flags.
+
+### Finding a defaults file
+
+The single-configuration commands (`render movie`, `render panel`,
+`render projection`, `render file`) autodetect defaults files. Starting from the
+configuration file's own folder, MovieRender walks up the directory tree to the
+current working directory (and beyond it) and collects every `defaults.cfg` it
+finds; files closest to the configuration file take precedence over files further
+up. Pass `--defaults-file PATH` to skip autodetection and load exactly one
+defaults file; an explicit path is used instead of the autodetected ones.
+
+`render folder` applies the same per-configuration autodetection to every
+configuration file in the folder. In addition, a `defaults.cfg` placed directly
+in the rendered folder (or the file passed with `--defaults-file`) acts as the
+project root default with the lowest priority, so a `defaults.cfg` closer to a
+configuration file still overrides it. The defaults file itself is never rendered
+as a configuration file.
+
+### Precedence
+
+Defaults are merged into the configuration file on a per-key basis. The closest
+definition wins, in this order (highest first):
+
+1. the configuration file itself;
+2. the `defaults.cfg` closest to the configuration file;
+3. `defaults.cfg` files further up the directory tree (up to and above the
+   working directory);
+4. the project-root `defaults.cfg` used by `render folder`.
+
+The `[DEFAULT]` section is special: as in any INI file it applies to every other
+section, so a key such as `rescale = yes` defined there reaches every section.
+For `[CHANNEL-N]` sections only genuine channel attributes are inherited
+(`name`, `color`, `histogram`, `intensity`, `rescale`, `rescale_min`,
+`rescale_max`, `gamma_value`, `gamma_gain`, `reference_frame`, and `font_*`);
+other image-level `[DEFAULT]` flags are ignored there so they cannot leak into a
+channel definition.
+
+A `[CHANNEL-N]` section in a defaults file provides per-channel defaults (colour,
+name, rescale bounds, gamma, font). The configuration file's own `[CHANNEL-N]`
+section overrides them key by key: keys it does not mention keep their default
+value.
+
+A `[COPYRIGHT]` section in a defaults file supplies the copyright metadata
+embedded in rendered movies and panels whenever the configuration file does not
+define its own `[COPYRIGHT]`.
+
+### Example
+
+`defaults.cfg`, in the project (or render) folder:
+
+```ini
+[DEFAULT]
+rescale = yes
+
+[COPYRIGHT]
+author = Jane Doe
+license = MIT
+
+[CHANNEL-1]
+name = 60x GFP
+color = green
+gamma_value = 1.5
+```
+
+`experiment.cfg`, in a sub-folder:
+
+```ini
+[DATA]
+image = experiment.ome.tif
+frame = all
+
+[CHANNEL-1]
+name = cell-specific        ; overrides the default name
+
+[MOVIE-1]
+title = Experiment
+fps = 10
+filename = experiment.mp4
+```
+
+Rendering `experiment.cfg` keeps `rescale = yes`, `color = green`,
+`gamma_value = 1.5` and the MIT copyright from `defaults.cfg`, while the channel
+name is `cell-specific` because the configuration file overrides it.
+
 ## Render movie plugin
 
 Header "MOVIE".
@@ -101,6 +192,15 @@ The supported parameters to render a movie from a configuration file are as foll
     - `all-std`: uses standard deviation of the images.
     - `all-mean`,`all-avg`, : uses average of all images.
     - `all-median`, : uses std projection.
+    - `all-depth` (alias `all-code`): depth-coded projection. Each pixel is
+      coloured, through the `zstack_cmap` colormap, according to the z-position
+      of its peak intensity (bottom→top) and scaled by the pixel's normalised
+      brightness, so the colour encodes depth. Because the colours themselves
+      encode depth, depth-coding is only meaningful for a single channel; the
+      layouts render it one channel at a time and it cannot be merged into a
+      composite RGB image.
+- `zstack_cmap`: colormap used by a depth-coded projection (`zstack_fn = all-depth`).
+  Any matplotlib colormap name; `plasma` (default), `viridis`, `turbo`, etc.
 - `roi`: Specifies the file of ROIs that the processing will use.
 - `scalebar`: Set the scalebar size to the specified value in micrometers.
   If no number is specified, no scalebar will be rendered.
@@ -151,6 +251,10 @@ The supported parameters to render a panel are:
   Possible options are to select one image from the z-stack or to project a subset of them into a single image when used
   im combination with `zstack_fn`.
   To select a single z-stack, just specify the number of the slice (starting from zero).
+- `zstack_fn`: projection applied to the subset selected by `zstack`. See the
+  MOVIE section above for the available values, including the depth-coded
+  `all-depth`/`all-code` mode.
+- `zstack_cmap`: colormap used by a depth-coded projection (default `plasma`).
 - `multipage`: if true, the definition of rows in the plot (e.g., the different channels of the render) will
   become different pages of the pdf instead.
   When multipage is on, the constraint on maximum column number has no effect.
@@ -183,7 +287,7 @@ The relevant parameters for this section are:
 MovieRender supports composable graphics parameters for both MOVIE and PANEL sections.
 These parameters can be defined at:
 
-* Project level: in defaults.cfg (auto-detected or via --defaults-file flag - point #71)
+* Project level: in `defaults.cfg` (see [Project-level defaults](#project-level-defaults))
 * Individual section: each configuration file has its own values
 
 ## Property Classes
@@ -277,6 +381,15 @@ scalebar.line_width = 1           # Scalebar line width in points (default: 1.0)
 timestamp.font_name = Arial       # Font for timestamp text (default: Arial)
 timestamp.font_size = 12          # Font size in points (default: 12)
 timestamp.color = white           # Timestamp text color (default: white)
+```
+
+### Channel Label Parameters
+Control the text of the row and column titles of the grid (channel names, frames, z-slices).
+The legacy `fontsize` key of the section is used as `channel_label.font_size` when the latter is not given.
+```ini
+channel_label.font_name = Arial   # Font for the titles (default: Arial)
+channel_label.font_size = 12      # Font size in points (default: 12)
+channel_label.color = black       # Title text color (default: matplotlib's, black)
 ```
 
 ### Background Parameters

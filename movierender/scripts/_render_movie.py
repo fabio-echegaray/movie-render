@@ -7,10 +7,9 @@ from typing_extensions import Annotated
 
 from movierender.config import ConfigMovie
 from movierender.layouts import LayoutChannelColumnComposer, LayoutZStackColumnComposer, LayoutCompositeComposer
-from movierender.scripts._defaults import find_default_files
 
 import fileops
-from fileops.export.config import read_config
+from fileops.export.config import read_config, find_default_files
 from fileops.logger import get_logger
 
 log = get_logger(name='render-movie')
